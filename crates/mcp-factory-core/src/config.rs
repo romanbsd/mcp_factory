@@ -1,5 +1,5 @@
 use std::env;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::time::Duration;
 
 use serde::{Deserialize, Serialize};
@@ -15,56 +15,98 @@ pub enum TransportMode {
     Both,
 }
 
+fn default_client_secret_env() -> String {
+    "MCP_FACTORY_OAUTH_CLIENT_SECRET".to_string()
+}
+
+pub fn default_token_store_path() -> PathBuf {
+    if let Ok(dir) = env::var("XDG_CONFIG_HOME") {
+        return PathBuf::from(dir).join("mcp-factory").join("tokens.json");
+    }
+    PathBuf::from(".mcp-factory/tokens.json")
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum AuthConfig {
     #[default]
     None,
     Bearer {
-        #[serde(default)]
+        #[serde(default = "default_bearer_env")]
         env_var: String,
     },
     ApiKeyHeader {
         header: String,
-        #[serde(default)]
+        #[serde(default = "default_api_key_env")]
         env_var: String,
     },
     ApiKeyQuery {
         param: String,
-        #[serde(default)]
+        #[serde(default = "default_api_key_env")]
         env_var: String,
     },
+    #[serde(rename = "oauth2")]
+    OAuth2 {
+        authorization_endpoint: String,
+        token_endpoint: String,
+        client_id: String,
+        #[serde(default = "default_client_secret_env")]
+        client_secret_env: String,
+        scopes: Vec<String>,
+        #[serde(default)]
+        redirect_uri: Option<String>,
+        #[serde(default = "default_token_store_path")]
+        token_store: PathBuf,
+    },
+}
+
+fn default_bearer_env() -> String {
+    "MCP_FACTORY_BEARER_TOKEN".to_string()
+}
+
+fn default_api_key_env() -> String {
+    "MCP_FACTORY_API_KEY".to_string()
 }
 
 impl AuthConfig {
     pub fn bearer() -> Self {
         Self::Bearer {
-            env_var: "MCP_FACTORY_BEARER_TOKEN".to_string(),
+            env_var: default_bearer_env(),
         }
     }
 
     pub fn api_key_header(header: impl Into<String>) -> Self {
         Self::ApiKeyHeader {
             header: header.into(),
-            env_var: "MCP_FACTORY_API_KEY".to_string(),
+            env_var: default_api_key_env(),
         }
     }
 
     pub fn api_key_query(param: impl Into<String>) -> Self {
         Self::ApiKeyQuery {
             param: param.into(),
-            env_var: "MCP_FACTORY_API_KEY".to_string(),
+            env_var: default_api_key_env(),
         }
     }
 
     pub fn resolve_secret(&self) -> Option<String> {
         let env_var = match self {
-            Self::None => return None,
+            Self::None | Self::OAuth2 { .. } => return None,
             Self::Bearer { env_var } => env_var,
             Self::ApiKeyHeader { env_var, .. } => env_var,
             Self::ApiKeyQuery { env_var, .. } => env_var,
         };
         env::var(env_var).ok().filter(|v| !v.is_empty())
+    }
+
+    pub fn oauth_client_secret(&self) -> Option<String> {
+        let Self::OAuth2 {
+            client_secret_env, ..
+        } = self
+        else {
+            return None;
+        };
+        env::var(client_secret_env).ok().filter(|v| !v.is_empty())
     }
 }
 
@@ -176,7 +218,7 @@ impl ProxyConfig {
         if !env_config.base_url.is_empty() {
             self.base_url = env_config.base_url;
         }
-        if env_config.auth != AuthConfig::None {
+        if matches!(self.auth, AuthConfig::None) && env_config.auth != AuthConfig::None {
             self.auth = env_config.auth;
         }
         if env::var("MCP_TRANSPORT").is_ok() {
@@ -211,9 +253,21 @@ mod tests {
             assert_eq!(config.transport, TransportMode::Http);
         });
     }
+
+    #[test]
+    fn oauth_config_deserializes() {
+        let toml_str = r#"
+            type = "oauth2"
+            authorization_endpoint = "https://auth.example.com/authorize"
+            token_endpoint = "https://auth.example.com/token"
+            client_id = "cid"
+            scopes = ["read"]
+        "#;
+        let auth: AuthConfig = toml::from_str(toml_str).unwrap();
+        assert!(matches!(auth, AuthConfig::OAuth2 { .. }));
+    }
 }
 
-// Lightweight env helper for tests without extra dependency in non-test code.
 #[cfg(test)]
 mod temp_env {
     use std::env;

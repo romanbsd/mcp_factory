@@ -1,7 +1,10 @@
+use std::sync::Arc;
+
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 
-use crate::config::{AuthConfig, ProxyConfig};
+use crate::auth::AuthProvider;
+use crate::config::ProxyConfig;
 use crate::error::ProxyError;
 use crate::tools::{validate_args, ToolSpec};
 
@@ -32,14 +35,19 @@ pub struct RestOperation {
 pub struct RestProxyExecutor {
     client: reqwest::Client,
     config: ProxyConfig,
+    auth: Arc<dyn AuthProvider>,
 }
 
 impl RestProxyExecutor {
-    pub fn new(config: ProxyConfig) -> Result<Self, ProxyError> {
+    pub fn new(config: ProxyConfig, auth: Arc<dyn AuthProvider>) -> Result<Self, ProxyError> {
         let client = reqwest::Client::builder()
             .timeout(config.timeout())
             .build()?;
-        Ok(Self { client, config })
+        Ok(Self {
+            client,
+            config,
+            auth,
+        })
     }
 
     pub async fn execute(&self, tool: &ToolSpec, args: Value) -> Result<String, ProxyError> {
@@ -47,12 +55,17 @@ impl RestProxyExecutor {
             return Err(ProxyError::Other("expected REST execution".to_string()));
         };
         validate_args(&tool.input_schema, &args)?;
-        let url = build_url(&self.config.base_url, operation, &args, &self.config.auth)?;
+        let url = build_url(
+            &self.config.base_url,
+            operation,
+            &args,
+            self.auth.as_ref(),
+        )?;
         let mut request = self
             .client
             .request(parse_method(&operation.method)?, &url);
 
-        request = apply_auth(request, &self.config.auth)?;
+        request = self.auth.apply_request_auth(request).await?;
         request = apply_headers(request, operation, &args)?;
 
         if !operation.body_fields.is_empty() {
@@ -103,7 +116,7 @@ pub fn build_url(
     base_url: &str,
     operation: &RestOperation,
     args: &Value,
-    auth: &AuthConfig,
+    auth: &dyn AuthProvider,
 ) -> Result<String, ProxyError> {
     let path = substitute_path(&operation.path_template, args)?;
     let mut url = reqwest::Url::parse(base_url)
@@ -111,10 +124,8 @@ pub fn build_url(
     url.set_path(&join_paths(url.path(), &path));
     {
         let mut query_pairs = url.query_pairs_mut();
-        if let AuthConfig::ApiKeyQuery { param, .. } = auth {
-            if let Some(secret) = auth.resolve_secret() {
-                query_pairs.append_pair(param, &secret);
-            }
+        if let Some((param, secret)) = auth.api_key_query() {
+            query_pairs.append_pair(&param, &secret);
         }
         if let Some(obj) = args.as_object() {
             for binding in &operation.params {
@@ -137,27 +148,6 @@ fn join_paths(base: &str, path: &str) -> String {
     } else {
         format!("{base}/{path}")
     }
-}
-
-fn apply_auth(
-    mut request: reqwest::RequestBuilder,
-    auth: &AuthConfig,
-) -> Result<reqwest::RequestBuilder, ProxyError> {
-    match auth {
-        AuthConfig::None => {}
-        AuthConfig::Bearer { .. } => {
-            if let Some(token) = auth.resolve_secret() {
-                request = request.bearer_auth(token);
-            }
-        }
-        AuthConfig::ApiKeyHeader { header, .. } => {
-            if let Some(key) = auth.resolve_secret() {
-                request = request.header(header, key);
-            }
-        }
-        AuthConfig::ApiKeyQuery { .. } => {}
-    }
-    Ok(request)
 }
 
 fn apply_headers(
@@ -210,6 +200,8 @@ fn value_to_string(value: &Value) -> Result<String, ProxyError> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::auth::auth_provider_from_config;
+    use crate::config::AuthConfig;
     use serde_json::json;
 
     #[test]
@@ -230,11 +222,12 @@ mod tests {
             body_fields: vec![],
             content_type: None,
         };
+        let auth = auth_provider_from_config(&AuthConfig::None, reqwest::Client::new()).unwrap();
         let url = build_url(
             "https://api.example.com/v1",
             &operation,
             &json!({"limit": 10}),
-            &AuthConfig::None,
+            auth.as_ref(),
         )
         .unwrap();
         assert_eq!(url, "https://api.example.com/v1/pets?limit=10");

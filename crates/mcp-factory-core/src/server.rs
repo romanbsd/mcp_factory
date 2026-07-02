@@ -99,8 +99,12 @@ impl McpProxyServerBuilder {
     }
 
     pub fn build(self) -> Result<McpProxyServer, ProxyError> {
-        let rest = RestProxyExecutor::new(self.config.clone())?;
-        let graphql = GraphQLProxyExecutor::new(self.config.clone())?;
+        let http = reqwest::Client::builder()
+            .timeout(self.config.timeout())
+            .build()?;
+        let auth = crate::auth::auth_provider_from_config(&self.config.auth, http)?;
+        let rest = RestProxyExecutor::new(self.config.clone(), Arc::clone(&auth))?;
+        let graphql = GraphQLProxyExecutor::new(self.config.clone(), Arc::clone(&auth))?;
         Ok(McpProxyServer {
             inner: Arc::new(McpProxyServerInner {
                 config: self.config,

@@ -1,7 +1,7 @@
 mod resources;
 mod tools;
 
-use mcp_factory_core::{McpProxyServer, ProxyConfig};
+use mcp_factory_core::{run_oauth_login, McpProxyServer, ProxyConfig};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -11,6 +11,11 @@ async fn main() -> anyhow::Result<()> {
         ProxyConfig::default()
     };
     config = config.merge_env()?;
+
+    if std::env::args().any(|a| a == "--auth-login") {
+        return run_oauth_login(&config).await.map_err(Into::into);
+    }
+
     if config.base_url.is_empty() {
         config.base_url = "{{ base_url }}".to_string();
     }

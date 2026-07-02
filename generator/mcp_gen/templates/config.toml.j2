@@ -1,3 +1,22 @@
 base_url = "{{ base_url }}"
 server_name = "{{ crate_name }}"
 transport = "{{ transport }}"
+
+# Static bearer token (reads MCP_FACTORY_BEARER_TOKEN by default):
+# [auth]
+# type = "bearer"
+
+# OAuth2 Authorization Code + PKCE (single account, file token store):
+# [auth]
+# type = "oauth2"
+# authorization_endpoint = "https://provider.example.com/oauth/authorize"
+# token_endpoint = "https://provider.example.com/oauth/token"
+# client_id = "your-client-id"
+# scopes = ["read", "write"]
+# client_secret via env: MCP_FACTORY_OAUTH_CLIENT_SECRET
+# redirect_uri = "http://127.0.0.1:9876/callback"  # optional; ephemeral port if omitted
+# token_store = ".mcp-factory/tokens.json"           # optional
+#
+# Login once before running the server:
+#   mcp-factory-auth login --config config.toml
+#   cargo run -- --auth-login

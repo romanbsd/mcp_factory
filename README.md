@@ -203,10 +203,34 @@ Environment variables:
 | `MCP_FACTORY_BASE_URL` | Upstream API base URL |
 | `MCP_FACTORY_BEARER_TOKEN` | Bearer auth token |
 | `MCP_FACTORY_API_KEY` | API key (header mode) |
+| `MCP_FACTORY_OAUTH_CLIENT_SECRET` | OAuth2 client secret (optional, for confidential clients) |
 | `MCP_TRANSPORT` | `stdio`, `http`, or `both` |
 | `MCP_FACTORY_BIND_ADDR` | HTTP bind address (default `127.0.0.1:8080`) |
 
 Generated crates also ship a `config.toml` template.
+
+### OAuth2 (Authorization Code + PKCE)
+
+For APIs that use OAuth2 instead of a static bearer token, configure `[auth]` with `type = "oauth2"` in `config.toml` (see the commented template in generated crates).
+
+Login once to store tokens locally (file mode `0600`, default `.mcp-factory/tokens.json`):
+
+```bash
+# Standalone CLI (from mcp-factory-core)
+cargo run -p mcp-factory-core --bin mcp-factory-auth -- login --config config.toml
+
+# Or via generated server
+cargo run -- --auth-login
+```
+
+Check or clear stored tokens:
+
+```bash
+mcp-factory-auth status --config config.toml
+mcp-factory-auth logout --config config.toml
+```
+
+The runtime refreshes access tokens automatically before upstream calls when a refresh token is present.
 
 ## Examples
 

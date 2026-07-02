@@ -23,6 +23,15 @@ tracing-subscriber.workspace = true
 jsonschema.workspace = true
 toml.workspace = true
 tokio-util.workspace = true
+chrono.workspace = true
+oauth2.workspace = true
+clap.workspace = true
+open.workspace = true
+async-trait.workspace = true
+
+[[bin]]
+name = "mcp-factory-auth"
+path = "src/bin/mcp_factory_auth.rs"
 
 [[bin]]
 name = "mcp-factory-stdio-smoke"
