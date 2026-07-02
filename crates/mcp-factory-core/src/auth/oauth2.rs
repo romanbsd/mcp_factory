@@ -56,7 +56,11 @@ impl OAuth2Provider {
     }
 
     pub async fn get_tokens(&self) -> Result<StoredTokens, ProxyError> {
-        if let Some(tokens) = self.cache.lock().await.clone() {
+        // ponytail: hold the cache guard across load+refresh so concurrent tool
+        // calls serialize — the loser sees the fresh token instead of firing a
+        // second refresh (which a rotating-refresh-token provider would reject).
+        let mut cache = self.cache.lock().await;
+        if let Some(tokens) = cache.clone() {
             if tokens.is_valid(REFRESH_SKEW_SECS) {
                 return Ok(tokens);
             }
@@ -64,12 +68,18 @@ impl OAuth2Provider {
 
         if let Some(tokens) = self.token_store.load()? {
             if tokens.is_valid(REFRESH_SKEW_SECS) {
-                *self.cache.lock().await = Some(tokens.clone());
+                *cache = Some(tokens.clone());
                 return Ok(tokens);
             }
             if let Some(refresh) = tokens.refresh_token.clone() {
-                let refreshed = self.refresh_tokens(&refresh).await?;
-                self.persist(&refreshed).await?;
+                let mut refreshed = self.refresh_tokens(&refresh).await?;
+                // The token endpoint may omit a refresh token on refresh
+                // (RFC 6749 §6); keep the existing one so we don't lose it.
+                if refreshed.refresh_token.is_none() {
+                    refreshed.refresh_token = Some(refresh);
+                }
+                self.token_store.save(&refreshed)?;
+                *cache = Some(refreshed.clone());
                 return Ok(refreshed);
             }
         }

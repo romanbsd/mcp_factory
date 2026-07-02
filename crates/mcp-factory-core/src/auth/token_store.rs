@@ -61,9 +61,30 @@ impl FileTokenStore {
         }
         let contents = serde_json::to_string_pretty(tokens)
             .map_err(|e| ProxyError::Config(format!("failed to serialize tokens: {e}")))?;
-        std::fs::write(&self.path, contents)
-            .map_err(|e| ProxyError::Config(format!("failed to write token store: {e}")))?;
-        restrict_permissions(&self.path)?;
+        // Restrict permissions BEFORE the secret hits disk, not after — otherwise
+        // the tokens are briefly world/group-readable at the default umask.
+        #[cfg(unix)]
+        {
+            use std::io::Write;
+            use std::os::unix::fs::OpenOptionsExt;
+            let mut file = std::fs::OpenOptions::new()
+                .write(true)
+                .create(true)
+                .truncate(true)
+                .mode(0o600)
+                .open(&self.path)
+                .map_err(|e| ProxyError::Config(format!("failed to write token store: {e}")))?;
+            // `.mode()` only applies on create; enforce 0600 on a pre-existing file
+            // (now truncated/empty) before writing the new secret into it.
+            restrict_permissions(&self.path)?;
+            file.write_all(contents.as_bytes())
+                .map_err(|e| ProxyError::Config(format!("failed to write token store: {e}")))?;
+        }
+        #[cfg(not(unix))]
+        {
+            std::fs::write(&self.path, contents)
+                .map_err(|e| ProxyError::Config(format!("failed to write token store: {e}")))?;
+        }
         Ok(())
     }
 
