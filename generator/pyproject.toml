@@ -14,7 +14,7 @@ dependencies = [
     "pyyaml>=6.0",
     "prance>=25.4",
     "openapi-spec-validator>=0.7",
-    "graphql-core>=3.2",
+    "graphql-core>=3.2.11",
 ]
 
 [project.optional-dependencies]
