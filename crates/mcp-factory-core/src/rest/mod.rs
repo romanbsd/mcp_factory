@@ -6,9 +6,8 @@ use serde_json::{Map, Value};
 use percent_encoding::{utf8_percent_encode, NON_ALPHANUMERIC};
 
 use crate::auth::AuthProvider;
-use crate::config::ProxyConfig;
 use crate::error::ProxyError;
-use crate::tools::ToolSpec;
+use crate::tools::{ExecutionKind::Rest as ExecutionKindRest, ToolSpec};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -40,32 +39,24 @@ pub struct RestOperation {
 
 pub struct RestProxyExecutor {
     client: reqwest::Client,
-    config: ProxyConfig,
+    base_url: String,
     auth: Arc<dyn AuthProvider>,
 }
 
 impl RestProxyExecutor {
-    pub fn new(config: ProxyConfig, auth: Arc<dyn AuthProvider>) -> Result<Self, ProxyError> {
-        let client = reqwest::Client::builder()
-            .timeout(config.timeout())
-            .build()?;
-        Ok(Self {
+    pub fn new(client: reqwest::Client, base_url: String, auth: Arc<dyn AuthProvider>) -> Self {
+        Self {
             client,
-            config,
+            base_url,
             auth,
-        })
+        }
     }
 
     pub async fn execute(&self, tool: &ToolSpec, args: Value) -> Result<String, ProxyError> {
         let ExecutionKindRest(operation) = &tool.execution else {
             return Err(ProxyError::Other("expected REST execution".to_string()));
         };
-        let url = build_url(
-            &self.config.base_url,
-            operation,
-            &args,
-            self.auth.as_ref(),
-        )?;
+        let url = build_url(&self.base_url, operation, &args, self.auth.as_ref())?;
         let mut request = self
             .client
             .request(parse_method(&operation.method)?, &url);
@@ -104,8 +95,6 @@ impl RestProxyExecutor {
         }
     }
 }
-
-use crate::tools::ExecutionKind::Rest as ExecutionKindRest;
 
 pub fn substitute_path(template: &str, args: &Value) -> Result<String, ProxyError> {
     let mut path = template.to_string();

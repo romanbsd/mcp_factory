@@ -100,12 +100,16 @@ impl McpProxyServerBuilder {
     }
 
     pub fn build(self) -> Result<McpProxyServer, ProxyError> {
+        // One shared client so the connection pool / TLS setup is reused across
+        // auth, REST, and GraphQL calls (reqwest::Client is Arc-backed).
         let http = reqwest::Client::builder()
             .timeout(self.config.timeout())
             .build()?;
-        let auth = crate::auth::auth_provider_from_config(&self.config.auth, http)?;
-        let rest = RestProxyExecutor::new(self.config.clone(), Arc::clone(&auth))?;
-        let graphql = GraphQLProxyExecutor::new(self.config.clone(), Arc::clone(&auth))?;
+        let auth = crate::auth::auth_provider_from_config(&self.config.auth, http.clone())?;
+        let rest =
+            RestProxyExecutor::new(http.clone(), self.config.base_url.clone(), Arc::clone(&auth));
+        let graphql =
+            GraphQLProxyExecutor::new(http, self.config.base_url.clone(), Arc::clone(&auth));
         Ok(McpProxyServer {
             inner: Arc::new(McpProxyServerInner {
                 config: self.config,

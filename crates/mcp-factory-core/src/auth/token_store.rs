@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -39,7 +39,7 @@ impl FileTokenStore {
         Self { path }
     }
 
-    pub fn path(&self) -> &PathBuf {
+    pub fn path(&self) -> &Path {
         &self.path
     }
 
@@ -97,7 +97,7 @@ impl FileTokenStore {
     }
 }
 
-fn restrict_permissions(path: &PathBuf) -> Result<(), ProxyError> {
+fn restrict_permissions(path: &Path) -> Result<(), ProxyError> {
     #[cfg(unix)]
     {
         use std::os::unix::fs::PermissionsExt;

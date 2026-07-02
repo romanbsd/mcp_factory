@@ -4,7 +4,6 @@ use serde::{Deserialize, Serialize};
 use serde_json::{json, Map, Value};
 
 use crate::auth::AuthProvider;
-use crate::config::ProxyConfig;
 use crate::error::ProxyError;
 use crate::tools::{ExecutionKind, ToolSpec};
 
@@ -16,20 +15,17 @@ pub struct GraphQLOperation {
 
 pub struct GraphQLProxyExecutor {
     client: reqwest::Client,
-    config: ProxyConfig,
+    base_url: String,
     auth: Arc<dyn AuthProvider>,
 }
 
 impl GraphQLProxyExecutor {
-    pub fn new(config: ProxyConfig, auth: Arc<dyn AuthProvider>) -> Result<Self, ProxyError> {
-        let client = reqwest::Client::builder()
-            .timeout(config.timeout())
-            .build()?;
-        Ok(Self {
+    pub fn new(client: reqwest::Client, base_url: String, auth: Arc<dyn AuthProvider>) -> Self {
+        Self {
             client,
-            config,
+            base_url,
             auth,
-        })
+        }
     }
 
     pub async fn execute(&self, tool: &ToolSpec, args: Value) -> Result<String, ProxyError> {
@@ -44,7 +40,7 @@ impl GraphQLProxyExecutor {
 
         let mut request = self
             .client
-            .post(&self.config.base_url)
+            .post(&self.base_url)
             .header(reqwest::header::CONTENT_TYPE, "application/json")
             .json(&payload);
 
