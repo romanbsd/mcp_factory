@@ -27,12 +27,13 @@ python3 -m venv .venv
 source .venv/bin/activate
 pip install -e ".[dev]"
 
+`mcp-gen` auto-detects `crates/mcp-factory-core` from its install location (the repo checkout when using `pip install -e`). Pass `--core-path` only if the runtime crate lives elsewhere.
+
 mcp-gen generate \
   --input tests/fixtures/minimal-openapi.yaml \
   --output ../examples/petstore-openapi \
   --base-url http://127.0.0.1:8080 \
-  --name petstore-mcp \
-  --core-path ../../crates/mcp-factory-core
+  --name petstore-mcp
 ```
 
 ### Run generated server (stdio)
@@ -52,6 +53,113 @@ Configure Cursor MCP with:
     }
   }
 }
+```
+
+### Package a portable binary
+
+Build a release binary and assemble a directory you can copy to another machine
+(same OS/CPU as the build host, unless you pass `--target` for cross-compilation):
+
+```bash
+mcp-gen package \
+  --input tests/fixtures/minimal-openapi.yaml \
+  --output ../dist/petstore-mcp \
+  --base-url http://127.0.0.1:8080 \
+  --name petstore-mcp
+```
+
+This produces:
+
+```text
+dist/petstore-mcp/
+  petstore-mcp    # release binary
+  config.toml     # default upstream URL and transport
+  README.txt      # Cursor config and env var reference
+```
+
+Copy the whole directory to the target machine, then point Cursor at the binary:
+
+```json
+{
+  "mcpServers": {
+    "petstore": {
+      "command": "/path/on/target/petstore-mcp/petstore-mcp",
+      "env": {
+        "MCP_FACTORY_BASE_URL": "https://api.example.com"
+      }
+    }
+  }
+}
+```
+
+Optional flags:
+
+| Flag | Description |
+|------|-------------|
+| `--archive` | Also write `dist/petstore-mcp.tar.gz` for `scp`/upload |
+| `--target <triple>` | Cross-compile (e.g. `x86_64-unknown-linux-gnu`) |
+| `--keep-source` | Keep generated Rust source as `dist/petstore-mcp-source/` |
+
+#### Linux amd64 on Apple Silicon (Docker)
+
+The easiest way to build a Linux x86_64 binary on an arm64 Mac is to run the
+package step inside a `linux/amd64` container. No cross-linker or `--target`
+setup required — only [Docker](https://docs.docker.com/get-docker/).
+
+```bash
+scripts/package-linux-amd64.sh \
+  --input generator/tests/fixtures/minimal-openapi.yaml \
+  --output dist/petstore-mcp-linux-amd64 \
+  --base-url https://api.example.com \
+  --name petstore-mcp \
+  --archive
+```
+
+The script mounts the repo, installs `mcp-gen` in a `rust:bookworm` container,
+and runs `mcp-gen package`. Output lands in `dist/` on your host.
+
+Copy to the Linux host and extract:
+
+```bash
+scp dist/petstore-mcp-linux-amd64.tar.gz user@server:
+ssh user@server 'tar xzf petstore-mcp-linux-amd64.tar.gz'
+```
+
+The first run downloads Rust crates and may take a few minutes.
+
+<details>
+<summary>Alternative: native cross-compile with <code>--target</code></summary>
+
+If you prefer not to use Docker, install a Linux cross-linker and pass
+`--target x86_64-unknown-linux-gnu` to `mcp-gen package` directly:
+
+```bash
+brew tap messense/macos-cross-toolchains
+brew install x86_64-unknown-linux-gnu
+rustup target add x86_64-unknown-linux-gnu
+export CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER=x86_64-linux-gnu-gcc
+
+mcp-gen package \
+  --input tests/fixtures/minimal-openapi.yaml \
+  --output ../dist/petstore-mcp-linux-amd64 \
+  --base-url https://api.example.com \
+  --name petstore-mcp \
+  --target x86_64-unknown-linux-gnu \
+  --archive
+```
+
+</details>
+
+GraphQL SDL (`.graphql`/`.gql`) and GraphQL introspection JSON work the same way —
+swap `--input` for your schema file. Swagger/OpenAPI 3.x YAML or JSON is auto-detected.
+
+```bash
+mcp-gen package \
+  --input tests/fixtures/minimal.graphql \
+  --output ../dist/graphql-mcp \
+  --base-url http://127.0.0.1:8080/graphql \
+  --name graphql-mcp \
+  --archive
 ```
 
 ### HTTP transport

@@ -17,15 +17,13 @@ trap 'rm -rf "$TMPDIR"' EXIT
   --input "$GENERATOR/tests/fixtures/minimal-openapi.yaml" \
   --output "$TMPDIR/openapi-server" \
   --base-url "http://127.0.0.1:1" \
-  --name e2e-openapi \
-  --core-path "$ROOT/crates/mcp-factory-core"
+  --name e2e-openapi
 
 "$VENV/bin/mcp-gen" generate \
   --input "$GENERATOR/tests/fixtures/minimal.graphql" \
   --output "$TMPDIR/graphql-server" \
   --base-url "http://127.0.0.1:1/graphql" \
-  --name e2e-graphql \
-  --core-path "$ROOT/crates/mcp-factory-core"
+  --name e2e-graphql
 
 (
   cd "$TMPDIR/openapi-server"
@@ -35,5 +33,16 @@ trap 'rm -rf "$TMPDIR"' EXIT
   cd "$TMPDIR/graphql-server"
   cargo check -q
 )
+
+PKG_OUT="$TMPDIR/dist/petstore-mcp"
+"$VENV/bin/mcp-gen" package \
+  --input "$GENERATOR/tests/fixtures/minimal-openapi.yaml" \
+  --output "$PKG_OUT" \
+  --base-url "http://127.0.0.1:1" \
+  --name e2e-openapi
+
+test -x "$PKG_OUT/e2e-openapi"
+test -f "$PKG_OUT/config.toml"
+test -f "$PKG_OUT/README.txt"
 
 echo "cross-layer e2e: ok"

@@ -6,7 +6,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-mcp-factory-core = { path = "/Users/roman/projects/mcp_factory/crates/mcp-factory-core" }
+mcp-factory-core = { path = "<CORE>" }
 tokio = { version = "1", features = ["full"] }
 serde_json = "1"
 anyhow = "1"

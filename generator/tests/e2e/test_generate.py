@@ -22,8 +22,6 @@ def test_generate_openapi_crate(tmp_path: Path, fixtures_dir: Path) -> None:
             "http://localhost:8080",
             "--name",
             "minimal-mcp",
-            "--core-path",
-            str(Path(__file__).resolve().parents[3] / "crates" / "mcp-factory-core"),
         ],
     )
     assert result.exit_code == 0, result.output
@@ -44,8 +42,6 @@ def test_detects_graphql_kind(tmp_path: Path, fixtures_dir: Path) -> None:
             str(output),
             "--base-url",
             "http://localhost:8080/graphql",
-            "--core-path",
-            str(Path(__file__).resolve().parents[3] / "crates" / "mcp-factory-core"),
         ],
     )
     assert result.exit_code == 0, result.output

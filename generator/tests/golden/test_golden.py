@@ -1,4 +1,5 @@
 import os
+import re
 import subprocess
 from pathlib import Path
 from shutil import which
@@ -9,9 +10,12 @@ from mcp_gen.cli import app
 from typer.testing import CliRunner
 
 runner = CliRunner()
-ROOT = Path(__file__).resolve().parents[3]
-CORE_PATH = ROOT / "crates" / "mcp-factory-core"
 FIXTURES = Path(__file__).resolve().parents[1] / "fixtures"
+CORE_PATH_RE = re.compile(r'mcp-factory-core = \{ path = "[^"]+" \}')
+
+
+def _normalize_cargo_toml(text: str) -> str:
+    return CORE_PATH_RE.sub('mcp-factory-core = { path = "<CORE>" }', text)
 
 
 def _generate(tmp_path: Path, fixture: str, name: str) -> Path:
@@ -28,8 +32,6 @@ def _generate(tmp_path: Path, fixture: str, name: str) -> Path:
             "http://127.0.0.1:9",
             "--name",
             name,
-            "--core-path",
-            str(CORE_PATH),
         ],
     )
     assert result.exit_code == 0, result.output
@@ -65,4 +67,7 @@ def test_golden_minimal_openapi(tmp_path: Path) -> None:
             else (output / name).read_text()
         )
         expected = (golden_dir / name).read_text()
+        if name == "Cargo.toml":
+            generated = _normalize_cargo_toml(generated)
+            expected = _normalize_cargo_toml(expected)
         assert generated == expected
