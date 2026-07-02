@@ -62,11 +62,8 @@ async fn run_http(server: McpProxyServer) -> Result<(), ProxyError> {
         .with_cancellation_token(cancellation.clone());
     let path = config.http_path.clone();
 
-    let service = StreamableHttpService::new(
-        move || Ok(server.clone()),
-        session_manager,
-        http_config,
-    );
+    let service =
+        StreamableHttpService::new(move || Ok(server.clone()), session_manager, http_config);
 
     let app = Router::new().nest_service(&path, service);
 

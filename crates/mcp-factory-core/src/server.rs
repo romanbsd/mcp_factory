@@ -106,8 +106,11 @@ impl McpProxyServerBuilder {
             .timeout(self.config.timeout())
             .build()?;
         let auth = crate::auth::auth_provider_from_config(&self.config.auth, http.clone())?;
-        let rest =
-            RestProxyExecutor::new(http.clone(), self.config.base_url.clone(), Arc::clone(&auth));
+        let rest = RestProxyExecutor::new(
+            http.clone(),
+            self.config.base_url.clone(),
+            Arc::clone(&auth),
+        );
         let graphql =
             GraphQLProxyExecutor::new(http, self.config.base_url.clone(), Arc::clone(&auth));
         Ok(McpProxyServer {
@@ -173,7 +176,9 @@ impl ServerHandler for McpProxyServer {
             .unwrap_or_else(|| Value::Object(Default::default()));
 
         if let Err(err) = self.inner.tools.validate(&request.name, &args) {
-            return Ok(CallToolResult::error(vec![ContentBlock::text(err.to_string())]));
+            return Ok(CallToolResult::error(vec![ContentBlock::text(
+                err.to_string(),
+            )]));
         }
 
         let result = match &tool.execution {
@@ -183,7 +188,9 @@ impl ServerHandler for McpProxyServer {
 
         match result {
             Ok(text) => Ok(CallToolResult::success(vec![ContentBlock::text(text)])),
-            Err(err) => Ok(CallToolResult::error(vec![ContentBlock::text(err.to_string())])),
+            Err(err) => Ok(CallToolResult::error(vec![ContentBlock::text(
+                err.to_string(),
+            )])),
         }
     }
 
@@ -197,7 +204,9 @@ impl ServerHandler for McpProxyServer {
             .resources
             .iter()
             .map(|r| {
-                Resource::new(&r.uri, &r.name).with_description(&r.description).with_mime_type(&r.mime_type)
+                Resource::new(&r.uri, &r.name)
+                    .with_description(&r.description)
+                    .with_mime_type(&r.mime_type)
             })
             .collect();
         Ok(ListResourcesResult {
@@ -216,10 +225,11 @@ impl ServerHandler for McpProxyServer {
             .resources
             .get(&request.uri)
             .ok_or_else(|| ProxyError::ResourceNotFound(request.uri.clone()))?;
-        Ok(ReadResourceResult::new(vec![
-            ResourceContents::text(resource.content, &request.uri)
-                .with_mime_type(&resource.mime_type),
-        ]))
+        Ok(ReadResourceResult::new(vec![ResourceContents::text(
+            resource.content,
+            &request.uri,
+        )
+        .with_mime_type(&resource.mime_type)]))
     }
 
     async fn on_initialized(&self, _context: NotificationContext<RoleServer>) {
@@ -233,11 +243,10 @@ impl ServerHandler for McpProxyServer {
 }
 
 fn tool_spec_to_rmcp(spec: &ToolSpec) -> Result<Tool, ProxyError> {
-    let schema_obj = spec
-        .input_schema
-        .as_object()
-        .cloned()
-        .ok_or_else(|| ProxyError::Validation("tool input_schema must be an object".to_string()))?;
+    let schema_obj =
+        spec.input_schema.as_object().cloned().ok_or_else(|| {
+            ProxyError::Validation("tool input_schema must be an object".to_string())
+        })?;
     Ok(Tool::new(
         spec.name.clone(),
         spec.description.clone(),

@@ -10,9 +10,9 @@ pub mod server;
 pub mod tools;
 pub mod transport;
 
+pub use auth::{oauth_logout, oauth_status, run_oauth_login, AuthProvider};
 pub use config::{AuthConfig, ProxyConfig, TransportMode};
 pub use error::ProxyError;
-pub use auth::{oauth_logout, oauth_status, run_oauth_login, AuthProvider};
 pub use graphql::{GraphQLOperation, GraphQLProxyExecutor};
 pub use resources::ResourceSpec;
 pub use rest::{ParamBinding, ParamLocation, RestOperation, RestProxyExecutor};

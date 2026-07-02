@@ -1,7 +1,7 @@
 use oauth2::basic::BasicClient;
 use oauth2::{
-    AuthorizationCode, ClientId, ClientSecret, EndpointNotSet, EndpointSet, PkceCodeVerifier,
-    RefreshToken, TokenResponse, TokenUrl, AuthUrl, RedirectUrl,
+    AuthUrl, AuthorizationCode, ClientId, ClientSecret, EndpointNotSet, EndpointSet,
+    PkceCodeVerifier, RedirectUrl, RefreshToken, TokenResponse, TokenUrl,
 };
 use reqwest::Client;
 use tokio::sync::Mutex;
@@ -32,7 +32,9 @@ impl OAuth2Provider {
             ..
         } = auth
         else {
-            return Err(ProxyError::Config("expected OAuth2 auth config".to_string()));
+            return Err(ProxyError::Config(
+                "expected OAuth2 auth config".to_string(),
+            ));
         };
 
         let mut client = BasicClient::new(ClientId::new(client_id.clone()))

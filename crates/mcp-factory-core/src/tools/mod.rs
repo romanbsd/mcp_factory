@@ -56,7 +56,10 @@ impl ToolRegistry {
         Ok(())
     }
 
-    pub fn register_many(&mut self, tools: impl IntoIterator<Item = ToolSpec>) -> Result<(), ProxyError> {
+    pub fn register_many(
+        &mut self,
+        tools: impl IntoIterator<Item = ToolSpec>,
+    ) -> Result<(), ProxyError> {
         for tool in tools {
             self.register(tool)?;
         }
@@ -123,7 +126,8 @@ mod tests {
 
     #[test]
     fn validates_args_against_schema() {
-        let schema = json!({"type": "object", "properties": {"id": {"type": "string"}}, "required": ["id"]});
+        let schema =
+            json!({"type": "object", "properties": {"id": {"type": "string"}}, "required": ["id"]});
         validate_args(&schema, &json!({"id": "1"})).unwrap();
         assert!(validate_args(&schema, &json!({})).is_err());
     }

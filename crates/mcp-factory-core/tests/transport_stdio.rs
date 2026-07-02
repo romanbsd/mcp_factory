@@ -1,5 +1,5 @@
-use rmcp::ServiceExt;
 use rmcp::transport::TokioChildProcess;
+use rmcp::ServiceExt;
 
 #[tokio::test]
 async fn stdio_subprocess_handshake_and_lists_tools() -> anyhow::Result<()> {

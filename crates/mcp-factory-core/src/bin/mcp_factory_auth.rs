@@ -4,7 +4,10 @@ use clap::{Parser, Subcommand};
 use mcp_factory_core::{oauth_logout, oauth_status, run_oauth_login, ProxyConfig};
 
 #[derive(Parser)]
-#[command(name = "mcp-factory-auth", about = "OAuth2 login for MCP Factory servers")]
+#[command(
+    name = "mcp-factory-auth",
+    about = "OAuth2 login for MCP Factory servers"
+)]
 struct Cli {
     #[arg(long, default_value = "config.toml")]
     config: PathBuf,

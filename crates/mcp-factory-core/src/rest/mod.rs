@@ -57,9 +57,7 @@ impl RestProxyExecutor {
             return Err(ProxyError::Other("expected REST execution".to_string()));
         };
         let url = build_url(&self.base_url, operation, &args, self.auth.as_ref())?;
-        let mut request = self
-            .client
-            .request(parse_method(&operation.method)?, &url);
+        let mut request = self.client.request(parse_method(&operation.method)?, &url);
 
         request = self.auth.apply_request_auth(request).await?;
         request = apply_headers(request, operation, &args)?;

@@ -1,9 +1,7 @@
 mod common;
 
 use chrono::{Duration, Utc};
-use mcp_factory_core::auth::{
-    oauth_provider_from_config, FileTokenStore, StoredTokens,
-};
+use mcp_factory_core::auth::{oauth_provider_from_config, FileTokenStore, StoredTokens};
 use mcp_factory_core::{AuthConfig, McpProxyServer, ProxyConfig};
 use serde_json::json;
 use wiremock::matchers::{body_string_contains, header, method, path};
@@ -42,14 +40,12 @@ async fn refreshes_expired_access_token() {
         .and(path("/oauth/token"))
         .and(body_string_contains("grant_type=refresh_token"))
         .and(body_string_contains("refresh_token=refresh-abc"))
-        .respond_with(
-            ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "access_token": "new-access",
-                "token_type": "Bearer",
-                "expires_in": 3600,
-                "refresh_token": "refresh-abc"
-            })),
-        )
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+            "access_token": "new-access",
+            "token_type": "Bearer",
+            "expires_in": 3600,
+            "refresh_token": "refresh-abc"
+        })))
         .mount(&mock_server)
         .await;
 
@@ -85,14 +81,12 @@ async fn exchange_code_persists_tokens() {
         .and(path("/oauth/token"))
         .and(body_string_contains("grant_type=authorization_code"))
         .and(body_string_contains("code=auth-code-123"))
-        .respond_with(
-            ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "access_token": "fresh-access",
-                "token_type": "Bearer",
-                "expires_in": 3600,
-                "refresh_token": "fresh-refresh"
-            })),
-        )
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+            "access_token": "fresh-access",
+            "token_type": "Bearer",
+            "expires_in": 3600,
+            "refresh_token": "fresh-refresh"
+        })))
         .mount(&mock_server)
         .await;
 

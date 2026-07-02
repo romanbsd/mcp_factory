@@ -38,9 +38,7 @@ async fn main() -> anyhow::Result<()> {
         ..Default::default()
     };
     let tools = vec![smoke_tool()];
-    let server = McpProxyServer::builder(config)
-        .tools(&tools)?
-        .build()?;
+    let server = McpProxyServer::builder(config).tools(&tools)?.build()?;
     server.run().await?;
     Ok(())
 }

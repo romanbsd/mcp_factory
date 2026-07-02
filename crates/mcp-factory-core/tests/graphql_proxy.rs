@@ -15,8 +15,7 @@ async fn graphql_proxy_posts_query() {
             "variables": {"id": "1"}
         })))
         .respond_with(
-            ResponseTemplate::new(200)
-                .set_body_json(json!({"data": {"user": {"name": "alice"}}})),
+            ResponseTemplate::new(200).set_body_json(json!({"data": {"user": {"name": "alice"}}})),
         )
         .mount(&mock_server)
         .await;
