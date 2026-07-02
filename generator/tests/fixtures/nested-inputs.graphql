@@ -1,0 +1,13 @@
+type Query {
+  search(input: SearchInput!): [User!]!
+}
+
+input SearchInput {
+  term: String!
+  limit: Int
+}
+
+type User {
+  id: ID!
+  name: String!
+}

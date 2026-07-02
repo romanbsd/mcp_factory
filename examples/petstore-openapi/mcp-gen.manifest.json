@@ -1,0 +1,6 @@
+{
+  "crate_name": "petstore-mcp",
+  "tool_count": 1,
+  "resource_count": 2,
+  "schema_kind": "openapi"
+}

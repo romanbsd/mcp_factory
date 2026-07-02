@@ -1,0 +1,41 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "mcp-gen"
+version = "0.1.0"
+description = "Generate MCP proxy servers from OpenAPI and GraphQL schemas"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "typer>=0.15",
+    "jinja2>=3.1",
+    "pyyaml>=6.0",
+    "prance>=25.4",
+    "openapi-spec-validator>=0.7",
+    "graphql-core>=3.2",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=6.0",
+]
+
+[project.scripts]
+mcp-gen = "mcp_gen.cli:app"
+
+[tool.hatch.build.targets.wheel]
+packages = ["mcp_gen"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[tool.coverage.run]
+source = ["mcp_gen"]
+branch = true
+
+[tool.coverage.report]
+fail_under = 85

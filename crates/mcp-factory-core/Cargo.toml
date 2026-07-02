@@ -1,0 +1,39 @@
+[package]
+name = "mcp-factory-core"
+description = "Generic MCP proxy runtime for schema-generated servers"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+rmcp.workspace = true
+tokio.workspace = true
+reqwest.workspace = true
+axum.workspace = true
+tower.workspace = true
+tower-http.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+schemars.workspace = true
+thiserror.workspace = true
+anyhow.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+jsonschema.workspace = true
+toml.workspace = true
+tokio-util.workspace = true
+
+[[bin]]
+name = "mcp-factory-stdio-smoke"
+path = "tests/support/stdio_smoke.rs"
+test = false
+doc = false
+
+[dev-dependencies]
+wiremock = "0.6"
+tokio-test = "0.4"
+tempfile = "3"
+assert-json-diff = "2"
+anyhow = "1"
+rmcp = { version = "2.0", features = ["client", "transport-child-process"] }

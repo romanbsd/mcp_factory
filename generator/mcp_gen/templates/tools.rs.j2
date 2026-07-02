@@ -1,0 +1,41 @@
+use mcp_factory_core::{
+    ExecutionKind{% if tools | selectattr('execution_kind', 'equalto', 'graphql') | list %}, GraphQLOperation{% endif %}{% if tools | selectattr('execution_kind', 'equalto', 'rest') | list %}, ParamBinding, ParamLocation, RestOperation{% endif %}, ToolSpec,
+};
+use serde_json::json;
+
+pub fn build_tools() -> Vec<ToolSpec> {
+    vec![
+{% for tool in tools %}
+        ToolSpec {
+            name: {{ tool.name | tojson }}.to_string(),
+            description: {{ tool.description | tojson }}.to_string(),
+            input_schema: json!({{ tool.input_schema | tojson }}),
+            execution: ExecutionKind::{% if tool.execution_kind == "rest" %}Rest(RestOperation {
+                method: {{ tool.rest.method | tojson }}.to_string(),
+                path_template: {{ tool.rest.path_template | tojson }}.to_string(),
+                params: vec![
+{% for param in tool.rest.params %}
+                    ParamBinding {
+                        name: {{ param.name | tojson }}.to_string(),
+                        location: ParamLocation::{% if param.location == "path" %}Path{% elif param.location == "query" %}Query{% else %}Header{% endif %},
+                    },
+{% endfor %}
+                ],
+                body_fields: vec![
+{% for field in tool.rest.body_fields %}
+                    {{ field | tojson }}.to_string(),
+{% endfor %}
+                ],
+                content_type: {% if tool.rest.content_type %}Some({{ tool.rest.content_type | tojson }}.to_string()){% else %}None{% endif %},
+            }){% else %}GraphQL(GraphQLOperation {
+                document: {{ tool.graphql.document | tojson }}.to_string(),
+                variable_bindings: vec![
+{% for binding in tool.graphql.variable_bindings %}
+                    {{ binding | tojson }}.to_string(),
+{% endfor %}
+                ],
+            }){% endif %},
+        },
+{% endfor %}
+    ]
+}

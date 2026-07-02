@@ -1,0 +1,6 @@
+{
+  "crate_name": "graphql-mcp",
+  "tool_count": 2,
+  "resource_count": 2,
+  "schema_kind": "graphql"
+}
