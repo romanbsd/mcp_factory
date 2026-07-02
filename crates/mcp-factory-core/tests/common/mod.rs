@@ -24,6 +24,7 @@ pub fn rest_get_pet_tool() -> ToolSpec {
             }],
             body_fields: vec![],
             content_type: None,
+            raw_body: false,
         }),
     }
 }
@@ -46,6 +47,7 @@ pub fn rest_create_pet_tool() -> ToolSpec {
             params: vec![],
             body_fields: vec!["name".to_string(), "tag".to_string()],
             content_type: Some("application/json".to_string()),
+            raw_body: false,
         }),
     }
 }

@@ -1219,6 +1219,7 @@ dependencies = [
  "jsonschema",
  "oauth2",
  "open",
+ "percent-encoding",
  "reqwest 0.12.28",
  "rmcp",
  "schemars 0.8.22",

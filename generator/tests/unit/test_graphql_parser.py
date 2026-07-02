@@ -9,6 +9,40 @@ def test_parses_sdl_query_and_mutation(fixtures_dir: Path) -> None:
     user = next(tool for tool in result.tools if tool.name == "user")
     assert user.graphql is not None
     assert "user(id: $id)" in user.graphql.document
+    # Required arg keeps its `!` so the variable is usable where `ID!` is expected.
+    assert "$id: ID!" in user.graphql.document
+    # Composite return type gets an explicit scalar subselection.
+    assert "{ id name }" in user.graphql.document
+
+
+def test_preserves_arg_types_and_valid_selection(tmp_path: Path) -> None:
+    sdl = tmp_path / "deep.graphql"
+    sdl.write_text(
+        """
+        type Query {
+          posts(ids: [ID!]!, first: Int): PostConnection
+        }
+        type PostConnection { nodes: [Post!]! }
+        type Post {
+          id: ID!
+          author: Author!
+          comments(first: Int!): [Comment!]!
+        }
+        type Author { id: ID! profile: Profile! }
+        type Profile { bio: String! }
+        type Comment { id: ID! }
+        """
+    )
+    posts = next(t for t in parse_graphql(sdl).tools if t.name == "posts")
+    doc = posts.graphql.document
+    # Finding 1: list/non-null and nullable arg types are declared correctly.
+    assert "$ids: [ID!]!" in doc
+    assert "$first: Int" in doc and "$first: Int!" not in doc
+    # Finding 2: object fields past the depth limit and arg-requiring fields are
+    # skipped, never emitted as invalid bare leaves.
+    assert "nodes { id }" in doc
+    assert "author" not in doc
+    assert "comments" not in doc
 
 
 def test_parses_nested_input_types(fixtures_dir: Path) -> None:

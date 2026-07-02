@@ -3,10 +3,12 @@ use std::sync::Arc;
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 
+use percent_encoding::{utf8_percent_encode, NON_ALPHANUMERIC};
+
 use crate::auth::AuthProvider;
 use crate::config::ProxyConfig;
 use crate::error::ProxyError;
-use crate::tools::{validate_args, ToolSpec};
+use crate::tools::ToolSpec;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -30,6 +32,10 @@ pub struct RestOperation {
     pub body_fields: Vec<String>,
     #[serde(default)]
     pub content_type: Option<String>,
+    /// When true, the single `body` argument is serialized verbatim as the
+    /// request body (array/scalar/free-form bodies).
+    #[serde(default)]
+    pub raw_body: bool,
 }
 
 pub struct RestProxyExecutor {
@@ -54,7 +60,6 @@ impl RestProxyExecutor {
         let ExecutionKindRest(operation) = &tool.execution else {
             return Err(ProxyError::Other("expected REST execution".to_string()));
         };
-        validate_args(&tool.input_schema, &args)?;
         let url = build_url(
             &self.config.base_url,
             operation,
@@ -68,7 +73,16 @@ impl RestProxyExecutor {
         request = self.auth.apply_request_auth(request).await?;
         request = apply_headers(request, operation, &args)?;
 
-        if !operation.body_fields.is_empty() {
+        if operation.raw_body {
+            if let Some(body) = args.as_object().and_then(|obj| obj.get("body")) {
+                let content_type = operation
+                    .content_type
+                    .as_deref()
+                    .unwrap_or("application/json");
+                request = request.header(reqwest::header::CONTENT_TYPE, content_type);
+                request = request.json(body);
+            }
+        } else if !operation.body_fields.is_empty() {
             let body = build_body(operation, &args)?;
             let content_type = operation
                 .content_type
@@ -99,7 +113,10 @@ pub fn substitute_path(template: &str, args: &Value) -> Result<String, ProxyErro
         for (key, value) in obj {
             let placeholder = format!("{{{key}}}");
             if path.contains(&placeholder) {
-                let replacement = value_to_string(value)?;
+                // Percent-encode per segment so a value like "../admin" or "a/b"
+                // can't inject extra path segments (traversal / wrong endpoint).
+                let raw = value_to_string(value)?;
+                let replacement = utf8_percent_encode(&raw, NON_ALPHANUMERIC).to_string();
                 path = path.replace(&placeholder, &replacement);
             }
         }
@@ -211,6 +228,13 @@ mod tests {
     }
 
     #[test]
+    fn percent_encodes_path_params() {
+        // A slash in a path value must not create a new segment (no traversal).
+        let path = substitute_path("/pets/{id}", &json!({"id": "1/../admin"})).unwrap();
+        assert_eq!(path, "/pets/1%2F%2E%2E%2Fadmin");
+    }
+
+    #[test]
     fn builds_query_string() {
         let operation = RestOperation {
             method: "GET".to_string(),
@@ -221,6 +245,7 @@ mod tests {
             }],
             body_fields: vec![],
             content_type: None,
+            raw_body: false,
         };
         let auth = auth_provider_from_config(&AuthConfig::None, reqwest::Client::new()).unwrap();
         let url = build_url(
@@ -241,6 +266,7 @@ mod tests {
             params: vec![],
             body_fields: vec!["name".to_string(), "tag".to_string()],
             content_type: Some("application/json".to_string()),
+            raw_body: false,
         };
         let body = build_body(
             &operation,

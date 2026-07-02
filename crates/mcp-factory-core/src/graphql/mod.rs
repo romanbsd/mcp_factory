@@ -6,7 +6,7 @@ use serde_json::{json, Map, Value};
 use crate::auth::AuthProvider;
 use crate::config::ProxyConfig;
 use crate::error::ProxyError;
-use crate::tools::{validate_args, ExecutionKind, ToolSpec};
+use crate::tools::{ExecutionKind, ToolSpec};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GraphQLOperation {
@@ -36,7 +36,6 @@ impl GraphQLProxyExecutor {
         let ExecutionKind::GraphQL(operation) = &tool.execution else {
             return Err(ProxyError::Other("expected GraphQL execution".to_string()));
         };
-        validate_args(&tool.input_schema, &args)?;
         let variables = build_variables(operation, &args)?;
         let payload = json!({
             "query": operation.document,

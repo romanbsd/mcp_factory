@@ -6,16 +6,25 @@ from typing import Any
 
 from graphql import (
     GraphQLArgument,
+    GraphQLEnumType,
     GraphQLInputObjectType,
     GraphQLList,
     GraphQLNonNull,
     GraphQLScalarType,
+    Undefined,
     build_ast_schema,
     build_client_schema,
     parse,
 )
 
-from mcp_gen.models import GenerationResult, GraphQLOperation, ResourceSpec, ToolSpec
+from mcp_gen.models import (
+    GenerationResult,
+    GraphQLOperation,
+    ResourceSpec,
+    ToolSpec,
+    sanitize_tool_name,
+    unique_name,
+)
 
 SCALAR_TO_JSON: dict[str, dict[str, str]] = {
     "String": {"type": "string"},
@@ -66,17 +75,40 @@ def _field_input_schema(arguments: dict[str, GraphQLArgument]) -> dict[str, Any]
     return schema
 
 
+def _is_leaf(gql_type: Any) -> bool:
+    return isinstance(_unwrap_type(gql_type), (GraphQLScalarType, GraphQLEnumType))
+
+
+def _requires_args(field: Any) -> bool:
+    """True if the field has a required argument we cannot supply in a selection."""
+    return any(
+        isinstance(arg.type, GraphQLNonNull) and arg.default_value is Undefined
+        for arg in getattr(field, "args", {}).values()
+    )
+
+
 def _selection_for_type(gql_type: Any, depth: int = 2) -> str:
+    """Inner selection set for a composite type, or "" if nothing is selectable.
+
+    Leaf (scalar/enum) fields are emitted bare. Composite fields are only
+    emitted when we can expand them into a non-empty subselection — at the depth
+    limit, on unions (no ``fields``), or when a field needs arguments, they are
+    skipped rather than emitted as an invalid bare object field.
+    """
     gql_type = _unwrap_type(gql_type)
-    if depth == 0 or not hasattr(gql_type, "fields"):
+    fields = getattr(gql_type, "fields", None)
+    if not fields or depth <= 0:
         return ""
     selections = []
-    for name, field in gql_type.fields.items():
-        child = _selection_for_type(field.type, depth - 1)
-        if child:
-            selections.append(f"{name} {{ {child} }}")
-        else:
+    for name, field in fields.items():
+        if _requires_args(field):
+            continue
+        if _is_leaf(field.type):
             selections.append(name)
+        else:
+            child = _selection_for_type(field.type, depth - 1)
+            if child:
+                selections.append(f"{name} {{ {child} }}")
     return " ".join(selections)
 
 
@@ -85,22 +117,26 @@ def _build_document(operation_type: str, field_name: str, args: dict[str, GraphQ
     arg_vars = []
     bindings = []
     for name, arg in args.items():
-        gql_type = arg.type
-        while isinstance(gql_type, GraphQLNonNull):
-            gql_type = gql_type.of_type
-        type_name = gql_type.name if hasattr(gql_type, "name") else "String"
-        arg_defs.append(f"${name}: {type_name}")
+        # str(arg.type) yields the full SDL type reference, preserving `!` and
+        # `[...]` so required and list variables are declared correctly.
+        arg_defs.append(f"${name}: {arg.type}")
         arg_vars.append(f"{name}: ${name}")
         bindings.append(name)
-    selection = _selection_for_type(return_type)
+
+    call = f"{field_name}({', '.join(arg_vars)})" if arg_vars else field_name
+    if _is_leaf(return_type):
+        field_selection = call
+    else:
+        # __typename is a valid selection on any object/interface/union, so we
+        # always produce a well-formed query even when nothing else expands.
+        selection = _selection_for_type(return_type) or "__typename"
+        field_selection = f"{call} {{ {selection} }}"
+
     operation = operation_type.lower()
     if arg_defs:
-        document = (
-            f"{operation}({', '.join(arg_defs)}) {{ {field_name}({', '.join(arg_vars)})"
-            f" {{ {selection} }} }}"
-        )
+        document = f"{operation}({', '.join(arg_defs)}) {{ {field_selection} }}"
     else:
-        document = f"{operation} {{ {field_name} {{ {selection} }} }}"
+        document = f"{operation} {{ {field_selection} }}"
     return document, bindings
 
 
@@ -108,13 +144,17 @@ def _load_schema(path: Path):
     text = path.read_text(encoding="utf-8")
     if path.suffix == ".json":
         introspection = json.loads(text)
-        return build_client_schema(introspection["data"]), text, "application/json"
+        # Accept both the {"data": {"__schema": ...}} response envelope and a
+        # bare {"__schema": ...} introspection dump.
+        data = introspection.get("data", introspection)
+        return build_client_schema(data), text, "application/json"
     return build_ast_schema(parse(text)), text, "text/plain"
 
 
 def parse_graphql(path: Path) -> GenerationResult:
     schema, schema_text, mime_type = _load_schema(path)
     tools: list[ToolSpec] = []
+    seen_names: set[str] = set()
 
     for operation_type in ("query", "mutation"):
         root = schema.query_type if operation_type == "query" else schema.mutation_type
@@ -125,9 +165,10 @@ def parse_graphql(path: Path) -> GenerationResult:
             document, bindings = _build_document(
                 gql_operation, field_name, field.args, field.type
             )
+            tool_name = unique_name(sanitize_tool_name(field_name), seen_names)
             tools.append(
                 ToolSpec(
-                    name=field_name,
+                    name=tool_name,
                     description=field.description or f"GraphQL {operation_type} {field_name}",
                     input_schema=_field_input_schema(field.args),
                     execution_kind="graphql",

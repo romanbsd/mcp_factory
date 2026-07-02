@@ -21,6 +21,7 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                 ],
                 content_type: None,
+                raw_body: false,
             }),
         },
     ]

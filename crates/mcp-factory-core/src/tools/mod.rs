@@ -22,9 +22,11 @@ pub struct ToolSpec {
     pub execution: ExecutionKind,
 }
 
-#[derive(Debug, Default)]
+#[derive(Default)]
 pub struct ToolRegistry {
     tools: HashMap<String, ToolSpec>,
+    // Compiled once at registration instead of per tool call.
+    validators: HashMap<String, jsonschema::Validator>,
 }
 
 impl ToolRegistry {
@@ -36,7 +38,21 @@ impl ToolRegistry {
         if self.tools.contains_key(&tool.name) {
             return Err(ProxyError::DuplicateTool(tool.name.clone()));
         }
+        let validator = jsonschema::validator_for(&tool.input_schema).map_err(|e| {
+            ProxyError::Validation(format!("invalid schema for tool {}: {e}", tool.name))
+        })?;
+        self.validators.insert(tool.name.clone(), validator);
         self.tools.insert(tool.name.clone(), tool);
+        Ok(())
+    }
+
+    /// Validate args against a tool's precompiled input schema.
+    pub fn validate(&self, name: &str, args: &Value) -> Result<(), ProxyError> {
+        if let Some(validator) = self.validators.get(name) {
+            if let Err(error) = validator.validate(args) {
+                return Err(ProxyError::Validation(error.to_string()));
+            }
+        }
         Ok(())
     }
 
@@ -93,6 +109,7 @@ mod tests {
                 }],
                 body_fields: vec![],
                 content_type: None,
+                raw_body: false,
             }),
         }
     }

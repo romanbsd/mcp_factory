@@ -63,6 +63,7 @@ impl McpProxyServer {
             .tools
             .get(name)
             .ok_or_else(|| ProxyError::ToolNotFound(name.to_string()))?;
+        self.inner.tools.validate(name, &args)?;
         match &tool.execution {
             ExecutionKind::Rest(_) => self.inner.rest.execute(tool, args).await,
             ExecutionKind::GraphQL(_) => self.inner.graphql.execute(tool, args).await,
@@ -166,6 +167,10 @@ impl ServerHandler for McpProxyServer {
             .arguments
             .map(Value::Object)
             .unwrap_or_else(|| Value::Object(Default::default()));
+
+        if let Err(err) = self.inner.tools.validate(&request.name, &args) {
+            return Ok(CallToolResult::error(vec![ContentBlock::text(err.to_string())]));
+        }
 
         let result = match &tool.execution {
             ExecutionKind::Rest(_) => self.inner.rest.execute(tool, args).await,

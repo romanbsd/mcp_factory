@@ -27,6 +27,7 @@ pub fn build_tools() -> Vec<ToolSpec> {
 {% endfor %}
                 ],
                 content_type: {% if tool.rest.content_type %}Some({{ tool.rest.content_type | tojson }}.to_string()){% else %}None{% endif %},
+                raw_body: {% if tool.rest.raw_body %}true{% else %}false{% endif %},
             }){% else %}GraphQL(GraphQLOperation {
                 document: {{ tool.graphql.document | tojson }}.to_string(),
                 variable_bindings: vec![

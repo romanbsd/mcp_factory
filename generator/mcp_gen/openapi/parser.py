@@ -8,7 +8,15 @@ from typing import Any
 import yaml
 from prance import ResolvingParser
 
-from mcp_gen.models import GenerationResult, ParamBinding, ResourceSpec, RestOperation, ToolSpec
+from mcp_gen.models import (
+    GenerationResult,
+    ParamBinding,
+    ResourceSpec,
+    RestOperation,
+    ToolSpec,
+    sanitize_tool_name,
+    unique_name,
+)
 
 
 def load_openapi(path: Path) -> dict[str, Any]:
@@ -67,6 +75,7 @@ def parse_openapi(
 ) -> GenerationResult:
     spec = load_openapi(path)
     tools: list[ToolSpec] = []
+    seen_names: set[str] = set()
 
     for path_name, path_item in spec.get("paths", {}).items():
         for method in ("get", "post", "put", "patch", "delete", "head", "options"):
@@ -79,6 +88,7 @@ def parse_openapi(
                 continue
 
             operation_id = operation.get("operationId") or _slugify(f"{method}_{path_name}")
+            tool_name = unique_name(sanitize_tool_name(operation_id), seen_names)
             params: list[ParamBinding] = []
             schema_parts: list[dict[str, Any]] = []
 
@@ -100,17 +110,31 @@ def parse_openapi(
             body_schema = _request_body_schema(operation)
             body_fields: list[str] = []
             content_type: str | None = None
+            raw_body = False
             if body_schema:
-                body_fields = list(body_schema.get("properties", {}).keys())
-                schema_parts.append(body_schema)
                 request_body = operation.get("requestBody", {})
                 content = request_body.get("content", {})
                 if "application/json" in content:
                     content_type = "application/json"
+                if body_schema.get("properties"):
+                    body_fields = list(body_schema["properties"].keys())
+                    schema_parts.append(body_schema)
+                else:
+                    # Array / scalar / free-form body: expose a single `body`
+                    # argument sent verbatim rather than silently dropping it.
+                    raw_body = True
+                    body_fields = ["body"]
+                    schema_parts.append(
+                        {
+                            "type": "object",
+                            "properties": {"body": body_schema},
+                            "required": ["body"] if request_body.get("required") else [],
+                        }
+                    )
 
             tools.append(
                 ToolSpec(
-                    name=operation_id,
+                    name=tool_name,
                     description=_operation_description(operation),
                     input_schema=_merge_schemas(schema_parts),
                     execution_kind="rest",
@@ -120,6 +144,7 @@ def parse_openapi(
                         params=params,
                         body_fields=body_fields,
                         content_type=content_type,
+                        raw_body=raw_body,
                     ),
                 )
             )
