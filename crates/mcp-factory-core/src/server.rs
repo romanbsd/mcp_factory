@@ -105,7 +105,11 @@ impl McpProxyServerBuilder {
         let http = reqwest::Client::builder()
             .timeout(self.config.timeout())
             .build()?;
-        let auth = crate::auth::auth_provider_from_config(&self.config.auth, http.clone())?;
+        // Only launch the browser login flow on stdio (local) servers; an HTTP
+        // server may be remote/headless, where popping a browser is wrong.
+        let interactive = !matches!(self.config.transport, crate::config::TransportMode::Http);
+        let auth =
+            crate::auth::auth_provider_from_config(&self.config.auth, http.clone(), interactive)?;
         let rest = RestProxyExecutor::new(
             http.clone(),
             self.config.base_url.clone(),

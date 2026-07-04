@@ -17,6 +17,8 @@ transport = "{{ transport }}"
 # redirect_uri = "http://127.0.0.1:9876/callback"  # optional; ephemeral port if omitted
 # token_store = ".mcp-factory/tokens.json"           # optional
 #
-# Login once before running the server:
+# On a stdio server the browser login flow launches automatically on the first
+# tool call that needs a token (and refreshes silently after that). To log in
+# ahead of time (or for HTTP transport, where auto-login is disabled):
 #   mcp-factory-auth login --config config.toml
 #   cargo run -- --auth-login

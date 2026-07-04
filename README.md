@@ -213,7 +213,11 @@ Generated crates also ship a `config.toml` template.
 
 For APIs that use OAuth2 instead of a static bearer token, configure `[auth]` with `type = "oauth2"` in `config.toml` (see the commented template in generated crates).
 
-Login once to store tokens locally (file mode `0600`, default `.mcp-factory/tokens.json`):
+On a **stdio** server (the common case for local MCP clients like Cursor), the Authorization Code + PKCE flow launches **automatically** the first time a tool call needs a token: the server opens your browser, runs a loopback listener for the callback, stores the tokens, and completes the call. Subsequent calls reuse and silently refresh them. Progress is printed to stderr so it never corrupts the stdio protocol. (The very first call may exceed a client's tool-call timeout while you log in — just retry once tokens are stored, or pre-authenticate below.)
+
+Auto-login is disabled for **HTTP** transport, where the server may be remote/headless; there you must log in ahead of time.
+
+To log in ahead of time and store tokens locally (file mode `0600`, default `.mcp-factory/tokens.json`):
 
 ```bash
 # Standalone CLI (from mcp-factory-core)

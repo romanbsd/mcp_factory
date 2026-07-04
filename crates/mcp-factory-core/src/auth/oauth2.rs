@@ -20,10 +20,15 @@ pub struct OAuth2Provider {
     http: Client,
     token_store: FileTokenStore,
     cache: Mutex<Option<StoredTokens>>,
+    /// Full OAuth2 config, kept so we can (re)run the interactive login flow.
+    auth: AuthConfig,
+    /// Whether an unauthenticated call may launch the browser login flow.
+    /// Disabled for HTTP transport, where the server may be remote/headless.
+    interactive: bool,
 }
 
 impl OAuth2Provider {
-    pub fn new(auth: &AuthConfig, http: Client) -> Result<Self, ProxyError> {
+    pub fn new(auth: &AuthConfig, http: Client, interactive: bool) -> Result<Self, ProxyError> {
         let AuthConfig::OAuth2 {
             authorization_endpoint,
             token_endpoint,
@@ -50,11 +55,17 @@ impl OAuth2Provider {
             http,
             token_store: FileTokenStore::new(token_store.clone()),
             cache: Mutex::new(None),
+            auth: auth.clone(),
+            interactive,
         })
     }
 
     pub fn token_store(&self) -> &FileTokenStore {
         &self.token_store
+    }
+
+    pub(crate) fn auth_config(&self) -> &AuthConfig {
+        &self.auth
     }
 
     pub async fn get_tokens(&self) -> Result<StoredTokens, ProxyError> {
@@ -84,6 +95,16 @@ impl OAuth2Provider {
                 *cache = Some(refreshed.clone());
                 return Ok(refreshed);
             }
+        }
+
+        // No usable stored token. On a local (stdio) server we can transparently
+        // launch the browser login flow; holding `cache` across it serializes
+        // concurrent tool calls so only one browser window opens.
+        if self.interactive {
+            let tokens = crate::auth::login::perform_login(self).await?;
+            self.token_store.save(&tokens)?;
+            *cache = Some(tokens.clone());
+            return Ok(tokens);
         }
 
         Err(ProxyError::Config(

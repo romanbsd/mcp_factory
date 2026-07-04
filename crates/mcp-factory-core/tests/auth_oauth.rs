@@ -113,6 +113,9 @@ async fn unauthenticated_oauth_returns_clear_error() {
     let token_path = token_dir.path().join("tokens.json");
     let mut config = common::proxy_config(&mock_server.uri());
     config.auth = oauth_auth_config(&mock_server, token_path);
+    // HTTP transport disables interactive browser login, so an unauthenticated
+    // call surfaces a clear error instead of launching the login flow.
+    config.transport = mcp_factory_core::TransportMode::Http;
 
     let server = McpProxyServer::builder(config)
         .tools(&[common::rest_get_pet_tool()])

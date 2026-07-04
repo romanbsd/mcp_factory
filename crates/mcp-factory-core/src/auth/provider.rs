@@ -88,11 +88,12 @@ impl AuthProvider for OAuth2AuthProvider {
 pub fn auth_provider_from_config(
     auth: &AuthConfig,
     http: reqwest::Client,
+    interactive: bool,
 ) -> Result<Arc<dyn AuthProvider>, ProxyError> {
     match auth {
         AuthConfig::None => Ok(Arc::new(StaticAuthProvider::new(AuthConfig::None))),
         AuthConfig::OAuth2 { .. } => {
-            let provider = Arc::new(OAuth2Provider::new(auth, http)?);
+            let provider = Arc::new(OAuth2Provider::new(auth, http, interactive)?);
             Ok(Arc::new(OAuth2AuthProvider::new(provider)))
         }
         _ => Ok(Arc::new(StaticAuthProvider::new(auth.clone()))),
@@ -103,5 +104,7 @@ pub fn oauth_provider_from_config(
     auth: &AuthConfig,
     http: reqwest::Client,
 ) -> Result<Arc<OAuth2Provider>, ProxyError> {
-    Ok(Arc::new(OAuth2Provider::new(auth, http)?))
+    // Explicit login command drives the flow directly via perform_login, so the
+    // lazy interactive gate is irrelevant here.
+    Ok(Arc::new(OAuth2Provider::new(auth, http, true)?))
 }

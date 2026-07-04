@@ -8,7 +8,9 @@ use oauth2::PkceCodeChallenge;
 use serde::Deserialize;
 use tokio::sync::{oneshot, Mutex};
 
+use crate::auth::oauth2::OAuth2Provider;
 use crate::auth::provider::oauth_provider_from_config;
+use crate::auth::token_store::StoredTokens;
 use crate::config::{AuthConfig, ProxyConfig};
 use crate::error::ProxyError;
 
@@ -21,14 +23,9 @@ struct CallbackQuery {
     error_description: Option<String>,
 }
 
-/// Run interactive OAuth2 Authorization Code + PKCE login.
+/// Run interactive OAuth2 Authorization Code + PKCE login and persist the tokens.
 pub async fn run_oauth_login(config: &ProxyConfig) -> Result<(), ProxyError> {
-    let AuthConfig::OAuth2 {
-        scopes,
-        redirect_uri,
-        ..
-    } = &config.auth
-    else {
+    let AuthConfig::OAuth2 { .. } = &config.auth else {
         return Err(ProxyError::Config(
             "auth.type must be oauth2 for login".to_string(),
         ));
@@ -39,22 +36,43 @@ pub async fn run_oauth_login(config: &ProxyConfig) -> Result<(), ProxyError> {
         .build()?;
     let provider = oauth_provider_from_config(&config.auth, http)?;
 
+    let tokens = perform_login(&provider).await?;
+    provider.persist(&tokens).await?;
+    eprintln!("OAuth login successful; tokens saved.");
+    Ok(())
+}
+
+/// Drive the interactive browser flow and return the resulting tokens (without
+/// persisting them). Shared by the explicit `login` command and the lazy,
+/// on-demand login triggered from a tool call.
+///
+/// All progress goes to stderr: on a stdio MCP server, stdout is the JSON-RPC
+/// channel and must not be written to.
+pub(crate) async fn perform_login(provider: &OAuth2Provider) -> Result<StoredTokens, ProxyError> {
+    let AuthConfig::OAuth2 {
+        scopes,
+        redirect_uri,
+        ..
+    } = provider.auth_config()
+    else {
+        return Err(ProxyError::Config(
+            "auth.type must be oauth2 for login".to_string(),
+        ));
+    };
+
     let (pkce_challenge, pkce_verifier) = PkceCodeChallenge::new_random_sha256();
     let (redirect, listener) = prepare_callback(redirect_uri.as_deref()).await?;
-    let auth_url = build_auth_url(&config.auth, &redirect, scopes, pkce_challenge)?;
+    let auth_url = build_auth_url(provider.auth_config(), &redirect, scopes, pkce_challenge)?;
 
-    println!("Open this URL to authorize:\n{auth_url}");
+    eprintln!("Open this URL to authorize:\n{auth_url}");
     if open::that(&auth_url).is_err() {
-        println!("(Could not open browser automatically; copy the URL above.)");
+        eprintln!("(Could not open browser automatically; copy the URL above.)");
     }
 
     let code = wait_for_callback(listener, &redirect).await?;
-    let tokens = provider
+    provider
         .exchange_code(&code, &redirect, pkce_verifier)
-        .await?;
-    provider.persist(&tokens).await?;
-    println!("OAuth login successful; tokens saved.");
-    Ok(())
+        .await
 }
 
 fn build_auth_url(

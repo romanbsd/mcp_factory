@@ -234,7 +234,8 @@ mod tests {
             content_type: None,
             raw_body: false,
         };
-        let auth = auth_provider_from_config(&AuthConfig::None, reqwest::Client::new()).unwrap();
+        let auth =
+            auth_provider_from_config(&AuthConfig::None, reqwest::Client::new(), false).unwrap();
         let url = build_url(
             "https://api.example.com/v1",
             &operation,
