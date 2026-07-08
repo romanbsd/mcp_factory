@@ -34,9 +34,7 @@ impl From<ProxyError> for rmcp::ErrorData {
         match err {
             ProxyError::ToolNotFound(_)
             | ProxyError::ResourceNotFound(_)
-            | ProxyError::Validation(_) => {
-                rmcp::ErrorData::invalid_params(err.to_string(), None)
-            }
+            | ProxyError::Validation(_) => rmcp::ErrorData::invalid_params(err.to_string(), None),
             _ => rmcp::ErrorData::internal_error(err.to_string(), None),
         }
     }

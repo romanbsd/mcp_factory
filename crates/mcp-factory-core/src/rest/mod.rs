@@ -108,7 +108,7 @@ impl RestProxyExecutor {
         }
 
         if !status.is_success() {
-            let body = response.text().await.unwrap_or_default();
+            let body = read_limited_text(response).await.unwrap_or_default();
             return Ok(error_result(status, &content_type, body, meta));
         }
 
@@ -124,7 +124,7 @@ impl RestProxyExecutor {
         // charset); non-text is handed back as raw bytes so the server can wrap
         // it in a proper binary/image MCP content block instead of mangling it.
         let body = if is_texty(&content_type) {
-            let text = response.text().await?;
+            let text = read_limited_text(response).await?;
             // JSON also rides along as `structuredContent` so clients can read
             // fields directly instead of re-parsing the string.
             let structured = if content_type.to_ascii_lowercase().contains("json") {
@@ -140,7 +140,7 @@ impl RestProxyExecutor {
         } else {
             ToolResult {
                 body: ToolBody::Binary {
-                    data: response.bytes().await?.to_vec(),
+                    data: read_limited_bytes(response).await?,
                     mime: content_type,
                 },
                 structured: None,
@@ -150,6 +150,32 @@ impl RestProxyExecutor {
         };
         Ok(body)
     }
+}
+
+async fn read_limited_text(response: reqwest::Response) -> Result<String, ProxyError> {
+    let bytes = read_limited_bytes(response).await?;
+    Ok(String::from_utf8_lossy(&bytes).into_owned())
+}
+
+async fn read_limited_bytes(response: reqwest::Response) -> Result<Vec<u8>, ProxyError> {
+    read_limited_response(response, MAX_RESPONSE_BYTES).await
+}
+
+async fn read_limited_response(
+    mut response: reqwest::Response,
+    max_bytes: u64,
+) -> Result<Vec<u8>, ProxyError> {
+    let mut body = Vec::new();
+    while let Some(chunk) = response.chunk().await? {
+        let new_len = body.len() + chunk.len();
+        if new_len as u64 > max_bytes {
+            return Err(ProxyError::Other(format!(
+                "upstream response too large: more than {max_bytes} bytes"
+            )));
+        }
+        body.extend_from_slice(&chunk);
+    }
+    Ok(body)
 }
 
 /// Whitelisted response headers that carry clues a client/LLM can act on:
@@ -379,7 +405,9 @@ fn encode_path_value(value: &Value) -> Result<String, ProxyError> {
             }
             let encoded = items
                 .iter()
-                .map(|item| Ok(utf8_percent_encode(&value_to_string(item)?, PATH_VALUE).to_string()))
+                .map(
+                    |item| Ok(utf8_percent_encode(&value_to_string(item)?, PATH_VALUE).to_string()),
+                )
                 .collect::<Result<Vec<_>, ProxyError>>()?;
             Ok(encoded.join(","))
         }
@@ -448,6 +476,22 @@ mod tests {
         assert!(is_texty("")); // missing header defaults to text
         assert!(!is_texty("image/png"));
         assert!(!is_texty("application/octet-stream"));
+    }
+
+    #[tokio::test]
+    async fn limited_stream_rejects_chunked_overflow() {
+        let mock_server = wiremock::MockServer::start().await;
+        wiremock::Mock::given(wiremock::matchers::method("GET"))
+            .respond_with(wiremock::ResponseTemplate::new(200).set_body_string("1234567890x"))
+            .mount(&mock_server)
+            .await;
+        let response = reqwest::Client::new()
+            .get(mock_server.uri())
+            .send()
+            .await
+            .unwrap();
+        let err = read_limited_response(response, 10).await.unwrap_err();
+        assert!(err.to_string().contains("upstream response too large"));
     }
 
     #[test]

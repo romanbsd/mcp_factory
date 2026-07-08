@@ -23,6 +23,76 @@ def test_merges_path_query_header_and_body(fixtures_dir: Path) -> None:
     assert create_pet.rest.body_fields == ["name", "tag"]
 
 
+def test_includes_path_level_parameters_with_operation_override(tmp_path: Path) -> None:
+    path = _write_spec(
+        tmp_path / "path-params.yaml",
+        {
+            "/pets/{petId}": {
+                "parameters": [
+                    {
+                        "name": "petId",
+                        "in": "path",
+                        "required": True,
+                        "schema": {"type": "string"},
+                    },
+                    {
+                        "name": "trace",
+                        "in": "header",
+                        "schema": {"type": "string"},
+                    },
+                ],
+                "get": {
+                    "operationId": "getPet",
+                    "parameters": [
+                        {
+                            "name": "trace",
+                            "in": "header",
+                            "required": True,
+                            "schema": {"type": "string", "minLength": 1},
+                        }
+                    ],
+                    "responses": {"200": {"description": "OK"}},
+                },
+            }
+        },
+    )
+    tool = parse_openapi(path).tools[0]
+    assert {(p.name, p.location) for p in tool.rest.params} == {
+        ("petId", "path"),
+        ("trace", "header"),
+    }
+    assert tool.input_schema["required"] == ["petId", "trace"]
+    assert tool.input_schema["properties"]["trace"]["minLength"] == 1
+
+
+def test_optional_request_body_does_not_require_body_fields(tmp_path: Path) -> None:
+    path = _write_spec(
+        tmp_path / "optional-body.yaml",
+        {
+            "/pets": {
+                "post": {
+                    "operationId": "createPet",
+                    "requestBody": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {"name": {"type": "string"}},
+                                    "required": ["name"],
+                                }
+                            }
+                        }
+                    },
+                    "responses": {"200": {"description": "OK"}},
+                }
+            }
+        },
+    )
+    tool = parse_openapi(path).tools[0]
+    assert tool.rest.body_fields == ["name"]
+    assert "required" not in tool.input_schema
+
+
 def test_resolves_refs(fixtures_dir: Path) -> None:
     result = parse_openapi(fixtures_dir / "refs-openapi.yaml")
     assert len(result.tools) == 1

@@ -251,9 +251,10 @@ impl ServerHandler for McpProxyServer {
     }
 }
 
-/// Text bodies larger than this are handed back as an embedded resource (with a
-/// URI + mime) rather than a bare text block, so clients can treat the payload
-/// as a document instead of inline chat text.
+/// Text bodies larger than this are handed back as an inline embedded resource
+/// rather than a bare text block, so clients can treat the payload as a document
+/// instead of chat text. The `embedded://` URI is intentionally not readable via
+/// `read_resource`; the bytes are already carried in this content block.
 const LARGE_TEXT_BYTES: usize = 256 * 1024;
 
 /// Assemble the full MCP `CallToolResult` from an executor's `ToolResult`:
@@ -278,7 +279,7 @@ fn result_to_call(result: ToolResult, tool_name: &str) -> CallToolResult {
 fn body_to_content(body: ToolBody, tool_name: &str) -> ContentBlock {
     match body {
         ToolBody::Text(text) if text.len() > LARGE_TEXT_BYTES => ContentBlock::resource(
-            ResourceContents::text(text, format!("tool://{tool_name}/response")),
+            ResourceContents::text(text, format!("embedded://tool/{tool_name}/response")),
         ),
         ToolBody::Text(text) => ContentBlock::text(text),
         ToolBody::Binary { data, mime } => {
@@ -406,6 +407,12 @@ mod tests {
     fn large_text_becomes_resource_block() {
         let big = "x".repeat(LARGE_TEXT_BYTES + 1);
         let block = body_to_content(ToolBody::Text(big), "get_pet");
-        assert!(matches!(block, ContentBlock::Resource(_)));
+        let ContentBlock::Resource(resource) = block else {
+            panic!("expected resource block");
+        };
+        let ResourceContents::TextResourceContents { uri, .. } = resource.resource else {
+            panic!("expected text resource");
+        };
+        assert_eq!(uri, "embedded://tool/get_pet/response");
     }
 }

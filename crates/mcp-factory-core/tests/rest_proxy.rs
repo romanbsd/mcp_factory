@@ -78,10 +78,7 @@ async fn rest_proxy_sends_form_urlencoded_body() {
     // Matches only if the body is urlencoded (not JSON) with both fields.
     Mock::given(method("POST"))
         .and(path("/login"))
-        .and(header(
-            "content-type",
-            "application/x-www-form-urlencoded",
-        ))
+        .and(header("content-type", "application/x-www-form-urlencoded"))
         .and(body_string_contains("user=bob"))
         .and(body_string_contains("pass=secret"))
         .respond_with(ResponseTemplate::new(200).set_body_string("ok"))

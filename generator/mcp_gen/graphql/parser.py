@@ -65,12 +65,16 @@ def _type_to_schema(gql_type: Any) -> dict[str, Any]:
     return {"type": "string"}
 
 
+def _is_required_argument(arg: GraphQLArgument) -> bool:
+    return isinstance(arg.type, GraphQLNonNull) and arg.default_value is Undefined
+
+
 def _field_input_schema(arguments: dict[str, GraphQLArgument]) -> dict[str, Any]:
     properties: dict[str, Any] = {}
     required: list[str] = []
     for name, arg in arguments.items():
         properties[name] = _type_to_schema(arg.type)
-        if isinstance(arg.type, GraphQLNonNull):
+        if _is_required_argument(arg):
             required.append(name)
     schema: dict[str, Any] = {"type": "object", "properties": properties}
     if required:
@@ -145,7 +149,10 @@ def _build_document(operation_type: str, field_name: str, args: dict[str, GraphQ
     for name, arg in args.items():
         # str(arg.type) yields the full SDL type reference, preserving `!` and
         # `[...]` so required and list variables are declared correctly.
-        arg_defs.append(f"${name}: {arg.type}")
+        variable_type = arg.type
+        if isinstance(arg.type, GraphQLNonNull) and arg.default_value is not Undefined:
+            variable_type = arg.type.of_type
+        arg_defs.append(f"${name}: {variable_type}")
         arg_vars.append(f"{name}: ${name}")
         bindings.append(name)
 

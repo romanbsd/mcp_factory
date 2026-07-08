@@ -4,7 +4,7 @@ use std::time::Duration;
 use axum::extract::Query;
 use axum::routing::get;
 use axum::Router;
-use oauth2::PkceCodeChallenge;
+use oauth2::{CsrfToken, PkceCodeChallenge};
 use serde::Deserialize;
 use tokio::sync::{oneshot, Mutex};
 
@@ -19,6 +19,7 @@ const LOGIN_TIMEOUT: Duration = Duration::from_secs(300);
 #[derive(Debug, Deserialize)]
 struct CallbackQuery {
     code: Option<String>,
+    state: Option<String>,
     error: Option<String>,
     error_description: Option<String>,
 }
@@ -61,15 +62,22 @@ pub(crate) async fn perform_login(provider: &OAuth2Provider) -> Result<StoredTok
     };
 
     let (pkce_challenge, pkce_verifier) = PkceCodeChallenge::new_random_sha256();
+    let csrf_state = CsrfToken::new_random();
     let (redirect, listener) = prepare_callback(redirect_uri.as_deref()).await?;
-    let auth_url = build_auth_url(provider.auth_config(), &redirect, scopes, pkce_challenge)?;
+    let auth_url = build_auth_url(
+        provider.auth_config(),
+        &redirect,
+        scopes,
+        pkce_challenge,
+        &csrf_state,
+    )?;
 
     eprintln!("Open this URL to authorize:\n{auth_url}");
     if open::that(&auth_url).is_err() {
         eprintln!("(Could not open browser automatically; copy the URL above.)");
     }
 
-    let code = wait_for_callback(listener, &redirect).await?;
+    let code = wait_for_callback(listener, &redirect, csrf_state.secret()).await?;
     provider
         .exchange_code(&code, &redirect, pkce_verifier)
         .await
@@ -80,6 +88,7 @@ fn build_auth_url(
     redirect_uri: &str,
     scopes: &[String],
     pkce_challenge: PkceCodeChallenge,
+    csrf_state: &CsrfToken,
 ) -> Result<String, ProxyError> {
     let AuthConfig::OAuth2 {
         authorization_endpoint,
@@ -97,6 +106,7 @@ fn build_auth_url(
         pairs.append_pair("response_type", "code");
         pairs.append_pair("client_id", client_id);
         pairs.append_pair("redirect_uri", redirect_uri);
+        pairs.append_pair("state", csrf_state.secret());
         pairs.append_pair("code_challenge", pkce_challenge.as_str());
         pairs.append_pair("code_challenge_method", "S256");
         if !scopes.is_empty() {
@@ -135,6 +145,7 @@ async fn prepare_callback(
 async fn wait_for_callback(
     listener: tokio::net::TcpListener,
     redirect_uri: &str,
+    expected_state: &str,
 ) -> Result<String, ProxyError> {
     let path = oauth2::url::Url::parse(redirect_uri)
         .map_err(|e| ProxyError::Config(format!("invalid redirect_uri: {e}")))?
@@ -143,13 +154,16 @@ async fn wait_for_callback(
 
     let (tx, rx) = oneshot::channel::<Result<String, ProxyError>>();
     let tx = Arc::new(Mutex::new(Some(tx)));
+    let expected_state = expected_state.to_string();
 
     let app = Router::new().route(
         &path,
         get({
             let tx = Arc::clone(&tx);
+            let expected_state = expected_state.clone();
             move |Query(query): Query<CallbackQuery>| {
                 let tx = Arc::clone(&tx);
+                let expected_state = expected_state.clone();
                 async move {
                     let mut guard = tx.lock().await;
                     if let Some(sender) = guard.take() {
@@ -158,6 +172,10 @@ async fn wait_for_callback(
                             Err(ProxyError::Config(format!(
                                 "OAuth authorization error: {err} {detail}"
                             )))
+                        } else if query.state.as_deref() != Some(expected_state.as_str()) {
+                            Err(ProxyError::Config(
+                                "OAuth callback state mismatch".to_string(),
+                            ))
                         } else if let Some(code) = query.code {
                             Ok(code)
                         } else {
@@ -185,6 +203,42 @@ async fn wait_for_callback(
 
     server_handle.abort();
     Ok(result)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn oauth_config() -> AuthConfig {
+        AuthConfig::OAuth2 {
+            authorization_endpoint: "https://auth.example.com/authorize".to_string(),
+            token_endpoint: "https://auth.example.com/token".to_string(),
+            client_id: "client".to_string(),
+            client_secret_env: "SECRET".to_string(),
+            scopes: vec!["read".to_string()],
+            redirect_uri: None,
+            token_store: "tokens.json".into(),
+        }
+    }
+
+    #[test]
+    fn auth_url_includes_csrf_state() {
+        let (challenge, _verifier) = PkceCodeChallenge::new_random_sha256();
+        let state = CsrfToken::new("state-123".to_string());
+        let url = build_auth_url(
+            &oauth_config(),
+            "http://127.0.0.1:1234/callback",
+            &["read".to_string()],
+            challenge,
+            &state,
+        )
+        .unwrap();
+        let parsed = oauth2::url::Url::parse(&url).unwrap();
+        let query = parsed
+            .query_pairs()
+            .collect::<std::collections::HashMap<_, _>>();
+        assert_eq!(query.get("state").map(|v| v.as_ref()), Some("state-123"));
+    }
 }
 
 pub async fn oauth_status(config: &ProxyConfig) -> Result<(), ProxyError> {

@@ -1,5 +1,5 @@
 use mcp_factory_core::{
-    ExecutionKind, GraphQLOperation, ToolSpec,
+    ExecutionKind, GraphQLOperation, ToolHints, ToolSpec,
 };
 use serde_json::json;
 
@@ -15,6 +15,12 @@ pub fn build_tools() -> Vec<ToolSpec> {
                     "id".to_string(),
                 ],
             }),
+            hints: ToolHints {
+                read_only: Some(true),
+                idempotent: Some(true),
+                open_world: Some(true),
+                ..Default::default()
+            },
         },
         ToolSpec {
             name: "createUser".to_string(),
@@ -26,6 +32,12 @@ pub fn build_tools() -> Vec<ToolSpec> {
                     "name".to_string(),
                 ],
             }),
+            hints: ToolHints {
+                read_only: Some(false),
+                idempotent: Some(false),
+                open_world: Some(true),
+                ..Default::default()
+            },
         },
     ]
 }

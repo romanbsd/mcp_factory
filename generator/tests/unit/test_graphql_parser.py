@@ -45,6 +45,24 @@ def test_preserves_arg_types_and_valid_selection(tmp_path: Path) -> None:
     assert "comments" not in doc
 
 
+def test_defaulted_arguments_are_optional_but_still_bound(tmp_path: Path) -> None:
+    sdl = tmp_path / "defaults.graphql"
+    sdl.write_text(
+        """
+        type Query {
+          search(term: String!, limit: Int! = 10): [Result!]!
+        }
+        type Result { id: ID! }
+        """
+    )
+    search = next(t for t in parse_graphql(sdl).tools if t.name == "search")
+    assert search.input_schema["required"] == ["term"]
+    assert "limit" in search.input_schema["properties"]
+    assert "$limit: Int" in search.graphql.document
+    assert "$limit: Int!" not in search.graphql.document
+    assert "limit: $limit" in search.graphql.document
+
+
 def test_parses_nested_input_types(fixtures_dir: Path) -> None:
     result = parse_graphql(fixtures_dir / "nested-inputs.graphql")
     search = next(tool for tool in result.tools if tool.name == "search")

@@ -50,6 +50,29 @@ def _merge_schemas(schemas: list[dict[str, Any]]) -> dict[str, Any]:
     return merged
 
 
+def _merged_parameters(
+    path_parameters: list[dict[str, Any]],
+    operation_parameters: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Merge OpenAPI path-item and operation parameters.
+
+    Operation-level parameters override path-level parameters with the same
+    ``(name, in)`` pair.
+    """
+    merged: dict[tuple[str, str], dict[str, Any]] = {}
+    for parameter in [*path_parameters, *operation_parameters]:
+        key = (parameter["name"], parameter["in"])
+        merged[key] = parameter
+    return list(merged.values())
+
+
+def _as_optional_object_schema(schema: dict[str, Any]) -> dict[str, Any]:
+    """Flatten an optional request body without making body fields mandatory."""
+    optional = dict(schema)
+    optional.pop("required", None)
+    return optional
+
+
 def _request_body_schema(operation: dict[str, Any]) -> dict[str, Any] | None:
     request_body = operation.get("requestBody")
     if not request_body:
@@ -119,7 +142,10 @@ def parse_openapi(
             params: list[ParamBinding] = []
             schema_parts: list[dict[str, Any]] = []
 
-            for parameter in operation.get("parameters", []):
+            for parameter in _merged_parameters(
+                path_item.get("parameters", []),
+                operation.get("parameters", []),
+            ):
                 name = parameter["name"]
                 location = parameter["in"]
                 if location not in {"path", "query", "header"}:
@@ -148,7 +174,10 @@ def parse_openapi(
                     content_type = "application/x-www-form-urlencoded"
                 if body_schema.get("properties"):
                     body_fields = list(body_schema["properties"].keys())
-                    schema_parts.append(body_schema)
+                    if request_body.get("required"):
+                        schema_parts.append(body_schema)
+                    else:
+                        schema_parts.append(_as_optional_object_schema(body_schema))
                 else:
                     # Array / scalar / free-form body: expose a single `body`
                     # argument sent verbatim rather than silently dropping it.

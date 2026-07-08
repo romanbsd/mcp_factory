@@ -1,5 +1,5 @@
 use mcp_factory_core::{
-    ExecutionKind, ParamBinding, ParamLocation, RestOperation, ToolSpec,
+    ExecutionKind, ParamBinding, ParamLocation, RestOperation, ToolHints, ToolSpec,
 };
 use serde_json::json;
 
@@ -21,7 +21,16 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                 ],
                 content_type: None,
+                raw_body: false,
             }),
+            hints: ToolHints {
+                title: Some("Get a pet".to_string()),
+                read_only: Some(true),
+                destructive: Some(false),
+                idempotent: Some(true),
+                open_world: Some(true),
+                ..Default::default()
+            },
         },
     ]
 }
