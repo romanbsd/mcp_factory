@@ -74,12 +74,20 @@ pub fn build_variables(operation: &GraphQLOperation, args: &Value) -> Result<Val
 pub fn format_graphql_response(text: &str) -> Result<String, ProxyError> {
     let parsed: Value = serde_json::from_str(text)
         .map_err(|e| ProxyError::Other(format!("invalid GraphQL JSON response: {e}")))?;
-    if let Some(errors) = parsed.get("errors") {
-        if errors.as_array().is_some_and(|arr| !arr.is_empty()) {
-            return Err(ProxyError::Other(format!("GraphQL errors: {errors}")));
-        }
+
+    let has_errors = parsed
+        .get("errors")
+        .and_then(Value::as_array)
+        .is_some_and(|arr| !arr.is_empty());
+    // GraphQL allows partial success: `data` and `errors` can both be present.
+    // Only fail outright when there is no usable data to return.
+    let has_data = parsed.get("data").is_some_and(|d| !d.is_null());
+
+    if has_errors && !has_data {
+        let errors = parsed.get("errors").unwrap();
+        return Err(ProxyError::Other(format!("GraphQL errors: {errors}")));
     }
-    if let Some(data) = parsed.get("data") {
+    if let Some(data) = parsed.get("data").filter(|d| !d.is_null()) {
         return Ok(serde_json::to_string_pretty(data).unwrap_or_else(|_| data.to_string()));
     }
     Ok(text.to_string())
@@ -111,5 +119,19 @@ mod tests {
     fn surfaces_graphql_errors() {
         let text = r#"{"errors":[{"message":"not found"}]}"#;
         assert!(format_graphql_response(text).is_err());
+    }
+
+    #[test]
+    fn null_data_with_errors_is_error() {
+        let text = r#"{"data":null,"errors":[{"message":"boom"}]}"#;
+        assert!(format_graphql_response(text).is_err());
+    }
+
+    #[test]
+    fn partial_data_with_errors_is_returned() {
+        // data present alongside field-level errors must not be discarded.
+        let text = r#"{"data":{"user":{"name":"alice"}},"errors":[{"message":"nickname failed"}]}"#;
+        let formatted = format_graphql_response(text).unwrap();
+        assert!(formatted.contains("alice"));
     }
 }

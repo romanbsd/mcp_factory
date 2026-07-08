@@ -17,6 +17,16 @@ from . import __version__
 
 app = typer.Typer(no_args_is_help=True, add_completion=False, name="mcp-gen")
 
+_TRANSPORTS = {"stdio", "http", "both"}
+
+
+def _validate_transport(transport: str) -> str:
+    if transport not in _TRANSPORTS:
+        raise typer.BadParameter(
+            f"invalid transport: {transport!r} (expected stdio, http, or both)"
+        )
+    return transport
+
 
 def detect_kind(path: Path) -> Literal["openapi", "graphql"]:
     if path.suffix in {".graphql", ".gql"}:
@@ -27,9 +37,13 @@ def detect_kind(path: Path) -> Literal["openapi", "graphql"]:
             data = json.loads(text)
         except json.JSONDecodeError as exc:
             raise typer.BadParameter(f"invalid JSON schema file: {exc}") from exc
+        if not isinstance(data, dict):
+            raise typer.BadParameter("unsupported JSON input: expected a JSON object")
         if "openapi" in data:
             return "openapi"
-        if data.get("__schema") or data.get("data", {}).get("__schema"):
+        inner = data.get("data")
+        inner = inner if isinstance(inner, dict) else {}
+        if data.get("__schema") or inner.get("__schema"):
             return "graphql"
         raise typer.BadParameter("unsupported JSON input: expected OpenAPI or GraphQL introspection")
     if path.suffix in {".yaml", ".yml"}:
@@ -77,6 +91,7 @@ def generate(
     tags: str | None = typer.Option(None, "--tags", help="Comma-separated OpenAPI tags filter"),
 ) -> None:
     """Generate a Rust MCP proxy crate from an OpenAPI or GraphQL schema."""
+    _validate_transport(transport)
     result = _parse_schema(
         input,
         kind=kind,
@@ -119,6 +134,7 @@ def package(
     keep_source: bool = typer.Option(False, "--keep-source", help="Keep generated Rust source beside the dist"),
 ) -> None:
     """Generate, build, and package a portable MCP server binary."""
+    _validate_transport(transport)
     result = _parse_schema(
         input,
         kind=kind,

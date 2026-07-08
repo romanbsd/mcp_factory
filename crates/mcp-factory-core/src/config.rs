@@ -15,6 +15,21 @@ pub enum TransportMode {
     Both,
 }
 
+impl std::str::FromStr for TransportMode {
+    type Err = ProxyError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.trim().to_lowercase().as_str() {
+            "stdio" => Ok(TransportMode::Stdio),
+            "http" => Ok(TransportMode::Http),
+            "both" => Ok(TransportMode::Both),
+            other => Err(ProxyError::Config(format!(
+                "invalid transport value: {other} (expected stdio, http, or both)"
+            ))),
+        }
+    }
+}
+
 fn default_client_secret_env() -> String {
     "MCP_FACTORY_OAUTH_CLIENT_SECRET".to_string()
 }
@@ -172,16 +187,7 @@ impl ProxyConfig {
             config.base_url = base_url;
         }
         if let Ok(transport) = env::var("MCP_TRANSPORT") {
-            config.transport = match transport.to_lowercase().as_str() {
-                "stdio" => TransportMode::Stdio,
-                "http" => TransportMode::Http,
-                "both" => TransportMode::Both,
-                other => {
-                    return Err(ProxyError::Config(format!(
-                        "invalid MCP_TRANSPORT value: {other}"
-                    )));
-                }
-            };
+            config.transport = transport.parse()?;
         }
         if let Ok(bind) = env::var("MCP_FACTORY_BIND_ADDR") {
             config.bind_addr = bind;

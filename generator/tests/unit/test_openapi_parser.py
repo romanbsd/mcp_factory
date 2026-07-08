@@ -125,6 +125,35 @@ def test_wraps_non_object_request_body(tmp_path: Path) -> None:
     assert tool.input_schema.get("required") == ["body"]
 
 
+def test_form_urlencoded_body_sets_content_type(tmp_path: Path) -> None:
+    path = _write_spec(
+        tmp_path / "form.yaml",
+        {
+            "/login": {
+                "post": {
+                    "operationId": "login",
+                    "requestBody": {
+                        "required": True,
+                        "content": {
+                            "application/x-www-form-urlencoded": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {"user": {"type": "string"}},
+                                }
+                            }
+                        },
+                    },
+                    "responses": {"200": {"description": "OK"}},
+                }
+            }
+        },
+    )
+    tool = parse_openapi(path).tools[0]
+    assert tool.rest.content_type == "application/x-www-form-urlencoded"
+    assert tool.rest.body_fields == ["user"]
+    assert tool.rest.raw_body is False
+
+
 def test_embeds_openapi_resources(fixtures_dir: Path) -> None:
     result = parse_openapi(fixtures_dir / "minimal-openapi.yaml")
     uris = {resource.uri for resource in result.resources}

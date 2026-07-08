@@ -18,11 +18,11 @@ pub async fn run(server: McpProxyServer) -> Result<(), ProxyError> {
     match server.config().transport {
         TransportMode::Stdio => run_stdio(server).await,
         TransportMode::Http => run_http(server).await,
+        // Serve both transports concurrently; the first to error (or stdin EOF)
+        // brings the process down.
         TransportMode::Both => {
-            tracing::warn!(
-                "MCP_TRANSPORT=both is not supported concurrently; falling back to stdio"
-            );
-            run_stdio(server).await
+            tokio::try_join!(run_stdio(server.clone()), run_http(server))?;
+            Ok(())
         }
     }
 }

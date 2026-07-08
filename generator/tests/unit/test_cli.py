@@ -21,6 +21,32 @@ def test_detect_graphql_introspection(fixtures_dir: Path) -> None:
     assert detect_kind(fixtures_dir / "introspection.json") == "graphql"
 
 
+def test_detect_rejects_non_object_json(tmp_path: Path) -> None:
+    bad = tmp_path / "bad.json"
+    bad.write_text("[1, 2, 3]")
+    with pytest.raises(Exception):
+        detect_kind(bad)
+
+
+def test_invalid_transport_rejected(tmp_path: Path, fixtures_dir: Path) -> None:
+    result = runner.invoke(
+        app,
+        [
+            "generate",
+            "--input",
+            str(fixtures_dir / "minimal-openapi.yaml"),
+            "--output",
+            str(tmp_path / "out"),
+            "--base-url",
+            "http://localhost",
+            "--transport",
+            "bogus",
+        ],
+    )
+    assert result.exit_code != 0
+    assert "invalid transport" in result.output.lower()
+
+
 def test_missing_input_file(tmp_path: Path) -> None:
     result = runner.invoke(
         app,

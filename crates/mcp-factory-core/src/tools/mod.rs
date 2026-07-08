@@ -83,15 +83,6 @@ impl ToolRegistry {
     }
 }
 
-pub fn validate_args(schema: &Value, args: &Value) -> Result<(), ProxyError> {
-    let validator = jsonschema::validator_for(schema)
-        .map_err(|e| ProxyError::Validation(format!("invalid schema: {e}")))?;
-    if let Err(error) = validator.validate(args) {
-        return Err(ProxyError::Validation(error.to_string()));
-    }
-    Ok(())
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -126,9 +117,9 @@ mod tests {
 
     #[test]
     fn validates_args_against_schema() {
-        let schema =
-            json!({"type": "object", "properties": {"id": {"type": "string"}}, "required": ["id"]});
-        validate_args(&schema, &json!({"id": "1"})).unwrap();
-        assert!(validate_args(&schema, &json!({})).is_err());
+        let mut registry = ToolRegistry::new();
+        registry.register(sample_tool("get_item")).unwrap();
+        registry.validate("get_item", &json!({"id": "1"})).unwrap();
+        assert!(registry.validate("get_item", &json!({})).is_err());
     }
 }

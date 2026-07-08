@@ -29,6 +29,15 @@ pub enum ProxyError {
 
 impl From<ProxyError> for rmcp::ErrorData {
     fn from(err: ProxyError) -> Self {
-        rmcp::ErrorData::internal_error(err.to_string(), None)
+        // Client-caused errors map to invalid_params (-32602); everything else
+        // is an internal error (-32603).
+        match err {
+            ProxyError::ToolNotFound(_)
+            | ProxyError::ResourceNotFound(_)
+            | ProxyError::Validation(_) => {
+                rmcp::ErrorData::invalid_params(err.to_string(), None)
+            }
+            _ => rmcp::ErrorData::internal_error(err.to_string(), None),
+        }
     }
 }

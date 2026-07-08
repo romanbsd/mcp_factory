@@ -3,11 +3,20 @@ use std::sync::Arc;
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 
-use percent_encoding::{utf8_percent_encode, NON_ALPHANUMERIC};
+use percent_encoding::{utf8_percent_encode, AsciiSet, NON_ALPHANUMERIC};
 
 use crate::auth::AuthProvider;
 use crate::error::ProxyError;
 use crate::tools::{ExecutionKind::Rest as ExecutionKindRest, ToolSpec};
+
+/// Path-segment encoding set: blocks `/` (and every other reserved/unsafe byte)
+/// so a value can't inject a new path segment, but keeps the RFC 3986 unreserved
+/// characters `- . _ ~` so dates/UUIDs/etc. aren't needlessly percent-mangled.
+const PATH_VALUE: &AsciiSet = &NON_ALPHANUMERIC
+    .remove(b'-')
+    .remove(b'.')
+    .remove(b'_')
+    .remove(b'~');
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -62,28 +71,29 @@ impl RestProxyExecutor {
         request = self.auth.apply_request_auth(request).await?;
         request = apply_headers(request, operation, &args)?;
 
+        let content_type = operation
+            .content_type
+            .as_deref()
+            .unwrap_or("application/json");
         if operation.raw_body {
             if let Some(body) = args.as_object().and_then(|obj| obj.get("body")) {
-                let content_type = operation
-                    .content_type
-                    .as_deref()
-                    .unwrap_or("application/json");
-                request = request.header(reqwest::header::CONTENT_TYPE, content_type);
-                request = request.json(body);
+                request = apply_body(request, content_type, body);
             }
         } else if !operation.body_fields.is_empty() {
             let body = build_body(operation, &args)?;
-            let content_type = operation
-                .content_type
-                .as_deref()
-                .unwrap_or("application/json");
-            request = request.header(reqwest::header::CONTENT_TYPE, content_type);
-            request = request.json(&body);
+            request = apply_body(request, content_type, &body);
         }
 
         let response = request.send().await?;
         let status = response.status();
-        let text = response.text().await?;
+        let resp_content_type = response
+            .headers()
+            .get(reqwest::header::CONTENT_TYPE)
+            .and_then(|v| v.to_str().ok())
+            .unwrap_or("")
+            .to_string();
+        let bytes = response.bytes().await?;
+        let text = decode_body(&resp_content_type, &bytes);
         if status.is_success() {
             Ok(text)
         } else {
@@ -91,6 +101,49 @@ impl RestProxyExecutor {
                 "upstream returned {status}: {text}"
             )))
         }
+    }
+}
+
+/// Attach a request body using the declared content type. Form bodies are
+/// urlencoded; everything else is sent as JSON.
+///
+/// ponytail: only `application/x-www-form-urlencoded` is special-cased; nested
+/// objects in a form body aren't flattened. Add multipart / deep-form support
+/// if a real schema needs it.
+fn apply_body(
+    request: reqwest::RequestBuilder,
+    content_type: &str,
+    body: &Value,
+) -> reqwest::RequestBuilder {
+    if content_type == "application/x-www-form-urlencoded" {
+        request.form(body)
+    } else {
+        request
+            .header(reqwest::header::CONTENT_TYPE, content_type)
+            .json(body)
+    }
+}
+
+/// True for content types safe to hand back as a UTF-8 string. Anything else
+/// (images, PDFs, octet-stream, ...) would be corrupted by lossy UTF-8 decoding,
+/// so it is base64-encoded instead.
+fn is_texty(content_type: &str) -> bool {
+    let ct = content_type.to_ascii_lowercase();
+    ct.is_empty()
+        || ct.starts_with("text/")
+        || ct.contains("json")
+        || ct.contains("xml")
+        || ct.contains("javascript")
+        || ct.contains("csv")
+        || ct.contains("urlencoded")
+}
+
+fn decode_body(content_type: &str, bytes: &[u8]) -> String {
+    if is_texty(content_type) {
+        String::from_utf8_lossy(bytes).into_owned()
+    } else {
+        use base64::Engine;
+        base64::engine::general_purpose::STANDARD.encode(bytes)
     }
 }
 
@@ -102,8 +155,7 @@ pub fn substitute_path(template: &str, args: &Value) -> Result<String, ProxyErro
             if path.contains(&placeholder) {
                 // Percent-encode per segment so a value like "../admin" or "a/b"
                 // can't inject extra path segments (traversal / wrong endpoint).
-                let raw = value_to_string(value)?;
-                let replacement = utf8_percent_encode(&raw, NON_ALPHANUMERIC).to_string();
+                let replacement = encode_path_value(value)?;
                 path = path.replace(&placeholder, &replacement);
             }
         }
@@ -133,8 +185,21 @@ pub fn build_url(
         }
         if let Some(obj) = args.as_object() {
             for binding in &operation.params {
-                if binding.location == ParamLocation::Query {
-                    if let Some(value) = obj.get(&binding.name) {
+                if binding.location != ParamLocation::Query {
+                    continue;
+                }
+                let Some(value) = obj.get(&binding.name) else {
+                    continue;
+                };
+                // Array query params expand to repeated pairs (?id=1&id=2), the
+                // OpenAPI `form`/explode default; scalars append a single pair.
+                match value {
+                    Value::Array(items) => {
+                        for item in items {
+                            query_pairs.append_pair(&binding.name, &value_to_string(item)?);
+                        }
+                    }
+                    _ => {
                         query_pairs.append_pair(&binding.name, &value_to_string(value)?);
                     }
                 }
@@ -201,6 +266,21 @@ fn value_to_string(value: &Value) -> Result<String, ProxyError> {
     }
 }
 
+/// Encode a path-parameter value into a single URL segment. Arrays use the
+/// OpenAPI `simple` style (comma-joined), each element individually encoded.
+fn encode_path_value(value: &Value) -> Result<String, ProxyError> {
+    match value {
+        Value::Array(items) => {
+            let encoded = items
+                .iter()
+                .map(|item| Ok(utf8_percent_encode(&value_to_string(item)?, PATH_VALUE).to_string()))
+                .collect::<Result<Vec<_>, ProxyError>>()?;
+            Ok(encoded.join(","))
+        }
+        _ => Ok(utf8_percent_encode(&value_to_string(value)?, PATH_VALUE).to_string()),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -216,9 +296,52 @@ mod tests {
 
     #[test]
     fn percent_encodes_path_params() {
-        // A slash in a path value must not create a new segment (no traversal).
+        // A slash in a path value must not create a new segment (no traversal);
+        // unreserved chars like '.' and '-' are kept intact.
         let path = substitute_path("/pets/{id}", &json!({"id": "1/../admin"})).unwrap();
-        assert_eq!(path, "/pets/1%2F%2E%2E%2Fadmin");
+        assert_eq!(path, "/pets/1%2F..%2Fadmin");
+        let dated = substitute_path("/logs/{day}", &json!({"day": "2020-01-01"})).unwrap();
+        assert_eq!(dated, "/logs/2020-01-01");
+    }
+
+    #[test]
+    fn array_path_param_uses_simple_style() {
+        let path = substitute_path("/pets/{ids}", &json!({"ids": [1, 2, "a/b"]})).unwrap();
+        assert_eq!(path, "/pets/1,2,a%2Fb");
+    }
+
+    #[test]
+    fn array_query_param_expands_to_repeated_pairs() {
+        let operation = RestOperation {
+            method: "GET".to_string(),
+            path_template: "/pets".to_string(),
+            params: vec![ParamBinding {
+                name: "tag".to_string(),
+                location: ParamLocation::Query,
+            }],
+            body_fields: vec![],
+            content_type: None,
+            raw_body: false,
+        };
+        let auth =
+            auth_provider_from_config(&AuthConfig::None, reqwest::Client::new(), false).unwrap();
+        let url = build_url(
+            "https://api.example.com/v1",
+            &operation,
+            &json!({"tag": ["dog", "cat"]}),
+            auth.as_ref(),
+        )
+        .unwrap();
+        assert_eq!(url, "https://api.example.com/v1/pets?tag=dog&tag=cat");
+    }
+
+    #[test]
+    fn decode_body_passes_text_through_and_base64s_binary() {
+        assert_eq!(decode_body("application/json", b"{\"a\":1}"), "{\"a\":1}");
+        assert_eq!(decode_body("", b"plain"), "plain");
+        // Non-text stays lossless via base64 instead of being UTF-8 mangled.
+        let encoded = decode_body("image/png", &[0x89, 0x50, 0x4e, 0x47]);
+        assert_eq!(encoded, "iVBORw==");
     }
 
     #[test]

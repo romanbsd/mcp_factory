@@ -8,7 +8,12 @@ async fn main() -> anyhow::Result<()> {
     let mut config = if std::path::Path::new("config.toml").exists() {
         ProxyConfig::load("config.toml")?
     } else {
-        ProxyConfig::default()
+        // No config file: fall back to the transport chosen at generation time
+        // (MCP_TRANSPORT can still override it via merge_env below).
+        ProxyConfig {
+            transport: "{{ transport }}".parse().unwrap_or_default(),
+            ..ProxyConfig::default()
+        }
     };
     config = config.merge_env()?;
 

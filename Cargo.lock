@@ -1256,6 +1256,7 @@ dependencies = [
  "assert-json-diff",
  "async-trait",
  "axum",
+ "base64",
  "chrono",
  "clap",
  "jsonschema",

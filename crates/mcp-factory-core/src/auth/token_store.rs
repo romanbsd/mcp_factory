@@ -49,9 +49,16 @@ impl FileTokenStore {
         }
         let contents = std::fs::read_to_string(&self.path)
             .map_err(|e| ProxyError::Config(format!("failed to read token store: {e}")))?;
-        let tokens: StoredTokens = serde_json::from_str(&contents)
-            .map_err(|e| ProxyError::Config(format!("failed to parse token store: {e}")))?;
-        Ok(Some(tokens))
+        // A corrupt/empty token file (e.g. a crash mid-write) must not brick the
+        // server: treat it as "no tokens" so the refresh / re-login path runs
+        // instead of returning a hard error on every call.
+        match serde_json::from_str(&contents) {
+            Ok(tokens) => Ok(Some(tokens)),
+            Err(e) => {
+                tracing::warn!(path = %self.path.display(), error = %e, "ignoring unreadable token store");
+                Ok(None)
+            }
+        }
     }
 
     pub fn save(&self, tokens: &StoredTokens) -> Result<(), ProxyError> {
@@ -61,30 +68,35 @@ impl FileTokenStore {
         }
         let contents = serde_json::to_string_pretty(tokens)
             .map_err(|e| ProxyError::Config(format!("failed to serialize tokens: {e}")))?;
-        // Restrict permissions BEFORE the secret hits disk, not after — otherwise
-        // the tokens are briefly world/group-readable at the default umask.
+        // Write to a sibling temp file then rename over the target, so a crash
+        // mid-write can never leave a truncated/half-written token file: a reader
+        // sees either the old file or the complete new one.
+        let tmp = self.path.with_extension("tmp");
         #[cfg(unix)]
         {
             use std::io::Write;
             use std::os::unix::fs::OpenOptionsExt;
+            // Create the temp file 0600 up front — the secret is never world- or
+            // group-readable, even for the instant before the rename.
             let mut file = std::fs::OpenOptions::new()
                 .write(true)
                 .create(true)
                 .truncate(true)
                 .mode(0o600)
-                .open(&self.path)
+                .open(&tmp)
                 .map_err(|e| ProxyError::Config(format!("failed to write token store: {e}")))?;
-            // `.mode()` only applies on create; enforce 0600 on a pre-existing file
-            // (now truncated/empty) before writing the new secret into it.
-            restrict_permissions(&self.path)?;
+            // `.mode()` only applies on create; enforce 0600 on a reused temp file.
+            restrict_permissions(&tmp)?;
             file.write_all(contents.as_bytes())
                 .map_err(|e| ProxyError::Config(format!("failed to write token store: {e}")))?;
         }
         #[cfg(not(unix))]
         {
-            std::fs::write(&self.path, contents)
+            std::fs::write(&tmp, &contents)
                 .map_err(|e| ProxyError::Config(format!("failed to write token store: {e}")))?;
         }
+        std::fs::rename(&tmp, &self.path)
+            .map_err(|e| ProxyError::Config(format!("failed to write token store: {e}")))?;
         Ok(())
     }
 
@@ -133,6 +145,16 @@ mod tests {
         let loaded = store.load().unwrap().unwrap();
         assert_eq!(loaded.access_token, "access");
         assert_eq!(loaded.refresh_token, Some("refresh".to_string()));
+    }
+
+    #[test]
+    fn corrupt_token_file_loads_as_none() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("tokens.json");
+        std::fs::write(&path, "{ this is not json").unwrap();
+        let store = FileTokenStore::new(path);
+        // Must not error — falls through to the re-login path.
+        assert_eq!(store.load().unwrap(), None);
     }
 
     #[test]

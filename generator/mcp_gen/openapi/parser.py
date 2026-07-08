@@ -116,6 +116,9 @@ def parse_openapi(
                 content = request_body.get("content", {})
                 if "application/json" in content:
                     content_type = "application/json"
+                elif "application/x-www-form-urlencoded" in content:
+                    # Runtime urlencodes the body fields instead of sending JSON.
+                    content_type = "application/x-www-form-urlencoded"
                 if body_schema.get("properties"):
                     body_fields = list(body_schema["properties"].keys())
                     schema_parts.append(body_schema)
