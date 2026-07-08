@@ -292,7 +292,7 @@ fn body_to_content(body: ToolBody, tool_name: &str) -> ContentBlock {
             } else {
                 ContentBlock::resource(ResourceContents::blob(
                     encoded,
-                    format!("tool://{tool_name}/response"),
+                    format!("embedded://tool/{tool_name}/response"),
                 ))
             }
         }
@@ -414,5 +414,23 @@ mod tests {
             panic!("expected text resource");
         };
         assert_eq!(uri, "embedded://tool/get_pet/response");
+    }
+
+    #[test]
+    fn generic_binary_uses_embedded_resource_uri() {
+        let block = body_to_content(
+            ToolBody::Binary {
+                data: vec![1, 2, 3],
+                mime: "application/octet-stream".to_string(),
+            },
+            "download",
+        );
+        let ContentBlock::Resource(resource) = block else {
+            panic!("expected resource block");
+        };
+        let ResourceContents::BlobResourceContents { uri, .. } = resource.resource else {
+            panic!("expected blob resource");
+        };
+        assert_eq!(uri, "embedded://tool/download/response");
     }
 }

@@ -72,6 +72,26 @@ fn form_login_tool() -> ToolSpec {
     }
 }
 
+fn optional_body_tool() -> ToolSpec {
+    ToolSpec {
+        name: "optional_body".to_string(),
+        description: "Optional body".to_string(),
+        input_schema: json!({
+            "type": "object",
+            "properties": {"name": {"type": "string"}}
+        }),
+        execution: ExecutionKind::Rest(RestOperation {
+            method: "POST".to_string(),
+            path_template: "/optional".to_string(),
+            params: vec![],
+            body_fields: vec!["name".to_string()],
+            content_type: Some("application/json".to_string()),
+            raw_body: false,
+        }),
+        hints: Default::default(),
+    }
+}
+
 #[tokio::test]
 async fn rest_proxy_sends_form_urlencoded_body() {
     let mock_server = MockServer::start().await;
@@ -97,6 +117,34 @@ async fn rest_proxy_sends_form_urlencoded_body() {
         .await
         .unwrap();
     assert_eq!(result, "ok");
+}
+
+#[tokio::test]
+async fn rest_proxy_omits_optional_body_when_fields_absent() {
+    let mock_server = MockServer::start().await;
+    Mock::given(method("POST"))
+        .and(path("/optional"))
+        .respond_with(ResponseTemplate::new(200).set_body_string("ok"))
+        .mount(&mock_server)
+        .await;
+
+    let config = common::proxy_config(&mock_server.uri());
+    let server = McpProxyServer::builder(config)
+        .tools(&[optional_body_tool()])
+        .unwrap()
+        .build()
+        .unwrap();
+
+    let result = server
+        .invoke_tool("optional_body", json!({}))
+        .await
+        .unwrap();
+    assert_eq!(result, "ok");
+
+    let requests = mock_server.received_requests().await.unwrap();
+    assert_eq!(requests.len(), 1);
+    assert!(requests[0].body.is_empty());
+    assert!(requests[0].headers.get("content-type").is_none());
 }
 
 fn binary_tool() -> ToolSpec {

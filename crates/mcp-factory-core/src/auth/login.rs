@@ -165,6 +165,9 @@ async fn wait_for_callback(
                 let tx = Arc::clone(&tx);
                 let expected_state = expected_state.clone();
                 async move {
+                    if query.state.as_deref() != Some(expected_state.as_str()) {
+                        return "Invalid OAuth state. You can close this window.";
+                    }
                     let mut guard = tx.lock().await;
                     if let Some(sender) = guard.take() {
                         let result = if let Some(err) = query.error {
@@ -172,10 +175,6 @@ async fn wait_for_callback(
                             Err(ProxyError::Config(format!(
                                 "OAuth authorization error: {err} {detail}"
                             )))
-                        } else if query.state.as_deref() != Some(expected_state.as_str()) {
-                            Err(ProxyError::Config(
-                                "OAuth callback state mismatch".to_string(),
-                            ))
                         } else if let Some(code) = query.code {
                             Ok(code)
                         } else {
@@ -238,6 +237,36 @@ mod tests {
             .query_pairs()
             .collect::<std::collections::HashMap<_, _>>();
         assert_eq!(query.get("state").map(|v| v.as_ref()), Some("state-123"));
+    }
+
+    #[tokio::test]
+    async fn wrong_state_callback_does_not_consume_login() {
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let port = listener.local_addr().unwrap().port();
+        let redirect = format!("http://127.0.0.1:{port}/callback");
+        let task = tokio::spawn({
+            let redirect = redirect.clone();
+            async move { wait_for_callback(listener, &redirect, "good-state").await }
+        });
+        let client = reqwest::Client::new();
+
+        let bad = client
+            .get(format!("{redirect}?code=bad&state=bad-state"))
+            .send()
+            .await
+            .unwrap()
+            .text()
+            .await
+            .unwrap();
+        assert!(bad.contains("Invalid OAuth state"));
+
+        client
+            .get(format!("{redirect}?code=good-code&state=good-state"))
+            .send()
+            .await
+            .unwrap();
+
+        assert_eq!(task.await.unwrap().unwrap(), "good-code");
     }
 }
 

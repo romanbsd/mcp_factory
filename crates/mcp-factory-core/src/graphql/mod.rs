@@ -17,6 +17,7 @@ pub struct GraphQLProxyExecutor {
     client: reqwest::Client,
     base_url: String,
     auth: Arc<dyn AuthProvider>,
+    max_response_bytes: u64,
 }
 
 impl GraphQLProxyExecutor {
@@ -25,6 +26,22 @@ impl GraphQLProxyExecutor {
             client,
             base_url,
             auth,
+            max_response_bytes: crate::rest::MAX_RESPONSE_BYTES,
+        }
+    }
+
+    #[cfg(test)]
+    fn new_with_response_limit(
+        client: reqwest::Client,
+        base_url: String,
+        auth: Arc<dyn AuthProvider>,
+        max_response_bytes: u64,
+    ) -> Self {
+        Self {
+            client,
+            base_url,
+            auth,
+            max_response_bytes,
         }
     }
 
@@ -48,7 +65,8 @@ impl GraphQLProxyExecutor {
 
         let response = request.send().await?;
         let status = response.status();
-        let text = response.text().await?;
+        let text =
+            crate::rest::read_limited_text_with_limit(response, self.max_response_bytes).await?;
         if !status.is_success() {
             return Err(ProxyError::Other(format!(
                 "upstream returned {status}: {text}"
@@ -101,7 +119,11 @@ pub fn format_graphql_response(text: &str) -> Result<String, ProxyError> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::auth::auth_provider_from_config;
+    use crate::config::AuthConfig;
     use serde_json::json;
+    use wiremock::matchers::method;
+    use wiremock::{Mock, MockServer, ResponseTemplate};
 
     #[test]
     fn builds_variables_from_args() {
@@ -140,5 +162,36 @@ mod tests {
         let formatted = format_graphql_response(text).unwrap();
         assert!(formatted.contains("alice"));
         assert!(formatted.contains("nickname failed"));
+    }
+
+    #[tokio::test]
+    async fn execute_rejects_oversized_graphql_response() {
+        let mock_server = MockServer::start().await;
+        Mock::given(method("POST"))
+            .respond_with(ResponseTemplate::new(200).set_body_string("{\"data\":\"too-large\"}"))
+            .mount(&mock_server)
+            .await;
+
+        let auth =
+            auth_provider_from_config(&AuthConfig::None, reqwest::Client::new(), false).unwrap();
+        let executor = GraphQLProxyExecutor::new_with_response_limit(
+            reqwest::Client::new(),
+            mock_server.uri(),
+            auth,
+            10,
+        );
+        let tool = ToolSpec {
+            name: "query".to_string(),
+            description: "query".to_string(),
+            input_schema: json!({"type": "object", "properties": {}}),
+            execution: ExecutionKind::GraphQL(GraphQLOperation {
+                document: "query { value }".to_string(),
+                variable_bindings: vec![],
+            }),
+            hints: Default::default(),
+        };
+
+        let err = executor.execute(&tool, json!({})).await.unwrap_err();
+        assert!(err.to_string().contains("upstream response too large"));
     }
 }

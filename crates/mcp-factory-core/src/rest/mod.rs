@@ -12,7 +12,7 @@ use crate::tools::{ExecutionKind::Rest as ExecutionKindRest, ToolBody, ToolResul
 /// Refuse to buffer an upstream response whose declared length exceeds this, so
 /// a huge (or hostile) response can't exhaust memory. Chunked responses with no
 /// Content-Length bypass the check — an acceptable best-effort guard.
-const MAX_RESPONSE_BYTES: u64 = 64 * 1024 * 1024;
+pub(crate) const MAX_RESPONSE_BYTES: u64 = 64 * 1024 * 1024;
 
 /// Path-segment encoding set: blocks `/` (and every other reserved/unsafe byte)
 /// so a value can't inject a new path segment, but keeps the RFC 3986 unreserved
@@ -84,8 +84,7 @@ impl RestProxyExecutor {
             if let Some(body) = args.as_object().and_then(|obj| obj.get("body")) {
                 request = apply_body(request, content_type, body);
             }
-        } else if !operation.body_fields.is_empty() {
-            let body = build_body(operation, &args)?;
+        } else if let Some(body) = build_body(operation, &args)? {
             request = apply_body(request, content_type, &body);
         }
 
@@ -152,12 +151,19 @@ impl RestProxyExecutor {
     }
 }
 
-async fn read_limited_text(response: reqwest::Response) -> Result<String, ProxyError> {
-    let bytes = read_limited_bytes(response).await?;
+pub(crate) async fn read_limited_text(response: reqwest::Response) -> Result<String, ProxyError> {
+    read_limited_text_with_limit(response, MAX_RESPONSE_BYTES).await
+}
+
+pub(crate) async fn read_limited_text_with_limit(
+    response: reqwest::Response,
+    max_bytes: u64,
+) -> Result<String, ProxyError> {
+    let bytes = read_limited_response(response, max_bytes).await?;
     Ok(String::from_utf8_lossy(&bytes).into_owned())
 }
 
-async fn read_limited_bytes(response: reqwest::Response) -> Result<Vec<u8>, ProxyError> {
+pub(crate) async fn read_limited_bytes(response: reqwest::Response) -> Result<Vec<u8>, ProxyError> {
     read_limited_response(response, MAX_RESPONSE_BYTES).await
 }
 
@@ -364,9 +370,12 @@ fn apply_headers(
     Ok(request)
 }
 
-fn build_body(operation: &RestOperation, args: &Value) -> Result<Value, ProxyError> {
+fn build_body(operation: &RestOperation, args: &Value) -> Result<Option<Value>, ProxyError> {
+    if operation.body_fields.is_empty() {
+        return Ok(None);
+    }
     let Some(obj) = args.as_object() else {
-        return Ok(Value::Object(Map::new()));
+        return Ok(None);
     };
     let mut body = Map::new();
     for field in &operation.body_fields {
@@ -374,7 +383,11 @@ fn build_body(operation: &RestOperation, args: &Value) -> Result<Value, ProxyErr
             body.insert(field.clone(), value.clone());
         }
     }
-    Ok(Value::Object(body))
+    if body.is_empty() {
+        Ok(None)
+    } else {
+        Ok(Some(Value::Object(body)))
+    }
 }
 
 fn parse_method(method: &str) -> Result<reqwest::Method, ProxyError> {
@@ -587,6 +600,19 @@ mod tests {
             &json!({"name": "fluffy", "tag": "dog", "ignored": true}),
         )
         .unwrap();
-        assert_eq!(body, json!({"name": "fluffy", "tag": "dog"}));
+        assert_eq!(body, Some(json!({"name": "fluffy", "tag": "dog"})));
+    }
+
+    #[test]
+    fn skips_body_when_no_fields_are_present() {
+        let operation = RestOperation {
+            method: "POST".to_string(),
+            path_template: "/pets".to_string(),
+            params: vec![],
+            body_fields: vec!["name".to_string()],
+            content_type: Some("application/json".to_string()),
+            raw_body: false,
+        };
+        assert_eq!(build_body(&operation, &json!({})).unwrap(), None);
     }
 }
