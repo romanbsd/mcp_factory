@@ -119,12 +119,31 @@ def _selection_for_type(gql_type: Any, depth: int = 2) -> str:
     return " ".join(selections)
 
 
+def _nullable(schema: dict[str, Any]) -> dict[str, Any]:
+    """Allow JSON null, so a nullable GraphQL field returning null still conforms
+    to the declared outputSchema (which clients may validate against)."""
+    schema = dict(schema)
+    t = schema.get("type")
+    if isinstance(t, str):
+        schema["type"] = [t, "null"]
+    elif isinstance(t, list) and "null" not in t:
+        schema["type"] = [*t, "null"]
+    if "enum" in schema and None not in schema["enum"]:
+        schema["enum"] = [*schema["enum"], None]
+    return schema
+
+
 def _output_schema(gql_type: Any, depth: int = 3) -> dict[str, Any]:
-    """Approximate JSON schema of a field's return type for the tool's
-    outputSchema. Bounded by ``depth`` to stay finite on cyclic graphs; unions
-    and the depth limit collapse to a loose object."""
+    """Approximate JSON schema for a field's return type. Non-null types stay
+    strict; every nullable type also permits null so real responses conform."""
     if isinstance(gql_type, GraphQLNonNull):
-        return _output_schema(gql_type.of_type, depth)
+        return _output_schema_inner(gql_type.of_type, depth)
+    return _nullable(_output_schema_inner(gql_type, depth))
+
+
+def _output_schema_inner(gql_type: Any, depth: int) -> dict[str, Any]:
+    """Schema for a non-null type body. Bounded by ``depth`` to stay finite on
+    cyclic graphs; unions and the depth limit collapse to a loose object."""
     if isinstance(gql_type, GraphQLList):
         return {"type": "array", "items": _output_schema(gql_type.of_type, depth)}
     if isinstance(gql_type, GraphQLScalarType):
@@ -207,7 +226,12 @@ def parse_graphql(path: Path) -> GenerationResult:
                     input_schema=_field_input_schema(field.args),
                     execution_kind="graphql",
                     graphql=GraphQLOperation(document=document, variable_bindings=bindings),
-                    output_schema=_output_schema(field.type),
+                    # structuredContent is the `data` object keyed by the field
+                    # name, so the outputSchema must describe that wrapper too.
+                    output_schema={
+                        "type": "object",
+                        "properties": {field_name: _output_schema(field.type)},
+                    },
                     # Queries are read-only/idempotent; mutations are neither.
                     read_only=is_query,
                     idempotent=is_query,

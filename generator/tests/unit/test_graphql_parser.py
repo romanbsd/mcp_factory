@@ -92,13 +92,36 @@ def test_annotations_enum_and_output_schema(tmp_path: Path) -> None:
         "type": "string",
         "enum": ["ADMIN", "USER"],
     }
-    # Output schema mirrors the return object, incl. the enum field.
-    out_props = user.output_schema["properties"]
-    assert out_props["id"] == {"type": "string"}
+    # Output schema wraps the return type under the field name (matching the
+    # GraphQL `data` object) and is nullability-aware.
+    assert user.output_schema["type"] == "object"
+    user_schema = user.output_schema["properties"]["user"]
+    assert "null" in user_schema["type"]  # `user: User` is nullable
+    out_props = user_schema["properties"]
+    assert out_props["id"] == {"type": "string"}  # ID! stays strict
     assert out_props["role"] == {"type": "string", "enum": ["ADMIN", "USER"]}
 
     # Mutation → not read-only.
     assert tools["deleteUser"].read_only is False
+
+
+def test_nullable_output_fields_allow_null(tmp_path: Path) -> None:
+    sdl = tmp_path / "nullable.graphql"
+    sdl.write_text(
+        """
+        enum Role { ADMIN USER }
+        type User { nickname: String role: Role }
+        type Query { me: User }
+        """
+    )
+    me = {t.name: t for t in parse_graphql(sdl).tools}["me"]
+    user = me.output_schema["properties"]["me"]
+    props = user["properties"]
+    # Nullable scalar permits null.
+    assert props["nickname"]["type"] == ["string", "null"]
+    # Nullable enum permits null in both type and enum members.
+    assert props["role"]["type"] == ["string", "null"]
+    assert None in props["role"]["enum"]
 
 
 def test_parses_introspection_json(fixtures_dir: Path) -> None:

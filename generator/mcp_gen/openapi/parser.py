@@ -91,7 +91,11 @@ def _operation_description(operation: dict[str, Any]) -> str:
 
 
 def _response_schema(operation: dict[str, Any]) -> dict[str, Any] | None:
-    """JSON schema of the first 2xx response body, for the tool's outputSchema."""
+    """JSON schema of the first 2xx response body, for the tool's outputSchema.
+
+    Restricted to object-typed responses: MCP ``structuredContent`` must be an
+    object, and the runtime only attaches it for object bodies, so declaring an
+    array/scalar outputSchema would never be satisfied."""
     responses = operation.get("responses", {})
     for code in sorted(responses):
         if not str(code).startswith("2"):
@@ -100,7 +104,7 @@ def _response_schema(operation: dict[str, Any]) -> dict[str, Any] | None:
         for media_type in ("application/json", "application/*+json"):
             if media_type in content:
                 schema = content[media_type].get("schema")
-                if schema:
+                if schema and (schema.get("type") == "object" or "properties" in schema):
                     return schema
     return None
 

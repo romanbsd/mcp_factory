@@ -124,10 +124,13 @@ impl RestProxyExecutor {
         // it in a proper binary/image MCP content block instead of mangling it.
         let body = if is_texty(&content_type) {
             let text = read_limited_text(response).await?;
-            // JSON also rides along as `structuredContent` so clients can read
-            // fields directly instead of re-parsing the string.
+            // JSON objects also ride along as `structuredContent` so clients can
+            // read fields directly. MCP requires structuredContent to be an
+            // object, so arrays/scalars stay text-only.
             let structured = if content_type.to_ascii_lowercase().contains("json") {
-                serde_json::from_str::<Value>(&text).ok()
+                serde_json::from_str::<Value>(&text)
+                    .ok()
+                    .filter(Value::is_object)
             } else {
                 None
             };

@@ -247,6 +247,31 @@ def test_verb_annotations_and_output_schema(tmp_path: Path) -> None:
     assert delete.output_schema is None
 
 
+def test_array_response_has_no_output_schema(tmp_path: Path) -> None:
+    # MCP structuredContent must be an object, so array responses declare none.
+    path = _write_spec(
+        tmp_path / "list.yaml",
+        {
+            "/pets": {
+                "get": {
+                    "operationId": "listPets",
+                    "responses": {
+                        "200": {
+                            "description": "OK",
+                            "content": {
+                                "application/json": {
+                                    "schema": {"type": "array", "items": {"type": "object"}}
+                                }
+                            },
+                        }
+                    },
+                }
+            }
+        },
+    )
+    assert parse_openapi(path).tools[0].output_schema is None
+
+
 def test_form_urlencoded_body_sets_content_type(tmp_path: Path) -> None:
     path = _write_spec(
         tmp_path / "form.yaml",
