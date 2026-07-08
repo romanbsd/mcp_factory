@@ -67,6 +67,33 @@ def _operation_description(operation: dict[str, Any]) -> str:
     return "\n\n".join(part for part in parts if part) or "Generated from OpenAPI operation"
 
 
+def _response_schema(operation: dict[str, Any]) -> dict[str, Any] | None:
+    """JSON schema of the first 2xx response body, for the tool's outputSchema."""
+    responses = operation.get("responses", {})
+    for code in sorted(responses):
+        if not str(code).startswith("2"):
+            continue
+        content = (responses[code] or {}).get("content", {})
+        for media_type in ("application/json", "application/*+json"):
+            if media_type in content:
+                schema = content[media_type].get("schema")
+                if schema:
+                    return schema
+    return None
+
+
+def _verb_annotations(method: str) -> dict[str, bool]:
+    """Map an HTTP verb to MCP behavioral hints (read-only/idempotent/etc.)."""
+    m = method.upper()
+    return {
+        "read_only": m in {"GET", "HEAD", "OPTIONS"},
+        "idempotent": m in {"GET", "HEAD", "OPTIONS", "PUT", "DELETE"},
+        "destructive": m == "DELETE",
+        # Proxying an external API is inherently an open-world interaction.
+        "open_world": True,
+    }
+
+
 def parse_openapi(
     path: Path,
     *,
@@ -135,6 +162,7 @@ def parse_openapi(
                         }
                     )
 
+            annotations = _verb_annotations(method)
             tools.append(
                 ToolSpec(
                     name=tool_name,
@@ -149,6 +177,12 @@ def parse_openapi(
                         content_type=content_type,
                         raw_body=raw_body,
                     ),
+                    title=operation.get("summary"),
+                    output_schema=_response_schema(operation),
+                    read_only=annotations["read_only"],
+                    idempotent=annotations["idempotent"],
+                    destructive=annotations["destructive"],
+                    open_world=annotations["open_world"],
                 )
             )
 

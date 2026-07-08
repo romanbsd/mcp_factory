@@ -1,5 +1,5 @@
 use mcp_factory_core::{
-    ExecutionKind{% if tools | selectattr('execution_kind', 'equalto', 'graphql') | list %}, GraphQLOperation{% endif %}{% if tools | selectattr('execution_kind', 'equalto', 'rest') | list %}, ParamBinding, ParamLocation, RestOperation{% endif %}, ToolSpec,
+    ExecutionKind{% if tools | selectattr('execution_kind', 'equalto', 'graphql') | list %}, GraphQLOperation{% endif %}{% if tools | selectattr('execution_kind', 'equalto', 'rest') | list %}, ParamBinding, ParamLocation, RestOperation{% endif %}, ToolHints, ToolSpec,
 };
 use serde_json::json;
 
@@ -36,6 +36,14 @@ pub fn build_tools() -> Vec<ToolSpec> {
 {% endfor %}
                 ],
             }){% endif %},
+            hints: ToolHints {
+                title: {% if tool.title %}Some({{ tool.title | tojson }}.to_string()){% else %}None{% endif %},
+                output_schema: {% if tool.output_schema %}Some(json!({{ tool.output_schema | tojson }})){% else %}None{% endif %},
+                read_only: {% if tool.read_only is not none %}Some({{ tool.read_only | tojson }}){% else %}None{% endif %},
+                destructive: {% if tool.destructive is not none %}Some({{ tool.destructive | tojson }}){% else %}None{% endif %},
+                idempotent: {% if tool.idempotent is not none %}Some({{ tool.idempotent | tojson }}){% else %}None{% endif %},
+                open_world: {% if tool.open_world is not none %}Some({{ tool.open_world | tojson }}){% else %}None{% endif %},
+            },
         },
 {% endfor %}
     ]

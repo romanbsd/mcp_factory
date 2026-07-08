@@ -14,27 +14,78 @@ pub enum ExecutionKind {
     GraphQL(GraphQLOperation),
 }
 
-/// Result of executing a tool: UTF-8 text (JSON/XML/plain) or an opaque binary
-/// blob with its MIME type. Keeping them distinct lets the server pick the right
-/// MCP content block instead of stuffing raw bytes into a text field.
+/// Body of a tool result: UTF-8 text (JSON/XML/plain) or an opaque binary blob
+/// with its MIME type. Keeping them distinct lets the server pick the right MCP
+/// content block instead of stuffing raw bytes into a text field.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum ToolOutput {
+pub enum ToolBody {
     Text(String),
     Binary { data: Vec<u8>, mime: String },
 }
 
-impl ToolOutput {
-    /// Flatten to a string; binary is base64-encoded. Used where a plain string
-    /// is expected (e.g. the `invoke_tool` test helper).
+impl ToolBody {
+    /// Flatten to a string; binary is base64-encoded.
     pub fn into_text(self) -> String {
         match self {
-            ToolOutput::Text(text) => text,
-            ToolOutput::Binary { data, .. } => {
+            ToolBody::Text(text) => text,
+            ToolBody::Binary { data, .. } => {
                 use base64::Engine;
                 base64::engine::general_purpose::STANDARD.encode(data)
             }
         }
     }
+}
+
+/// Everything an executor learned about a response, ready for the server to map
+/// onto an MCP `CallToolResult`: the human-readable body, an optional parsed
+/// `structured` value (for `structuredContent`), header `meta` hints, and
+/// whether it is a tool-level error.
+#[derive(Debug, Clone)]
+pub struct ToolResult {
+    pub body: ToolBody,
+    pub structured: Option<Value>,
+    pub meta: serde_json::Map<String, Value>,
+    pub is_error: bool,
+}
+
+impl ToolResult {
+    pub fn text(text: impl Into<String>) -> Self {
+        Self {
+            body: ToolBody::Text(text.into()),
+            structured: None,
+            meta: serde_json::Map::new(),
+            is_error: false,
+        }
+    }
+
+    pub fn with_structured(mut self, structured: Option<Value>) -> Self {
+        self.structured = structured;
+        self
+    }
+
+    /// Flatten to a string (binary → base64). Used where a plain string is
+    /// expected, e.g. the `invoke_tool` test helper.
+    pub fn into_text(self) -> String {
+        self.body.into_text()
+    }
+}
+
+/// Optional MCP metadata carried alongside a tool: a human title, a declared
+/// output schema, and behavioral hints. All default to unset.
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq)]
+pub struct ToolHints {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub title: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub output_schema: Option<Value>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub read_only: Option<bool>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub destructive: Option<bool>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub idempotent: Option<bool>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub open_world: Option<bool>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -43,6 +94,8 @@ pub struct ToolSpec {
     pub description: String,
     pub input_schema: Value,
     pub execution: ExecutionKind,
+    #[serde(default)]
+    pub hints: ToolHints,
 }
 
 #[derive(Default)]
@@ -128,6 +181,7 @@ mod tests {
                 content_type: None,
                 raw_body: false,
             }),
+            hints: ToolHints::default(),
         }
     }
 

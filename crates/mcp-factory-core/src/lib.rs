@@ -17,4 +17,4 @@ pub use graphql::{GraphQLOperation, GraphQLProxyExecutor};
 pub use resources::ResourceSpec;
 pub use rest::{ParamBinding, ParamLocation, RestOperation, RestProxyExecutor};
 pub use server::McpProxyServer;
-pub use tools::{ExecutionKind, ToolRegistry, ToolSpec};
+pub use tools::{ExecutionKind, ToolBody, ToolHints, ToolRegistry, ToolResult, ToolSpec};

@@ -56,6 +56,13 @@ class ToolSpec:
     execution_kind: Literal["rest", "graphql"]
     rest: RestOperation | None = None
     graphql: GraphQLOperation | None = None
+    # MCP hints threaded to the client (all optional).
+    title: str | None = None
+    output_schema: dict[str, Any] | None = None
+    read_only: bool | None = None
+    destructive: bool | None = None
+    idempotent: bool | None = None
+    open_world: bool | None = None
 
 
 @dataclass

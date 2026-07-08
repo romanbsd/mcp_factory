@@ -125,6 +125,58 @@ def test_wraps_non_object_request_body(tmp_path: Path) -> None:
     assert tool.input_schema.get("required") == ["body"]
 
 
+def test_verb_annotations_and_output_schema(tmp_path: Path) -> None:
+    path = _write_spec(
+        tmp_path / "ann.yaml",
+        {
+            "/pets/{id}": {
+                "get": {
+                    "operationId": "getPet",
+                    "summary": "Fetch a pet",
+                    "parameters": [
+                        {"name": "id", "in": "path", "required": True,
+                         "schema": {"type": "string"}}
+                    ],
+                    "responses": {
+                        "200": {
+                            "description": "OK",
+                            "content": {
+                                "application/json": {
+                                    "schema": {"type": "object",
+                                               "properties": {"id": {"type": "string"}}}
+                                }
+                            },
+                        }
+                    },
+                },
+                "delete": {
+                    "operationId": "deletePet",
+                    "parameters": [
+                        {"name": "id", "in": "path", "required": True,
+                         "schema": {"type": "string"}}
+                    ],
+                    "responses": {"204": {"description": "gone"}},
+                },
+            }
+        },
+    )
+    tools = {t.name: t for t in parse_openapi(path).tools}
+
+    get = tools["getPet"]
+    assert get.read_only is True
+    assert get.idempotent is True
+    assert get.destructive is False
+    assert get.open_world is True
+    assert get.title == "Fetch a pet"
+    assert get.output_schema == {"type": "object", "properties": {"id": {"type": "string"}}}
+
+    delete = tools["deletePet"]
+    assert delete.read_only is False
+    assert delete.destructive is True
+    assert delete.idempotent is True
+    assert delete.output_schema is None
+
+
 def test_form_urlencoded_body_sets_content_type(tmp_path: Path) -> None:
     path = _write_spec(
         tmp_path / "form.yaml",

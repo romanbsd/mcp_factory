@@ -26,6 +26,7 @@ pub fn rest_get_pet_tool() -> ToolSpec {
             content_type: None,
             raw_body: false,
         }),
+        hints: Default::default(),
     }
 }
 
@@ -49,6 +50,7 @@ pub fn rest_create_pet_tool() -> ToolSpec {
             content_type: Some("application/json".to_string()),
             raw_body: false,
         }),
+        hints: Default::default(),
     }
 }
 
@@ -67,6 +69,7 @@ pub fn graphql_user_tool() -> ToolSpec {
             document: "query($id: ID!) { user(id: $id) { name } }".to_string(),
             variable_bindings: vec!["id".to_string()],
         }),
+        hints: Default::default(),
     }
 }
 

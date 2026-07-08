@@ -3,8 +3,8 @@ use std::sync::Arc;
 use rmcp::handler::server::ServerHandler;
 use rmcp::model::{
     CallToolRequestParams, CallToolResult, ContentBlock, ListResourcesResult, ListToolsResult,
-    PaginatedRequestParams, ReadResourceRequestParams, ReadResourceResult, Resource,
-    ResourceContents, ServerCapabilities, ServerInfo, Tool,
+    Meta, PaginatedRequestParams, ReadResourceRequestParams, ReadResourceResult, Resource,
+    ResourceContents, ServerCapabilities, ServerInfo, Tool, ToolAnnotations,
 };
 use rmcp::service::{NotificationContext, RequestContext, RoleServer};
 use rmcp::ErrorData as McpError;
@@ -15,7 +15,7 @@ use crate::error::ProxyError;
 use crate::graphql::GraphQLProxyExecutor;
 use crate::resources::{ResourceRegistry, ResourceSpec};
 use crate::rest::RestProxyExecutor;
-use crate::tools::{ExecutionKind, ToolOutput, ToolRegistry, ToolSpec};
+use crate::tools::{ExecutionKind, ToolBody, ToolRegistry, ToolResult, ToolSpec};
 
 #[derive(Clone)]
 pub struct McpProxyServer {
@@ -64,12 +64,16 @@ impl McpProxyServer {
             .get(name)
             .ok_or_else(|| ProxyError::ToolNotFound(name.to_string()))?;
         self.inner.tools.validate(name, &args)?;
-        Ok(self.dispatch(tool, args).await?.into_text())
+        let result = self.dispatch(tool, args).await?;
+        if result.is_error {
+            return Err(ProxyError::Other(result.into_text()));
+        }
+        Ok(result.into_text())
     }
 
     /// Route a validated tool call to its executor. Single source of dispatch
     /// for both `invoke_tool` and the MCP `call_tool` handler.
-    async fn dispatch(&self, tool: &ToolSpec, args: Value) -> Result<ToolOutput, ProxyError> {
+    async fn dispatch(&self, tool: &ToolSpec, args: Value) -> Result<ToolResult, ProxyError> {
         match &tool.execution {
             ExecutionKind::Rest(_) => self.inner.rest.execute(tool, args).await,
             ExecutionKind::GraphQL(_) => self.inner.graphql.execute(tool, args).await,
@@ -192,10 +196,7 @@ impl ServerHandler for McpProxyServer {
         }
 
         match self.dispatch(tool, args).await {
-            Ok(output) => Ok(CallToolResult::success(vec![output_to_content(
-                output,
-                &request.name,
-            )])),
+            Ok(result) => Ok(result_to_call(result, &request.name)),
             Err(err) => Ok(CallToolResult::error(vec![ContentBlock::text(
                 err.to_string(),
             )])),
@@ -250,13 +251,37 @@ impl ServerHandler for McpProxyServer {
     }
 }
 
-/// Wrap a tool result in the most appropriate MCP content block: text as-is,
-/// binary as an image/audio block or an embedded blob resource (base64) with its
-/// MIME type, so clients can decode it rather than receiving opaque bytes.
-fn output_to_content(output: ToolOutput, tool_name: &str) -> ContentBlock {
-    match output {
-        ToolOutput::Text(text) => ContentBlock::text(text),
-        ToolOutput::Binary { data, mime } => {
+/// Text bodies larger than this are handed back as an embedded resource (with a
+/// URI + mime) rather than a bare text block, so clients can treat the payload
+/// as a document instead of inline chat text.
+const LARGE_TEXT_BYTES: usize = 256 * 1024;
+
+/// Assemble the full MCP `CallToolResult` from an executor's `ToolResult`:
+/// the right content block, `structuredContent`, `isError`, and header `_meta`.
+fn result_to_call(result: ToolResult, tool_name: &str) -> CallToolResult {
+    let block = body_to_content(result.body, tool_name);
+    let mut call = if result.is_error {
+        CallToolResult::error(vec![block])
+    } else {
+        CallToolResult::success(vec![block])
+    };
+    call.structured_content = result.structured;
+    if !result.meta.is_empty() {
+        call.meta = Some(Meta(result.meta));
+    }
+    call
+}
+
+/// Wrap a tool body in the most appropriate MCP content block: small text as
+/// text, large text as an embedded text resource, binary as image/audio or an
+/// embedded blob resource (base64) with its MIME type.
+fn body_to_content(body: ToolBody, tool_name: &str) -> ContentBlock {
+    match body {
+        ToolBody::Text(text) if text.len() > LARGE_TEXT_BYTES => ContentBlock::resource(
+            ResourceContents::text(text, format!("tool://{tool_name}/response")),
+        ),
+        ToolBody::Text(text) => ContentBlock::text(text),
+        ToolBody::Binary { data, mime } => {
             use base64::Engine;
             let encoded = base64::engine::general_purpose::STANDARD.encode(&data);
             if mime.starts_with("image/") {
@@ -266,7 +291,7 @@ fn output_to_content(output: ToolOutput, tool_name: &str) -> ContentBlock {
             } else {
                 ContentBlock::resource(ResourceContents::blob(
                     encoded,
-                    format!("tool://{tool_name}"),
+                    format!("tool://{tool_name}/response"),
                 ))
             }
         }
@@ -278,9 +303,109 @@ fn tool_spec_to_rmcp(spec: &ToolSpec) -> Result<Tool, ProxyError> {
         spec.input_schema.as_object().cloned().ok_or_else(|| {
             ProxyError::Validation("tool input_schema must be an object".to_string())
         })?;
-    Ok(Tool::new(
+    let mut tool = Tool::new(
         spec.name.clone(),
         spec.description.clone(),
         Arc::new(schema_obj),
-    ))
+    );
+
+    let hints = &spec.hints;
+    tool.title = hints.title.clone();
+    if let Some(schema) = &hints.output_schema {
+        let obj = schema.as_object().cloned().ok_or_else(|| {
+            ProxyError::Validation("tool output_schema must be an object".to_string())
+        })?;
+        tool.output_schema = Some(Arc::new(obj));
+    }
+    // Emit annotations only when at least one hint is set, so we don't override
+    // client defaults with a wall of `null`s.
+    if hints.title.is_some()
+        || hints.read_only.is_some()
+        || hints.destructive.is_some()
+        || hints.idempotent.is_some()
+        || hints.open_world.is_some()
+    {
+        tool.annotations = Some(ToolAnnotations::from_raw(
+            hints.title.clone(),
+            hints.read_only,
+            hints.destructive,
+            hints.idempotent,
+            hints.open_world,
+        ));
+    }
+    Ok(tool)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::rest::RestOperation;
+    use crate::tools::ToolHints;
+    use serde_json::json;
+
+    fn rest_spec(hints: ToolHints) -> ToolSpec {
+        ToolSpec {
+            name: "get_pet".to_string(),
+            description: "Get a pet".to_string(),
+            input_schema: json!({"type": "object", "properties": {}}),
+            execution: ExecutionKind::Rest(RestOperation {
+                method: "GET".to_string(),
+                path_template: "/pets".to_string(),
+                params: vec![],
+                body_fields: vec![],
+                content_type: None,
+                raw_body: false,
+            }),
+            hints,
+        }
+    }
+
+    #[test]
+    fn maps_hints_to_tool_metadata() {
+        let spec = rest_spec(ToolHints {
+            title: Some("Get pet".to_string()),
+            output_schema: Some(json!({"type": "object"})),
+            read_only: Some(true),
+            idempotent: Some(true),
+            open_world: Some(true),
+            ..Default::default()
+        });
+        let tool = tool_spec_to_rmcp(&spec).unwrap();
+        assert_eq!(tool.title.as_deref(), Some("Get pet"));
+        assert!(tool.output_schema.is_some());
+        let ann = tool.annotations.unwrap();
+        assert_eq!(ann.read_only_hint, Some(true));
+        assert_eq!(ann.idempotent_hint, Some(true));
+        assert_eq!(ann.open_world_hint, Some(true));
+    }
+
+    #[test]
+    fn no_annotations_when_no_hints() {
+        let tool = tool_spec_to_rmcp(&rest_spec(ToolHints::default())).unwrap();
+        assert!(tool.annotations.is_none());
+        assert!(tool.output_schema.is_none());
+    }
+
+    #[test]
+    fn result_to_call_carries_structured_error_and_meta() {
+        let mut meta = serde_json::Map::new();
+        meta.insert("http.location".to_string(), json!("/pets/1"));
+        let result = ToolResult {
+            body: ToolBody::Text("boom".to_string()),
+            structured: Some(json!({"status": 500})),
+            meta,
+            is_error: true,
+        };
+        let call = result_to_call(result, "get_pet");
+        assert_eq!(call.is_error, Some(true));
+        assert_eq!(call.structured_content.unwrap()["status"], 500);
+        assert!(call.meta.is_some());
+    }
+
+    #[test]
+    fn large_text_becomes_resource_block() {
+        let big = "x".repeat(LARGE_TEXT_BYTES + 1);
+        let block = body_to_content(ToolBody::Text(big), "get_pet");
+        assert!(matches!(block, ContentBlock::Resource(_)));
+    }
 }

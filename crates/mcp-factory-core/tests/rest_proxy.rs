@@ -68,6 +68,7 @@ fn form_login_tool() -> ToolSpec {
             content_type: Some("application/x-www-form-urlencoded".to_string()),
             raw_body: false,
         }),
+        hints: Default::default(),
     }
 }
 
@@ -114,6 +115,7 @@ fn binary_tool() -> ToolSpec {
             content_type: None,
             raw_body: false,
         }),
+        hints: Default::default(),
     }
 }
 
@@ -140,4 +142,28 @@ async fn rest_proxy_base64s_binary_response() {
     // invoke_tool flattens binary output to base64; [1,2,3] -> "AQID".
     let result = server.invoke_tool("get_image", json!({})).await.unwrap();
     assert_eq!(result, "AQID");
+}
+
+#[tokio::test]
+async fn rest_proxy_surfaces_upstream_error() {
+    let mock_server = MockServer::start().await;
+    Mock::given(method("GET"))
+        .and(path("/pets/9"))
+        .respond_with(ResponseTemplate::new(500).set_body_string("boom"))
+        .mount(&mock_server)
+        .await;
+
+    let config = common::proxy_config(&mock_server.uri());
+    let server = McpProxyServer::builder(config)
+        .tools(&[common::rest_get_pet_tool()])
+        .unwrap()
+        .build()
+        .unwrap();
+
+    // Upstream 5xx surfaces as a tool error through invoke_tool.
+    let err = server
+        .invoke_tool("get_pet", json!({"petId": 9}))
+        .await
+        .unwrap_err();
+    assert!(err.to_string().contains("500"));
 }

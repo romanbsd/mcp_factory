@@ -7,7 +7,7 @@ use percent_encoding::{utf8_percent_encode, AsciiSet, NON_ALPHANUMERIC};
 
 use crate::auth::AuthProvider;
 use crate::error::ProxyError;
-use crate::tools::{ExecutionKind::Rest as ExecutionKindRest, ToolOutput, ToolSpec};
+use crate::tools::{ExecutionKind::Rest as ExecutionKindRest, ToolBody, ToolResult, ToolSpec};
 
 /// Refuse to buffer an upstream response whose declared length exceeds this, so
 /// a huge (or hostile) response can't exhaust memory. Chunked responses with no
@@ -66,7 +66,7 @@ impl RestProxyExecutor {
         }
     }
 
-    pub async fn execute(&self, tool: &ToolSpec, args: Value) -> Result<ToolOutput, ProxyError> {
+    pub async fn execute(&self, tool: &ToolSpec, args: Value) -> Result<ToolResult, ProxyError> {
         let ExecutionKindRest(operation) = &tool.execution else {
             return Err(ProxyError::Other("expected REST execution".to_string()));
         };
@@ -97,6 +97,8 @@ impl RestProxyExecutor {
             .and_then(|v| v.to_str().ok())
             .unwrap_or("")
             .to_string();
+        // Surface navigation/quota headers the model can't otherwise see.
+        let meta = collect_header_hints(response.headers());
         if let Some(len) = response.content_length() {
             if len > MAX_RESPONSE_BYTES {
                 return Err(ProxyError::Other(format!(
@@ -104,23 +106,111 @@ impl RestProxyExecutor {
                 )));
             }
         }
+
         if !status.is_success() {
-            let text = response.text().await.unwrap_or_default();
-            return Err(ProxyError::Other(format!(
-                "upstream returned {status}: {text}"
-            )));
+            let body = response.text().await.unwrap_or_default();
+            return Ok(error_result(status, &content_type, body, meta));
         }
+
+        // 204 / empty success: report it explicitly rather than an empty string.
+        if status == reqwest::StatusCode::NO_CONTENT {
+            return Ok(ToolResult {
+                meta,
+                ..ToolResult::text(format!("{status}"))
+            });
+        }
+
         // Text passes through as a string (`.text()` honors the declared
         // charset); non-text is handed back as raw bytes so the server can wrap
         // it in a proper binary/image MCP content block instead of mangling it.
-        if is_texty(&content_type) {
-            Ok(ToolOutput::Text(response.text().await?))
+        let body = if is_texty(&content_type) {
+            let text = response.text().await?;
+            // JSON also rides along as `structuredContent` so clients can read
+            // fields directly instead of re-parsing the string.
+            let structured = if content_type.to_ascii_lowercase().contains("json") {
+                serde_json::from_str::<Value>(&text).ok()
+            } else {
+                None
+            };
+            ToolResult {
+                structured,
+                meta,
+                ..ToolResult::text(text)
+            }
         } else {
-            Ok(ToolOutput::Binary {
-                data: response.bytes().await?.to_vec(),
-                mime: content_type,
-            })
+            ToolResult {
+                body: ToolBody::Binary {
+                    data: response.bytes().await?.to_vec(),
+                    mime: content_type,
+                },
+                structured: None,
+                meta,
+                is_error: false,
+            }
+        };
+        Ok(body)
+    }
+}
+
+/// Whitelisted response headers that carry clues a client/LLM can act on:
+/// where a created resource lives, pagination, rate-limit budget, caching.
+const HINT_HEADERS: &[&str] = &[
+    "location",
+    "link",
+    "retry-after",
+    "etag",
+    "x-ratelimit-remaining",
+    "x-ratelimit-limit",
+    "x-ratelimit-reset",
+    "content-range",
+];
+
+fn collect_header_hints(headers: &reqwest::header::HeaderMap) -> Map<String, Value> {
+    let mut meta = Map::new();
+    for name in HINT_HEADERS {
+        if let Some(value) = headers.get(*name).and_then(|v| v.to_str().ok()) {
+            meta.insert(format!("http.{name}"), Value::String(value.to_string()));
         }
+    }
+    meta
+}
+
+/// Build a tool-level error result from a non-2xx response, with machine-usable
+/// hints: whether it's worth retrying, any `Retry-After`, an auth cue, and the
+/// parsed body when it's `application/problem+json` (RFC 7807).
+fn error_result(
+    status: reqwest::StatusCode,
+    content_type: &str,
+    body: String,
+    meta: Map<String, Value>,
+) -> ToolResult {
+    let retryable = status.is_server_error() || status == reqwest::StatusCode::TOO_MANY_REQUESTS;
+    let mut structured = Map::new();
+    structured.insert("status".to_string(), Value::from(status.as_u16()));
+    structured.insert("retryable".to_string(), Value::Bool(retryable));
+    if matches!(
+        status,
+        reqwest::StatusCode::UNAUTHORIZED | reqwest::StatusCode::FORBIDDEN
+    ) {
+        structured.insert(
+            "hint".to_string(),
+            Value::String("authentication or authorization failed; re-authenticate".to_string()),
+        );
+    }
+    if let Some(retry_after) = meta.get("http.retry-after") {
+        structured.insert("retry_after".to_string(), retry_after.clone());
+    }
+    // Prefer a structured problem+json body; otherwise keep the raw text.
+    if content_type.to_ascii_lowercase().contains("problem+json") {
+        if let Ok(problem) = serde_json::from_str::<Value>(&body) {
+            structured.insert("problem".to_string(), problem);
+        }
+    }
+    ToolResult {
+        body: ToolBody::Text(format!("upstream returned {status}: {body}")),
+        structured: Some(Value::Object(structured)),
+        meta,
+        is_error: true,
     }
 }
 
@@ -363,6 +453,54 @@ mod tests {
     #[test]
     fn empty_array_path_param_errors() {
         assert!(substitute_path("/pets/{ids}", &json!({"ids": []})).is_err());
+    }
+
+    #[test]
+    fn error_result_classifies_status() {
+        let meta = Map::new();
+        let server = error_result(
+            reqwest::StatusCode::INTERNAL_SERVER_ERROR,
+            "text/plain",
+            "boom".to_string(),
+            meta.clone(),
+        );
+        assert!(server.is_error);
+        let s = server.structured.unwrap();
+        assert_eq!(s["status"], 500);
+        assert_eq!(s["retryable"], true);
+
+        let unauth = error_result(
+            reqwest::StatusCode::UNAUTHORIZED,
+            "text/plain",
+            "nope".to_string(),
+            meta,
+        );
+        let s = unauth.structured.unwrap();
+        assert_eq!(s["retryable"], false);
+        assert!(s["hint"].as_str().unwrap().contains("re-authenticate"));
+    }
+
+    #[test]
+    fn error_result_parses_problem_json() {
+        let s = error_result(
+            reqwest::StatusCode::BAD_REQUEST,
+            "application/problem+json",
+            r#"{"title":"bad","detail":"x"}"#.to_string(),
+            Map::new(),
+        )
+        .structured
+        .unwrap();
+        assert_eq!(s["problem"]["title"], "bad");
+    }
+
+    #[test]
+    fn collect_header_hints_whitelists() {
+        let mut headers = reqwest::header::HeaderMap::new();
+        headers.insert("location", "/pets/1".parse().unwrap());
+        headers.insert("x-custom", "ignored".parse().unwrap());
+        let meta = collect_header_hints(&headers);
+        assert_eq!(meta["http.location"], "/pets/1");
+        assert!(!meta.contains_key("http.x-custom"));
     }
 
     #[test]

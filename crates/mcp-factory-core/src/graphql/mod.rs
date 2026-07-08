@@ -5,7 +5,7 @@ use serde_json::{json, Map, Value};
 
 use crate::auth::AuthProvider;
 use crate::error::ProxyError;
-use crate::tools::{ExecutionKind, ToolOutput, ToolSpec};
+use crate::tools::{ExecutionKind, ToolResult, ToolSpec};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GraphQLOperation {
@@ -28,7 +28,7 @@ impl GraphQLProxyExecutor {
         }
     }
 
-    pub async fn execute(&self, tool: &ToolSpec, args: Value) -> Result<ToolOutput, ProxyError> {
+    pub async fn execute(&self, tool: &ToolSpec, args: Value) -> Result<ToolResult, ProxyError> {
         let ExecutionKind::GraphQL(operation) = &tool.execution else {
             return Err(ProxyError::Other("expected GraphQL execution".to_string()));
         };
@@ -54,7 +54,13 @@ impl GraphQLProxyExecutor {
                 "upstream returned {status}: {text}"
             )));
         }
-        format_graphql_response(&text).map(ToolOutput::Text)
+        let formatted = format_graphql_response(&text)?;
+        // Hand the `data` object back as structuredContent for direct field
+        // access, keeping the pretty text for humans.
+        let structured = serde_json::from_str::<Value>(&text)
+            .ok()
+            .and_then(|v| v.get("data").filter(|d| !d.is_null()).cloned());
+        Ok(ToolResult::text(formatted).with_structured(structured))
     }
 }
 

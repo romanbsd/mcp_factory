@@ -48,6 +48,9 @@ def _type_to_schema(gql_type: Any) -> dict[str, Any]:
         return {"type": "array", "items": _type_to_schema(gql_type.of_type)}
     if isinstance(gql_type, GraphQLScalarType):
         return SCALAR_TO_JSON.get(gql_type.name, {"type": "string"})
+    if isinstance(gql_type, GraphQLEnumType):
+        # Constrain to the enum's members so the client picks a valid value.
+        return {"type": "string", "enum": list(gql_type.values.keys())}
     if isinstance(gql_type, GraphQLInputObjectType):
         properties: dict[str, Any] = {}
         required: list[str] = []
@@ -112,6 +115,29 @@ def _selection_for_type(gql_type: Any, depth: int = 2) -> str:
     return " ".join(selections)
 
 
+def _output_schema(gql_type: Any, depth: int = 3) -> dict[str, Any]:
+    """Approximate JSON schema of a field's return type for the tool's
+    outputSchema. Bounded by ``depth`` to stay finite on cyclic graphs; unions
+    and the depth limit collapse to a loose object."""
+    if isinstance(gql_type, GraphQLNonNull):
+        return _output_schema(gql_type.of_type, depth)
+    if isinstance(gql_type, GraphQLList):
+        return {"type": "array", "items": _output_schema(gql_type.of_type, depth)}
+    if isinstance(gql_type, GraphQLScalarType):
+        return SCALAR_TO_JSON.get(gql_type.name, {"type": "string"})
+    if isinstance(gql_type, GraphQLEnumType):
+        return {"type": "string", "enum": list(gql_type.values.keys())}
+    fields = getattr(gql_type, "fields", None)
+    if fields and depth > 0:
+        properties = {
+            name: _output_schema(field.type, depth - 1)
+            for name, field in fields.items()
+            if not _requires_args(field)
+        }
+        return {"type": "object", "properties": properties}
+    return {"type": "object"}
+
+
 def _build_document(operation_type: str, field_name: str, args: dict[str, GraphQLArgument], return_type: Any) -> tuple[str, list[str]]:
     arg_defs = []
     arg_vars = []
@@ -166,6 +192,7 @@ def parse_graphql(path: Path) -> GenerationResult:
                 gql_operation, field_name, field.args, field.type
             )
             tool_name = unique_name(sanitize_tool_name(field_name), seen_names)
+            is_query = operation_type == "query"
             tools.append(
                 ToolSpec(
                     name=tool_name,
@@ -173,6 +200,11 @@ def parse_graphql(path: Path) -> GenerationResult:
                     input_schema=_field_input_schema(field.args),
                     execution_kind="graphql",
                     graphql=GraphQLOperation(document=document, variable_bindings=bindings),
+                    output_schema=_output_schema(field.type),
+                    # Queries are read-only/idempotent; mutations are neither.
+                    read_only=is_query,
+                    idempotent=is_query,
+                    open_world=True,
                 )
             )
 

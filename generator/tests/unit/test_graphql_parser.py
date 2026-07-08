@@ -52,6 +52,37 @@ def test_parses_nested_input_types(fixtures_dir: Path) -> None:
     assert "term" in props and "limit" in props
 
 
+def test_annotations_enum_and_output_schema(tmp_path: Path) -> None:
+    sdl = tmp_path / "enum.graphql"
+    sdl.write_text(
+        """
+        enum Role { ADMIN USER }
+        type User { id: ID! role: Role! }
+        type Query { user(role: Role!): User }
+        type Mutation { deleteUser(id: ID!): Boolean }
+        """
+    )
+    tools = {t.name: t for t in parse_graphql(sdl).tools}
+
+    user = tools["user"]
+    # Query → read-only/idempotent.
+    assert user.read_only is True
+    assert user.idempotent is True
+    assert user.open_world is True
+    # Enum argument is constrained to its members in the input schema.
+    assert user.input_schema["properties"]["role"] == {
+        "type": "string",
+        "enum": ["ADMIN", "USER"],
+    }
+    # Output schema mirrors the return object, incl. the enum field.
+    out_props = user.output_schema["properties"]
+    assert out_props["id"] == {"type": "string"}
+    assert out_props["role"] == {"type": "string", "enum": ["ADMIN", "USER"]}
+
+    # Mutation → not read-only.
+    assert tools["deleteUser"].read_only is False
+
+
 def test_parses_introspection_json(fixtures_dir: Path) -> None:
     result = parse_graphql(fixtures_dir / "introspection.json")
     assert len(result.tools) == 1

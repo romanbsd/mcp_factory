@@ -26,6 +26,7 @@ fn smoke_tool() -> ToolSpec {
             content_type: None,
             raw_body: false,
         }),
+        hints: Default::default(),
     }
 }
 
