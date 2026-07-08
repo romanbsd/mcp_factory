@@ -14,6 +14,29 @@ pub enum ExecutionKind {
     GraphQL(GraphQLOperation),
 }
 
+/// Result of executing a tool: UTF-8 text (JSON/XML/plain) or an opaque binary
+/// blob with its MIME type. Keeping them distinct lets the server pick the right
+/// MCP content block instead of stuffing raw bytes into a text field.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ToolOutput {
+    Text(String),
+    Binary { data: Vec<u8>, mime: String },
+}
+
+impl ToolOutput {
+    /// Flatten to a string; binary is base64-encoded. Used where a plain string
+    /// is expected (e.g. the `invoke_tool` test helper).
+    pub fn into_text(self) -> String {
+        match self {
+            ToolOutput::Text(text) => text,
+            ToolOutput::Binary { data, .. } => {
+                use base64::Engine;
+                base64::engine::general_purpose::STANDARD.encode(data)
+            }
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ToolSpec {
     pub name: String,

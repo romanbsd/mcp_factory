@@ -19,11 +19,15 @@ pub trait AuthProvider: Send + Sync {
 
 pub struct StaticAuthProvider {
     auth: AuthConfig,
+    /// Secret resolved once at construction — env vars are effectively immutable
+    /// for the process, so there's no need to re-read them on every request.
+    secret: Option<String>,
 }
 
 impl StaticAuthProvider {
     pub fn new(auth: AuthConfig) -> Self {
-        Self { auth }
+        let secret = auth.resolve_secret();
+        Self { auth, secret }
     }
 }
 
@@ -33,27 +37,22 @@ impl AuthProvider for StaticAuthProvider {
         &self,
         mut request: RequestBuilder,
     ) -> Result<RequestBuilder, ProxyError> {
-        match &self.auth {
-            AuthConfig::None => {}
-            AuthConfig::Bearer { .. } => {
-                if let Some(token) = self.auth.resolve_secret() {
-                    request = request.bearer_auth(token);
-                }
+        match (&self.auth, &self.secret) {
+            (AuthConfig::Bearer { .. }, Some(token)) => {
+                request = request.bearer_auth(token);
             }
-            AuthConfig::ApiKeyHeader { header, .. } => {
-                if let Some(key) = self.auth.resolve_secret() {
-                    request = request.header(header.as_str(), key);
-                }
+            (AuthConfig::ApiKeyHeader { header, .. }, Some(key)) => {
+                request = request.header(header.as_str(), key);
             }
-            AuthConfig::ApiKeyQuery { .. } | AuthConfig::OAuth2 { .. } => {}
+            _ => {}
         }
         Ok(request)
     }
 
     fn api_key_query(&self) -> Option<(String, String)> {
-        match &self.auth {
-            AuthConfig::ApiKeyQuery { param, .. } => {
-                self.auth.resolve_secret().map(|v| (param.clone(), v))
+        match (&self.auth, &self.secret) {
+            (AuthConfig::ApiKeyQuery { param, .. }, Some(secret)) => {
+                Some((param.clone(), secret.clone()))
             }
             _ => None,
         }

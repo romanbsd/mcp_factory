@@ -7,7 +7,12 @@ use percent_encoding::{utf8_percent_encode, AsciiSet, NON_ALPHANUMERIC};
 
 use crate::auth::AuthProvider;
 use crate::error::ProxyError;
-use crate::tools::{ExecutionKind::Rest as ExecutionKindRest, ToolSpec};
+use crate::tools::{ExecutionKind::Rest as ExecutionKindRest, ToolOutput, ToolSpec};
+
+/// Refuse to buffer an upstream response whose declared length exceeds this, so
+/// a huge (or hostile) response can't exhaust memory. Chunked responses with no
+/// Content-Length bypass the check — an acceptable best-effort guard.
+const MAX_RESPONSE_BYTES: u64 = 64 * 1024 * 1024;
 
 /// Path-segment encoding set: blocks `/` (and every other reserved/unsafe byte)
 /// so a value can't inject a new path segment, but keeps the RFC 3986 unreserved
@@ -61,7 +66,7 @@ impl RestProxyExecutor {
         }
     }
 
-    pub async fn execute(&self, tool: &ToolSpec, args: Value) -> Result<String, ProxyError> {
+    pub async fn execute(&self, tool: &ToolSpec, args: Value) -> Result<ToolOutput, ProxyError> {
         let ExecutionKindRest(operation) = &tool.execution else {
             return Err(ProxyError::Other("expected REST execution".to_string()));
         };
@@ -86,20 +91,35 @@ impl RestProxyExecutor {
 
         let response = request.send().await?;
         let status = response.status();
-        let resp_content_type = response
+        let content_type = response
             .headers()
             .get(reqwest::header::CONTENT_TYPE)
             .and_then(|v| v.to_str().ok())
             .unwrap_or("")
             .to_string();
-        let bytes = response.bytes().await?;
-        let text = decode_body(&resp_content_type, &bytes);
-        if status.is_success() {
-            Ok(text)
-        } else {
-            Err(ProxyError::Other(format!(
+        if let Some(len) = response.content_length() {
+            if len > MAX_RESPONSE_BYTES {
+                return Err(ProxyError::Other(format!(
+                    "upstream response too large: {len} bytes"
+                )));
+            }
+        }
+        if !status.is_success() {
+            let text = response.text().await.unwrap_or_default();
+            return Err(ProxyError::Other(format!(
                 "upstream returned {status}: {text}"
-            )))
+            )));
+        }
+        // Text passes through as a string (`.text()` honors the declared
+        // charset); non-text is handed back as raw bytes so the server can wrap
+        // it in a proper binary/image MCP content block instead of mangling it.
+        if is_texty(&content_type) {
+            Ok(ToolOutput::Text(response.text().await?))
+        } else {
+            Ok(ToolOutput::Binary {
+                data: response.bytes().await?.to_vec(),
+                mime: content_type,
+            })
         }
     }
 }
@@ -136,15 +156,6 @@ fn is_texty(content_type: &str) -> bool {
         || ct.contains("javascript")
         || ct.contains("csv")
         || ct.contains("urlencoded")
-}
-
-fn decode_body(content_type: &str, bytes: &[u8]) -> String {
-    if is_texty(content_type) {
-        String::from_utf8_lossy(bytes).into_owned()
-    } else {
-        use base64::Engine;
-        base64::engine::general_purpose::STANDARD.encode(bytes)
-    }
 }
 
 pub fn substitute_path(template: &str, args: &Value) -> Result<String, ProxyError> {
@@ -271,6 +282,11 @@ fn value_to_string(value: &Value) -> Result<String, ProxyError> {
 fn encode_path_value(value: &Value) -> Result<String, ProxyError> {
     match value {
         Value::Array(items) => {
+            if items.is_empty() {
+                return Err(ProxyError::Validation(
+                    "empty array for path parameter".to_string(),
+                ));
+            }
             let encoded = items
                 .iter()
                 .map(|item| Ok(utf8_percent_encode(&value_to_string(item)?, PATH_VALUE).to_string()))
@@ -336,12 +352,17 @@ mod tests {
     }
 
     #[test]
-    fn decode_body_passes_text_through_and_base64s_binary() {
-        assert_eq!(decode_body("application/json", b"{\"a\":1}"), "{\"a\":1}");
-        assert_eq!(decode_body("", b"plain"), "plain");
-        // Non-text stays lossless via base64 instead of being UTF-8 mangled.
-        let encoded = decode_body("image/png", &[0x89, 0x50, 0x4e, 0x47]);
-        assert_eq!(encoded, "iVBORw==");
+    fn is_texty_classifies_content_types() {
+        assert!(is_texty("application/json"));
+        assert!(is_texty("text/html; charset=utf-8"));
+        assert!(is_texty("")); // missing header defaults to text
+        assert!(!is_texty("image/png"));
+        assert!(!is_texty("application/octet-stream"));
+    }
+
+    #[test]
+    fn empty_array_path_param_errors() {
+        assert!(substitute_path("/pets/{ids}", &json!({"ids": []})).is_err());
     }
 
     #[test]

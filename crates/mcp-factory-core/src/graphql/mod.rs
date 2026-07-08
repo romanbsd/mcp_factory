@@ -5,7 +5,7 @@ use serde_json::{json, Map, Value};
 
 use crate::auth::AuthProvider;
 use crate::error::ProxyError;
-use crate::tools::{ExecutionKind, ToolSpec};
+use crate::tools::{ExecutionKind, ToolOutput, ToolSpec};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GraphQLOperation {
@@ -28,7 +28,7 @@ impl GraphQLProxyExecutor {
         }
     }
 
-    pub async fn execute(&self, tool: &ToolSpec, args: Value) -> Result<String, ProxyError> {
+    pub async fn execute(&self, tool: &ToolSpec, args: Value) -> Result<ToolOutput, ProxyError> {
         let ExecutionKind::GraphQL(operation) = &tool.execution else {
             return Err(ProxyError::Other("expected GraphQL execution".to_string()));
         };
@@ -54,7 +54,7 @@ impl GraphQLProxyExecutor {
                 "upstream returned {status}: {text}"
             )));
         }
-        format_graphql_response(&text)
+        format_graphql_response(&text).map(ToolOutput::Text)
     }
 }
 
@@ -75,22 +75,21 @@ pub fn format_graphql_response(text: &str) -> Result<String, ProxyError> {
     let parsed: Value = serde_json::from_str(text)
         .map_err(|e| ProxyError::Other(format!("invalid GraphQL JSON response: {e}")))?;
 
-    let has_errors = parsed
-        .get("errors")
-        .and_then(Value::as_array)
-        .is_some_and(|arr| !arr.is_empty());
     // GraphQL allows partial success: `data` and `errors` can both be present.
-    // Only fail outright when there is no usable data to return.
-    let has_data = parsed.get("data").is_some_and(|d| !d.is_null());
+    let errors = parsed
+        .get("errors")
+        .filter(|e| e.as_array().is_some_and(|arr| !arr.is_empty()));
+    let data = parsed.get("data").filter(|d| !d.is_null());
 
-    if has_errors && !has_data {
-        let errors = parsed.get("errors").unwrap();
-        return Err(ProxyError::Other(format!("GraphQL errors: {errors}")));
+    let pretty = |v: &Value| serde_json::to_string_pretty(v).unwrap_or_else(|_| v.to_string());
+    match (data, errors) {
+        // Partial success: return the data but keep the errors visible so the
+        // caller knows the result is incomplete.
+        (Some(data), Some(errors)) => Ok(pretty(&json!({"data": data, "errors": errors}))),
+        (Some(data), None) => Ok(pretty(data)),
+        (None, Some(errors)) => Err(ProxyError::Other(format!("GraphQL errors: {errors}"))),
+        (None, None) => Ok(text.to_string()),
     }
-    if let Some(data) = parsed.get("data").filter(|d| !d.is_null()) {
-        return Ok(serde_json::to_string_pretty(data).unwrap_or_else(|_| data.to_string()));
-    }
-    Ok(text.to_string())
 }
 
 #[cfg(test)]
@@ -129,9 +128,11 @@ mod tests {
 
     #[test]
     fn partial_data_with_errors_is_returned() {
-        // data present alongside field-level errors must not be discarded.
+        // data present alongside field-level errors must not be discarded, and
+        // the errors stay visible so the caller knows it is partial.
         let text = r#"{"data":{"user":{"name":"alice"}},"errors":[{"message":"nickname failed"}]}"#;
         let formatted = format_graphql_response(text).unwrap();
         assert!(formatted.contains("alice"));
+        assert!(formatted.contains("nickname failed"));
     }
 }

@@ -27,6 +27,10 @@ async fn main() -> anyhow::Result<()> {
     if config.server_name.is_empty() {
         config.server_name = "{{ crate_name }}".to_string();
     }
+    // Report this generated crate's version unless the config overrode it.
+    if config.server_version == ProxyConfig::default().server_version {
+        config.server_version = env!("CARGO_PKG_VERSION").to_string();
+    }
 
     let tools = tools::build_tools();
     let resources = resources::build_resources();

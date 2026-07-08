@@ -15,7 +15,7 @@ use crate::error::ProxyError;
 use crate::graphql::GraphQLProxyExecutor;
 use crate::resources::{ResourceRegistry, ResourceSpec};
 use crate::rest::RestProxyExecutor;
-use crate::tools::{ExecutionKind, ToolRegistry, ToolSpec};
+use crate::tools::{ExecutionKind, ToolOutput, ToolRegistry, ToolSpec};
 
 #[derive(Clone)]
 pub struct McpProxyServer {
@@ -64,6 +64,12 @@ impl McpProxyServer {
             .get(name)
             .ok_or_else(|| ProxyError::ToolNotFound(name.to_string()))?;
         self.inner.tools.validate(name, &args)?;
+        Ok(self.dispatch(tool, args).await?.into_text())
+    }
+
+    /// Route a validated tool call to its executor. Single source of dispatch
+    /// for both `invoke_tool` and the MCP `call_tool` handler.
+    async fn dispatch(&self, tool: &ToolSpec, args: Value) -> Result<ToolOutput, ProxyError> {
         match &tool.execution {
             ExecutionKind::Rest(_) => self.inner.rest.execute(tool, args).await,
             ExecutionKind::GraphQL(_) => self.inner.graphql.execute(tool, args).await,
@@ -185,13 +191,11 @@ impl ServerHandler for McpProxyServer {
             )]));
         }
 
-        let result = match &tool.execution {
-            ExecutionKind::Rest(_) => self.inner.rest.execute(tool, args).await,
-            ExecutionKind::GraphQL(_) => self.inner.graphql.execute(tool, args).await,
-        };
-
-        match result {
-            Ok(text) => Ok(CallToolResult::success(vec![ContentBlock::text(text)])),
+        match self.dispatch(tool, args).await {
+            Ok(output) => Ok(CallToolResult::success(vec![output_to_content(
+                output,
+                &request.name,
+            )])),
             Err(err) => Ok(CallToolResult::error(vec![ContentBlock::text(
                 err.to_string(),
             )])),
@@ -243,6 +247,29 @@ impl ServerHandler for McpProxyServer {
             resources = self.inner.resources.iter().count(),
             "MCP proxy server initialized"
         );
+    }
+}
+
+/// Wrap a tool result in the most appropriate MCP content block: text as-is,
+/// binary as an image/audio block or an embedded blob resource (base64) with its
+/// MIME type, so clients can decode it rather than receiving opaque bytes.
+fn output_to_content(output: ToolOutput, tool_name: &str) -> ContentBlock {
+    match output {
+        ToolOutput::Text(text) => ContentBlock::text(text),
+        ToolOutput::Binary { data, mime } => {
+            use base64::Engine;
+            let encoded = base64::engine::general_purpose::STANDARD.encode(&data);
+            if mime.starts_with("image/") {
+                ContentBlock::image(encoded, mime)
+            } else if mime.starts_with("audio/") {
+                ContentBlock::audio(encoded, mime)
+            } else {
+                ContentBlock::resource(ResourceContents::blob(
+                    encoded,
+                    format!("tool://{tool_name}"),
+                ))
+            }
+        }
     }
 }
 

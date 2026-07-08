@@ -70,8 +70,16 @@ impl FileTokenStore {
             .map_err(|e| ProxyError::Config(format!("failed to serialize tokens: {e}")))?;
         // Write to a sibling temp file then rename over the target, so a crash
         // mid-write can never leave a truncated/half-written token file: a reader
-        // sees either the old file or the complete new one.
-        let tmp = self.path.with_extension("tmp");
+        // sees either the old file or the complete new one. The temp name is
+        // process-unique so two writers don't clobber each other's temp file.
+        let file_name = self
+            .path
+            .file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or("tokens");
+        let tmp = self
+            .path
+            .with_file_name(format!("{file_name}.{}.tmp", std::process::id()));
         #[cfg(unix)]
         {
             use std::io::Write;
@@ -94,9 +102,17 @@ impl FileTokenStore {
         {
             std::fs::write(&tmp, &contents)
                 .map_err(|e| ProxyError::Config(format!("failed to write token store: {e}")))?;
+            // Windows `rename` refuses to overwrite an existing file; remove the
+            // old one first. (POSIX `rename` replaces atomically, so Unix skips
+            // this and keeps the crash-safety guarantee.)
+            let _ = std::fs::remove_file(&self.path);
         }
-        std::fs::rename(&tmp, &self.path)
-            .map_err(|e| ProxyError::Config(format!("failed to write token store: {e}")))?;
+        if let Err(e) = std::fs::rename(&tmp, &self.path) {
+            let _ = std::fs::remove_file(&tmp); // don't leak the temp file
+            return Err(ProxyError::Config(format!(
+                "failed to write token store: {e}"
+            )));
+        }
         Ok(())
     }
 
@@ -145,6 +161,24 @@ mod tests {
         let loaded = store.load().unwrap().unwrap();
         assert_eq!(loaded.access_token, "access");
         assert_eq!(loaded.refresh_token, Some("refresh".to_string()));
+    }
+
+    #[test]
+    fn save_overwrites_existing_file() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("tokens.json");
+        let store = FileTokenStore::new(path);
+        let mk = |t: &str| StoredTokens {
+            access_token: t.to_string(),
+            refresh_token: None,
+            expires_at: None,
+            token_type: "Bearer".to_string(),
+        };
+        store.save(&mk("first")).unwrap();
+        // Second save over an existing file must succeed (regression: Windows
+        // rename won't overwrite) and fully replace the contents.
+        store.save(&mk("second")).unwrap();
+        assert_eq!(store.load().unwrap().unwrap().access_token, "second");
     }
 
     #[test]
