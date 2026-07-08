@@ -194,6 +194,36 @@ bash tests/e2e/run.sh
 | Tools | One per OpenAPI operation or GraphQL query/mutation field |
 | Resources | `schema://openapi` or `schema://graphql`, plus `meta://tools` index |
 
+Each tool also carries hints derived from the schema, so the client sees more
+than just a name and input schema:
+
+- **`title`** from the OpenAPI `summary`.
+- **`outputSchema`** from the first 2xx JSON response (OpenAPI) or the field's
+  return type (GraphQL), so results can be validated and read field-by-field.
+- **Annotations** from the operation: `readOnly`/`idempotent` for `GET`/`HEAD`
+  and GraphQL queries, `destructive` for `DELETE`, `openWorld` always (it's an
+  external API). Mutations and `POST`/`PATCH` are neither read-only nor
+  idempotent.
+- **Input schema** preserves `enum`, `format`, etc. (GraphQL enums become
+  `{ "type": "string", "enum": [...] }`).
+
+### Response mapping
+
+The runtime adapts each upstream response into the richest MCP result it can:
+
+| Upstream | MCP result |
+|----------|------------|
+| JSON body | text content **plus** `structuredContent` (the parsed JSON) |
+| Non-JSON text | text content (decoded per the response charset) |
+| Binary (image/audio/other) | `image` / `audio` / embedded blob resource, base64, with its MIME type |
+| Large text (> 256 KiB) | embedded resource block instead of inline text |
+| `204 No Content` | explicit success message |
+| Non-2xx | tool error (`isError`) with `structuredContent` = `{ status, retryable, hint (401/403), retry_after, problem }` (RFC 7807 `problem+json` parsed when present) |
+
+Useful response headers (`Location`, `Link`, `Retry-After`, `ETag`,
+rate-limit, `Content-Range`) are surfaced under the result's `_meta` as
+`http.<header>` so the client can chain requests and respect quotas.
+
 ## Configuration
 
 Environment variables:
