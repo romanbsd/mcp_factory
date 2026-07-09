@@ -17,6 +17,15 @@ OpenAPI / GraphQL schema
  generated Rust crate ──► mcp-factory-core ──► upstream API
 ```
 
+## Use as an Agent Skill
+
+This repo ships a root `SKILL.md`, so it works as an [Agent Skill](https://www.skills.sh/).
+Install it into any skills-aware agent (Claude, Cursor, etc.):
+
+```bash
+npx skills add romanbsd/mcp_factory
+```
+
 ## Quickstart
 
 ### Generate a server
