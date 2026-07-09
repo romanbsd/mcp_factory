@@ -80,3 +80,6 @@ class GenerationResult:
     resources: list[ResourceSpec]
     schema_kind: Literal["openapi", "graphql"]
     schema_text: str
+    # Upstream base URL detected from the schema (OpenAPI servers[0]), used as
+    # the default when --base-url is omitted.
+    base_url: str | None = None

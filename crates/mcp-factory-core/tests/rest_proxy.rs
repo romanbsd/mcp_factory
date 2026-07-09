@@ -2,7 +2,7 @@ mod common;
 
 use mcp_factory_core::{ExecutionKind, McpProxyServer, RestOperation, ToolSpec};
 use serde_json::json;
-use wiremock::matchers::{body_string_contains, header, method, path};
+use wiremock::matchers::{body_string_contains, header, headers, method, path};
 use wiremock::{Mock, MockServer, ResponseTemplate};
 
 #[tokio::test]
@@ -211,4 +211,28 @@ async fn rest_proxy_surfaces_upstream_error() {
         .await
         .unwrap_err();
     assert!(err.to_string().contains("500"));
+}
+
+#[tokio::test]
+async fn rest_proxy_sends_accept_header() {
+    let mock_server = MockServer::start().await;
+    Mock::given(method("GET"))
+        .and(path("/pets/42"))
+        .and(headers("accept", vec!["application/json", "*/*"]))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({"id": 42})))
+        .mount(&mock_server)
+        .await;
+
+    let config = common::proxy_config(&mock_server.uri());
+    let server = McpProxyServer::builder(config)
+        .tools(&[common::rest_get_pet_tool()])
+        .unwrap()
+        .build()
+        .unwrap();
+
+    // Mock only matches when the Accept header is present.
+    server
+        .invoke_tool("get_pet", json!({"petId": 42}))
+        .await
+        .unwrap();
 }

@@ -245,8 +245,14 @@ Environment variables:
 | `MCP_FACTORY_OAUTH_CLIENT_SECRET` | OAuth2 client secret (optional, for confidential clients) |
 | `MCP_TRANSPORT` | `stdio`, `http`, or `both` |
 | `MCP_FACTORY_BIND_ADDR` | HTTP bind address (default `127.0.0.1:8080`) |
+| `MCP_FACTORY_HTTP_PATH` | HTTP mount path (default `/mcp`) |
+| `MCP_FACTORY_TIMEOUT` | Upstream request timeout, seconds |
 
 Generated crates also ship a `config.toml` template.
+
+`--base-url` is optional at generation time when the OpenAPI schema declares a
+`servers[].url` — it's used as the default (and baked into `config.toml`),
+still overridable via the flag or `MCP_FACTORY_BASE_URL` at runtime.
 
 ### OAuth2 (Authorization Code + PKCE)
 

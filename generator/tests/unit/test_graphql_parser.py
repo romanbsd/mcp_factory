@@ -105,6 +105,15 @@ def test_annotations_enum_and_output_schema(tmp_path: Path) -> None:
     assert tools["deleteUser"].read_only is False
 
 
+def test_deprecated_field_is_flagged(tmp_path: Path) -> None:
+    sdl = tmp_path / "dep.graphql"
+    sdl.write_text(
+        'type Query { legacy: String @deprecated(reason: "use modern") }'
+    )
+    tool = parse_graphql(sdl).tools[0]
+    assert tool.description.startswith("[DEPRECATED: use modern]")
+
+
 def test_nullable_output_fields_allow_null(tmp_path: Path) -> None:
     sdl = tmp_path / "nullable.graphql"
     sdl.write_text(

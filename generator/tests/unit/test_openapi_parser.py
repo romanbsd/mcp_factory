@@ -141,12 +141,48 @@ def test_filters_by_tags(fixtures_dir: Path) -> None:
     assert [tool.name for tool in result.tools] == ["a"]
 
 
-def _write_spec(path: Path, paths: dict) -> Path:
+def _write_spec(path: Path, paths: dict, **extra) -> Path:
     import yaml
 
     spec = {"openapi": "3.0.3", "info": {"title": "t", "version": "1.0.0"}, "paths": paths}
+    spec.update(extra)
     path.write_text(yaml.dump(spec), encoding="utf-8")
     return path
+
+
+def test_detects_base_url_from_servers(tmp_path: Path) -> None:
+    path = _write_spec(
+        tmp_path / "servers.yaml",
+        {"/ping": {"get": {"operationId": "ping", "responses": {"200": {"description": "OK"}}}}},
+        servers=[{"url": "https://api.example.com/v1"}],
+    )
+    assert parse_openapi(path).base_url == "https://api.example.com/v1"
+
+
+def test_no_servers_means_no_base_url(tmp_path: Path) -> None:
+    path = _write_spec(
+        tmp_path / "noserver.yaml",
+        {"/ping": {"get": {"operationId": "ping", "responses": {"200": {"description": "OK"}}}}},
+    )
+    assert parse_openapi(path).base_url is None
+
+
+def test_deprecated_operation_is_flagged(tmp_path: Path) -> None:
+    path = _write_spec(
+        tmp_path / "dep.yaml",
+        {
+            "/old": {
+                "get": {
+                    "operationId": "old",
+                    "summary": "Old thing",
+                    "deprecated": True,
+                    "responses": {"200": {"description": "OK"}},
+                }
+            }
+        },
+    )
+    tool = parse_openapi(path, include_deprecated=True).tools[0]
+    assert tool.description.startswith("[DEPRECATED]")
 
 
 def test_sanitizes_invalid_tool_name(tmp_path: Path) -> None:

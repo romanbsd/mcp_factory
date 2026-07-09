@@ -28,6 +28,17 @@ def _validate_transport(transport: str) -> str:
     return transport
 
 
+def _resolve_base_url(explicit: str | None, detected: str | None) -> str:
+    """Prefer an explicit --base-url, else the URL detected from the schema
+    (OpenAPI servers[0]); error if neither is available."""
+    base_url = explicit or detected
+    if not base_url:
+        raise typer.BadParameter(
+            "--base-url is required (the schema declares no servers[].url to default to)"
+        )
+    return base_url
+
+
 def detect_kind(path: Path) -> Literal["openapi", "graphql"]:
     if path.suffix in {".graphql", ".gql"}:
         return "graphql"
@@ -79,7 +90,9 @@ def generate(
     input: Path = typer.Option(..., "--input", "-i", exists=True, dir_okay=False, readable=True),
     output: Path = typer.Option(..., "--output", "-o", file_okay=False),
     kind: str | None = typer.Option(None, "--kind", help="openapi or graphql"),
-    base_url: str = typer.Option(..., "--base-url"),
+    base_url: str | None = typer.Option(
+        None, "--base-url", help="Upstream base URL (default: OpenAPI servers[0].url)"
+    ),
     name: str = typer.Option("generated-mcp", "--name"),
     transport: str = typer.Option("stdio", "--transport", help="stdio, http, or both"),
     core_path: str | None = typer.Option(
@@ -103,7 +116,7 @@ def generate(
         result,
         output_dir=output,
         crate_name=name,
-        base_url=base_url,
+        base_url=_resolve_base_url(base_url, result.base_url),
         core_path=resolve_core_path(core_path),
         transport=transport,
     )
@@ -115,7 +128,9 @@ def package(
     input: Path = typer.Option(..., "--input", "-i", exists=True, dir_okay=False, readable=True),
     output: Path = typer.Option(..., "--output", "-o", file_okay=False, help="Directory for the portable dist"),
     kind: str | None = typer.Option(None, "--kind", help="openapi or graphql"),
-    base_url: str = typer.Option(..., "--base-url"),
+    base_url: str | None = typer.Option(
+        None, "--base-url", help="Upstream base URL (default: OpenAPI servers[0].url)"
+    ),
     name: str = typer.Option("generated-mcp", "--name"),
     transport: str = typer.Option("stdio", "--transport", help="stdio, http, or both"),
     core_path: str | None = typer.Option(
@@ -141,12 +156,14 @@ def package(
         include_deprecated=include_deprecated,
         tags=tags,
     )
+    resolved_base_url = _resolve_base_url(base_url, result.base_url)
+
     def render(crate_dir: Path) -> None:
         render_crate(
             result,
             output_dir=crate_dir,
             crate_name=name,
-            base_url=base_url,
+            base_url=resolved_base_url,
             core_path=resolve_core_path(core_path),
             transport=transport,
         )
@@ -155,7 +172,7 @@ def package(
         render_fn=render,
         dist_dir=output,
         crate_name=name,
-        base_url=base_url,
+        base_url=resolved_base_url,
         transport=transport,
         target=target,
         archive=archive,

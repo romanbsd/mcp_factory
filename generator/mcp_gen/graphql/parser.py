@@ -219,10 +219,13 @@ def parse_graphql(path: Path) -> GenerationResult:
             )
             tool_name = unique_name(sanitize_tool_name(field_name), seen_names)
             is_query = operation_type == "query"
+            description = field.description or f"GraphQL {operation_type} {field_name}"
+            if field.deprecation_reason:
+                description = f"[DEPRECATED: {field.deprecation_reason}] {description}"
             tools.append(
                 ToolSpec(
                     name=tool_name,
-                    description=field.description or f"GraphQL {operation_type} {field_name}",
+                    description=description,
                     input_schema=_field_input_schema(field.args),
                     execution_kind="graphql",
                     graphql=GraphQLOperation(document=document, variable_bindings=bindings),

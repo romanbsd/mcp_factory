@@ -87,7 +87,19 @@ def _request_body_schema(operation: dict[str, Any]) -> dict[str, Any] | None:
 
 def _operation_description(operation: dict[str, Any]) -> str:
     parts = [operation.get("summary"), operation.get("description")]
-    return "\n\n".join(part for part in parts if part) or "Generated from OpenAPI operation"
+    text = "\n\n".join(part for part in parts if part) or "Generated from OpenAPI operation"
+    if operation.get("deprecated"):
+        text = f"[DEPRECATED] {text}"
+    return text
+
+
+def _detect_base_url(spec: dict[str, Any]) -> str | None:
+    """First non-empty `servers[].url`, used as the default upstream base URL."""
+    for server in spec.get("servers", []):
+        url = (server or {}).get("url")
+        if url:
+            return url
+    return None
 
 
 def _response_schema(operation: dict[str, Any]) -> dict[str, Any] | None:
@@ -246,4 +258,5 @@ def parse_openapi(
         resources=resources,
         schema_kind="openapi",
         schema_text=schema_text,
+        base_url=_detect_base_url(spec),
     )

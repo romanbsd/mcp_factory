@@ -195,6 +195,11 @@ impl ProxyConfig {
         if let Ok(path) = env::var("MCP_FACTORY_HTTP_PATH") {
             config.http_path = path;
         }
+        if let Ok(timeout) = env::var("MCP_FACTORY_TIMEOUT") {
+            config.timeout_secs = timeout.parse().map_err(|_| {
+                ProxyError::Config(format!("invalid MCP_FACTORY_TIMEOUT: {timeout}"))
+            })?;
+        }
         if env::var("MCP_FACTORY_BEARER_TOKEN")
             .ok()
             .filter(|v| !v.is_empty())
@@ -236,6 +241,9 @@ impl ProxyConfig {
         if env::var("MCP_FACTORY_HTTP_PATH").is_ok() {
             self.http_path = env_config.http_path;
         }
+        if env::var("MCP_FACTORY_TIMEOUT").is_ok() {
+            self.timeout_secs = env_config.timeout_secs;
+        }
         Ok(self)
     }
 }
@@ -257,6 +265,17 @@ mod tests {
         temp_env::with_var("MCP_TRANSPORT", Some("http"), || {
             let config = ProxyConfig::from_env().unwrap();
             assert_eq!(config.transport, TransportMode::Http);
+        });
+    }
+
+    #[test]
+    fn timeout_from_env() {
+        temp_env::with_var("MCP_FACTORY_TIMEOUT", Some("5"), || {
+            let config = ProxyConfig::default().merge_env().unwrap();
+            assert_eq!(config.timeout_secs, 5);
+        });
+        temp_env::with_var("MCP_FACTORY_TIMEOUT", Some("nope"), || {
+            assert!(ProxyConfig::default().merge_env().is_err());
         });
     }
 

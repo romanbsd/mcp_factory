@@ -28,6 +28,42 @@ def test_detect_rejects_non_object_json(tmp_path: Path) -> None:
         detect_kind(bad)
 
 
+def _spec_with_servers(path: Path, servers: list | None) -> Path:
+    import yaml
+
+    spec = {
+        "openapi": "3.0.3",
+        "info": {"title": "t", "version": "1.0.0"},
+        "paths": {"/ping": {"get": {"operationId": "ping",
+                                    "responses": {"200": {"description": "OK"}}}}},
+    }
+    if servers is not None:
+        spec["servers"] = servers
+    path.write_text(yaml.dump(spec), encoding="utf-8")
+    return path
+
+
+def test_base_url_defaults_from_servers(tmp_path: Path) -> None:
+    spec = _spec_with_servers(tmp_path / "s.yaml", [{"url": "https://api.example.com"}])
+    output = tmp_path / "out"
+    result = runner.invoke(
+        app,
+        ["generate", "--input", str(spec), "--output", str(output)],
+    )
+    assert result.exit_code == 0, result.output
+    assert 'base_url = "https://api.example.com"' in (output / "config.toml").read_text()
+
+
+def test_missing_base_url_without_servers_errors(tmp_path: Path) -> None:
+    spec = _spec_with_servers(tmp_path / "s.yaml", None)
+    result = runner.invoke(
+        app,
+        ["generate", "--input", str(spec), "--output", str(tmp_path / "out")],
+    )
+    assert result.exit_code != 0
+    assert "base-url" in result.output.lower()
+
+
 def test_invalid_transport_rejected(tmp_path: Path, fixtures_dir: Path) -> None:
     result = runner.invoke(
         app,
