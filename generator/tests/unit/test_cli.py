@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 from unittest.mock import patch
 
@@ -7,6 +8,15 @@ from typer.testing import CliRunner
 from mcp_gen.cli import app, detect_kind
 
 runner = CliRunner()
+
+
+def _flatten(output: str) -> str:
+    """Strip ANSI codes, box-drawing chars and whitespace so substring checks
+    don't depend on how the CLI framework wraps error panels (varies by
+    typer/click/rich version and terminal width)."""
+    output = re.sub(r"\x1b\[[0-9;]*[a-zA-Z]", "", output)
+    output = output.replace("│", " ")
+    return re.sub(r"\s+", "", output).lower()
 
 
 def test_detect_openapi_yaml(fixtures_dir: Path) -> None:
@@ -61,7 +71,7 @@ def test_missing_base_url_without_servers_errors(tmp_path: Path) -> None:
         ["generate", "--input", str(spec), "--output", str(tmp_path / "out")],
     )
     assert result.exit_code != 0
-    assert "base-url" in result.output.lower()
+    assert "base-url" in _flatten(result.output)
 
 
 def test_invalid_transport_rejected(tmp_path: Path, fixtures_dir: Path) -> None:
