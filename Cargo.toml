@@ -35,7 +35,7 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 jsonschema = "0.48"
 percent-encoding = "2"
-base64 = "0.22"
+base64 = "0.23"
 toml = "1.1"
 chrono = { version = "0.4", features = ["serde"] }
 oauth2 = { version = "5", features = ["reqwest"] }
