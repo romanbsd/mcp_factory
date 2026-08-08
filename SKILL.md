@@ -1,36 +1,34 @@
 ---
 name: mcp-factory
-description: Generate and run an MCP proxy server from an OpenAPI 3.x or GraphQL schema. Use when someone wants to expose a REST/GraphQL API to an MCP client (Claude, Cursor, etc.) as tools — turning a schema (OpenAPI YAML/JSON or GraphQL SDL/introspection) into a runnable or portable MCP server. Triggers: "MCP server from OpenAPI", "wrap this API as MCP tools", "GraphQL to MCP", "generate an MCP proxy".
+description: >-
+  Generate a runnable or portable MCP proxy from an OpenAPI 3.x or GraphQL
+  schema (one tool per operation). Use when wrapping a REST or GraphQL API as
+  MCP tools for Claude, Cursor, or another MCP client.
 ---
 
 # MCP Factory
 
-Turns an OpenAPI 3.x or GraphQL schema into a Rust MCP proxy server. One tool per
-OpenAPI operation / GraphQL query/mutation field. Proxying logic lives in the
-`mcp-factory-core` Rust runtime; the Python `mcp-gen` CLI emits a thin generated crate.
+Python `mcp-gen` emits a thin Rust crate; `mcp-factory-core` does the proxying.
+One MCP tool per OpenAPI operation or GraphQL query/mutation.
 
-## Prerequisites
+## Setup
 
-- **Rust** toolchain (`cargo`) — to build/run the generated server.
-- **Python ≥ 3.11** — for `mcp-gen`.
-
-Install the CLI from this repo (editable — lets `mcp-gen` auto-detect the core crate):
+Needs Rust (`cargo`) and Python ≥ 3.11:
 
 ```bash
 cd generator
 python3 -m venv .venv && source .venv/bin/activate
-pip install -e ".[dev]"
+pip install -e ".[dev]"   # editable → auto-detects mcp-factory-core
 ```
 
-## Two commands
+## Generate or package
 
-`mcp-gen generate` emits a Rust crate you `cargo run`. `mcp-gen package` also runs
-`cargo build --release` and assembles a portable dir (binary + `config.toml` + `README.txt`).
+`generate` writes a crate you `cargo run`. `package` also `cargo build --release`s
+and assembles `binary` + `config.toml` + `README.txt` (add `--archive` for `.tar.gz`).
 
-Schema kind auto-detects from extension/content (`.yaml`/`.yml`/`.json` = OpenAPI,
-`.graphql`/`.gql` or introspection JSON = GraphQL). Override with `--kind`.
-
-### Generate + run (dev)
+Kind auto-detects (`.yaml`/`.yml`/OpenAPI JSON → openapi; `.graphql`/`.gql`/
+introspection JSON → graphql). Override with `--kind`. `--base-url` defaults to
+OpenAPI `servers[0].url` when present.
 
 ```bash
 mcp-gen generate \
@@ -41,33 +39,18 @@ mcp-gen generate \
 cd my-mcp && cargo run          # stdio MCP server
 ```
 
-### Package a portable binary
-
-```bash
-mcp-gen package \
-  --input path/to/schema.yaml \
-  --output ./dist/my-mcp \
-  --base-url https://api.example.com \
-  --name my-mcp \
-  --archive                     # also writes dist/my-mcp.tar.gz
-```
-
-Cross-compile with `--target x86_64-unknown-linux-gnu` (needs a cross-linker), or use
-`scripts/package-linux-amd64.sh` for Linux amd64 via Docker. See README.md.
-
-### Common flags
+Same flags for `mcp-gen package --output ./dist/my-mcp`. Cross-compile with
+`--target x86_64-unknown-linux-gnu`, or `scripts/package-linux-amd64.sh` (Docker).
 
 | Flag | Effect |
 |------|--------|
 | `--transport stdio\|http\|both` | Transport (default `stdio`) |
-| `--tags a,b` | OpenAPI: only ops with these tags |
-| `--include-deprecated` | Include deprecated operations |
-| `--read-only` | Only non-mutating tools (GET/HEAD/OPTIONS; GraphQL queries) |
-| `--core-path <dir>` | Point at `mcp-factory-core` if not auto-detected |
+| `--tags a,b` | OpenAPI: only these tags |
+| `--include-deprecated` | Include deprecated ops |
+| `--read-only` | GET/HEAD/OPTIONS + GraphQL queries only |
+| `--core-path <dir>` | Override core crate path |
 
-## Wiring into a client
-
-Point the MCP client at the built binary. Cursor / Claude Desktop:
+## Client wiring
 
 ```json
 {
@@ -80,34 +63,26 @@ Point the MCP client at the built binary. Cursor / Claude Desktop:
 }
 ```
 
-HTTP transport instead of stdio: `MCP_TRANSPORT=http MCP_FACTORY_BIND_ADDR=127.0.0.1:8080 cargo run`.
+HTTP: `MCP_TRANSPORT=http MCP_FACTORY_BIND_ADDR=127.0.0.1:8080 cargo run`.
 
-## Configuration (env vars override `config.toml`)
+## Config
+
+Env vars override `config.toml`.
 
 | Variable | Description |
 |----------|-------------|
 | `MCP_FACTORY_BASE_URL` | Upstream API base URL |
-| `MCP_FACTORY_BEARER_TOKEN` | Bearer auth token |
-| `MCP_FACTORY_API_KEY` | API key (header mode) |
-| `MCP_FACTORY_OAUTH_CLIENT_SECRET` | OAuth2 client secret (confidential clients) |
+| `MCP_FACTORY_BEARER_TOKEN` | Bearer auth |
+| `MCP_FACTORY_API_KEY` | API key (header) |
+| `MCP_FACTORY_OAUTH_CLIENT_SECRET` | OAuth2 confidential client |
 | `MCP_TRANSPORT` | `stdio`, `http`, or `both` |
-| `MCP_FACTORY_BIND_ADDR` | HTTP bind address (default `127.0.0.1:8080`) |
+| `MCP_FACTORY_BIND_ADDR` | HTTP bind (default `127.0.0.1:8080`) |
 
-**OAuth2 (Auth Code + PKCE):** interactive login persists tokens to
-`.mcp-factory/tokens.json` and auto-refreshes. Run `<generated-server> --auth-login`
-(or the standalone `mcp-factory-auth login --config config.toml`).
+OAuth2 (Auth Code + PKCE): `<generated-server> --auth-login` (or
+`mcp-factory-auth login --config config.toml`) → tokens in `.mcp-factory/tokens.json`.
 
-## What the generated server exposes
+## More
 
-- **Tools** — one per operation, with `title`, `outputSchema`, and annotations
-  (`readOnly`/`idempotent` for GET/queries, `destructive` for DELETE) derived from the schema.
-- **Resources** — `schema://openapi` | `schema://graphql`, plus a `meta://tools` index.
-- **Responses** adapted to richest MCP result: JSON → text + `structuredContent`; binary →
-  image/audio/blob; non-2xx → tool error with `{ status, retryable, hint, retry_after, problem }`.
-  Useful headers (`Location`, `Retry-After`, `ETag`, rate-limit) surface under `_meta`.
-
-## Examples & depth
-
-- Worked examples: `examples/petstore-openapi/`, `examples/graphql-example/`.
-- Fixtures to try: `generator/tests/fixtures/`.
-- Full reference: `README.md`. Architecture / internals: `CLAUDE.md`.
+- Examples: `examples/petstore-openapi/`, `examples/graphql-example/`
+- Fixtures: `generator/tests/fixtures/`
+- Full reference: `README.md` · internals: `CLAUDE.md`
