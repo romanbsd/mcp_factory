@@ -70,6 +70,7 @@ def _parse_schema(
     kind: str | None,
     include_deprecated: bool,
     tags: str | None,
+    read_only: bool,
 ):
     schema_kind = kind or detect_kind(input)
     tag_set = {tag.strip() for tag in tags.split(",") if tag.strip()} if tags else None
@@ -79,9 +80,10 @@ def _parse_schema(
             input,
             include_deprecated=include_deprecated,
             tags=tag_set,
+            read_only=read_only,
         )
     if schema_kind == "graphql":
-        return parse_graphql(input)
+        return parse_graphql(input, read_only=read_only)
     raise typer.BadParameter(f"unsupported kind: {schema_kind}")
 
 
@@ -102,6 +104,9 @@ def generate(
     ),
     include_deprecated: bool = typer.Option(False, "--include-deprecated"),
     tags: str | None = typer.Option(None, "--tags", help="Comma-separated OpenAPI tags filter"),
+    read_only: bool = typer.Option(
+        False, "--read-only", help="Only generate non-mutating tools"
+    ),
 ) -> None:
     """Generate a Rust MCP proxy crate from an OpenAPI or GraphQL schema."""
     _validate_transport(transport)
@@ -110,6 +115,7 @@ def generate(
         kind=kind,
         include_deprecated=include_deprecated,
         tags=tags,
+        read_only=read_only,
     )
 
     render_crate(
@@ -140,6 +146,9 @@ def package(
     ),
     include_deprecated: bool = typer.Option(False, "--include-deprecated"),
     tags: str | None = typer.Option(None, "--tags", help="Comma-separated OpenAPI tags filter"),
+    read_only: bool = typer.Option(
+        False, "--read-only", help="Only generate non-mutating tools"
+    ),
     target: str | None = typer.Option(
         None,
         "--target",
@@ -155,6 +164,7 @@ def package(
         kind=kind,
         include_deprecated=include_deprecated,
         tags=tags,
+        read_only=read_only,
     )
     resolved_base_url = _resolve_base_url(base_url, result.base_url)
 

@@ -133,11 +133,15 @@ def _verb_annotations(method: str) -> dict[str, bool]:
     }
 
 
+_READ_ONLY_METHODS = frozenset({"get", "head", "options"})
+
+
 def parse_openapi(
     path: Path,
     *,
     include_deprecated: bool = False,
     tags: set[str] | None = None,
+    read_only: bool = False,
 ) -> GenerationResult:
     spec = load_openapi(path)
     tools: list[ToolSpec] = []
@@ -151,6 +155,8 @@ def parse_openapi(
             if operation.get("deprecated") and not include_deprecated:
                 continue
             if tags and not tags.intersection(operation.get("tags", [])):
+                continue
+            if read_only and method not in _READ_ONLY_METHODS:
                 continue
 
             operation_id = operation.get("operationId") or _slugify(f"{method}_{path_name}")
