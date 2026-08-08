@@ -15,6 +15,15 @@ def test_parses_sdl_query_and_mutation(fixtures_dir: Path) -> None:
     assert "{ id name }" in user.graphql.document
 
 
+def test_read_only_skips_mutations(fixtures_dir: Path) -> None:
+    import json
+
+    result = parse_graphql(fixtures_dir / "minimal.graphql", read_only=True)
+    assert [tool.name for tool in result.tools] == ["user"]
+    meta = next(r for r in result.resources if r.uri == "meta://tools")
+    assert [entry["name"] for entry in json.loads(meta.content)] == ["user"]
+
+
 def test_preserves_arg_types_and_valid_selection(tmp_path: Path) -> None:
     sdl = tmp_path / "deep.graphql"
     sdl.write_text(

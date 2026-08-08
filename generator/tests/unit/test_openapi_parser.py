@@ -141,6 +141,58 @@ def test_filters_by_tags(fixtures_dir: Path) -> None:
     assert [tool.name for tool in result.tools] == ["a"]
 
 
+def test_read_only_keeps_only_non_mutating_methods(tmp_path: Path) -> None:
+    import json
+
+    path = _write_spec(
+        tmp_path / "rw.yaml",
+        {
+            "/items": {
+                "get": {
+                    "operationId": "listItems",
+                    "responses": {"200": {"description": "OK"}},
+                },
+                "head": {
+                    "operationId": "headItems",
+                    "responses": {"200": {"description": "OK"}},
+                },
+                "options": {
+                    "operationId": "optionsItems",
+                    "responses": {"200": {"description": "OK"}},
+                },
+                "post": {
+                    "operationId": "createItem",
+                    "responses": {"201": {"description": "Created"}},
+                },
+                "put": {
+                    "operationId": "putItem",
+                    "responses": {"200": {"description": "OK"}},
+                },
+                "patch": {
+                    "operationId": "patchItem",
+                    "responses": {"200": {"description": "OK"}},
+                },
+                "delete": {
+                    "operationId": "deleteItem",
+                    "responses": {"204": {"description": "Gone"}},
+                },
+            }
+        },
+    )
+    result = parse_openapi(path, read_only=True)
+    assert {tool.name for tool in result.tools} == {
+        "listItems",
+        "headItems",
+        "optionsItems",
+    }
+    meta = next(r for r in result.resources if r.uri == "meta://tools")
+    assert {entry["name"] for entry in json.loads(meta.content)} == {
+        "listItems",
+        "headItems",
+        "optionsItems",
+    }
+
+
 def _write_spec(path: Path, paths: dict, **extra) -> Path:
     import yaml
 

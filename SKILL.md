@@ -62,6 +62,7 @@ Cross-compile with `--target x86_64-unknown-linux-gnu` (needs a cross-linker), o
 | `--transport stdio\|http\|both` | Transport (default `stdio`) |
 | `--tags a,b` | OpenAPI: only ops with these tags |
 | `--include-deprecated` | Include deprecated operations |
+| `--read-only` | Only non-mutating tools (GET/HEAD/OPTIONS; GraphQL queries) |
 | `--core-path <dir>` | Point at `mcp-factory-core` if not auto-detected |
 
 ## Wiring into a client

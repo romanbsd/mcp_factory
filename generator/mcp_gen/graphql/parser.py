@@ -203,12 +203,13 @@ def _load_schema(path: Path):
     return build_ast_schema(parse(text)), text, "text/plain"
 
 
-def parse_graphql(path: Path) -> GenerationResult:
+def parse_graphql(path: Path, *, read_only: bool = False) -> GenerationResult:
     schema, schema_text, mime_type = _load_schema(path)
     tools: list[ToolSpec] = []
     seen_names: set[str] = set()
 
-    for operation_type in ("query", "mutation"):
+    operation_types = ("query",) if read_only else ("query", "mutation")
+    for operation_type in operation_types:
         root = schema.query_type if operation_type == "query" else schema.mutation_type
         if not root:
             continue
