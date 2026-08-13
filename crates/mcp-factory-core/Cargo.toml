@@ -47,4 +47,4 @@ tokio-test = "0.4"
 tempfile = "3"
 assert-json-diff = "2"
 anyhow = "1"
-rmcp = { version = "2.0", features = ["client", "transport-child-process"] }
+rmcp = { version = "3.1", features = ["client", "transport-child-process"] }
