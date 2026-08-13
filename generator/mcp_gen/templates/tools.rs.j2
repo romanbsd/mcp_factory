@@ -1,44 +1,46 @@
 use mcp_factory_core::{
     ExecutionKind{% if tools | selectattr('execution_kind', 'equalto', 'graphql') | list %}, GraphQLOperation{% endif %}{% if tools | selectattr('execution_kind', 'equalto', 'rest') | list %}, ParamBinding, ParamLocation, RestOperation{% endif %}, ToolHints, ToolSpec,
 };
-use serde_json::json;
-
 pub fn build_tools() -> Vec<ToolSpec> {
     vec![
 {% for tool in tools %}
         ToolSpec {
-            name: {{ tool.name | tojson }}.to_string(),
-            description: {{ tool.description | tojson }}.to_string(),
-            input_schema: json!({{ tool.input_schema | tojson }}),
+            name: {{ tool.name | rust_string }}.to_string(),
+            description: {{ tool.description | rust_string }}.to_string(),
+            input_schema: serde_json::from_str({{ tool.input_schema | rust_json }})
+                .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::{% if tool.execution_kind == "rest" %}Rest(RestOperation {
-                method: {{ tool.rest.method | tojson }}.to_string(),
-                path_template: {{ tool.rest.path_template | tojson }}.to_string(),
+                method: {{ tool.rest.method | rust_string }}.to_string(),
+                path_template: {{ tool.rest.path_template | rust_string }}.to_string(),
                 params: vec![
 {% for param in tool.rest.params %}
                     ParamBinding {
-                        name: {{ param.name | tojson }}.to_string(),
+                        name: {{ param.name | rust_string }}.to_string(),
                         location: ParamLocation::{% if param.location == "path" %}Path{% elif param.location == "query" %}Query{% else %}Header{% endif %},
                     },
 {% endfor %}
                 ],
                 body_fields: vec![
 {% for field in tool.rest.body_fields %}
-                    {{ field | tojson }}.to_string(),
+                    {{ field | rust_string }}.to_string(),
 {% endfor %}
                 ],
-                content_type: {% if tool.rest.content_type %}Some({{ tool.rest.content_type | tojson }}.to_string()){% else %}None{% endif %},
+                content_type: {% if tool.rest.content_type %}Some({{ tool.rest.content_type | rust_string }}.to_string()){% else %}None{% endif %},
                 raw_body: {% if tool.rest.raw_body %}true{% else %}false{% endif %},
             }){% else %}GraphQL(GraphQLOperation {
-                document: {{ tool.graphql.document | tojson }}.to_string(),
+                document: {{ tool.graphql.document | rust_string }}.to_string(),
                 variable_bindings: vec![
 {% for binding in tool.graphql.variable_bindings %}
-                    {{ binding | tojson }}.to_string(),
+                    {{ binding | rust_string }}.to_string(),
 {% endfor %}
                 ],
             }){% endif %},
             hints: ToolHints {
-                title: {% if tool.title %}Some({{ tool.title | tojson }}.to_string()){% else %}None{% endif %},
-                output_schema: {% if tool.output_schema %}Some(json!({{ tool.output_schema | tojson }})){% else %}None{% endif %},
+                title: {% if tool.title %}Some({{ tool.title | rust_string }}.to_string()){% else %}None{% endif %},
+                output_schema: {% if tool.output_schema %}Some(
+                    serde_json::from_str({{ tool.output_schema | rust_json }})
+                        .expect("generated output schema must be valid JSON"),
+                ){% else %}None{% endif %},
                 read_only: {% if tool.read_only is not none %}Some({{ tool.read_only | tojson }}){% else %}None{% endif %},
                 destructive: {% if tool.destructive is not none %}Some({{ tool.destructive | tojson }}){% else %}None{% endif %},
                 idempotent: {% if tool.idempotent is not none %}Some({{ tool.idempotent | tojson }}){% else %}None{% endif %},

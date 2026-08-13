@@ -4,11 +4,11 @@ pub fn build_resources() -> Vec<ResourceSpec> {
     vec![
 {% for resource in resources %}
         ResourceSpec {
-            uri: {{ resource.uri | tojson }}.to_string(),
-            name: {{ resource.name | tojson }}.to_string(),
-            description: {{ resource.description | tojson }}.to_string(),
-            mime_type: {{ resource.mime_type | tojson }}.to_string(),
-            content: {{ resource.content | tojson }},
+            uri: {{ resource.uri | rust_string }}.to_string(),
+            name: {{ resource.name | rust_string }}.to_string(),
+            description: {{ resource.description | rust_string }}.to_string(),
+            mime_type: {{ resource.mime_type | rust_string }}.to_string(),
+            content: {{ resource.content | rust_string }},
         },
 {% endfor %}
     ]

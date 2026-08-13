@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import re
+import warnings
 from pathlib import Path
 from typing import Any
 
@@ -19,8 +20,50 @@ from mcp_gen.models import (
 )
 
 
+class OpenAPICompatibilityWarning(UserWarning):
+    """An invalid but unambiguous OpenAPI construct was repaired."""
+
+
+def _coerce_description_placeholders(
+    node: Any,
+    path: tuple[str, ...] = (),
+) -> list[str]:
+    """Coerce YAML ``description: {key}`` mappings to literal strings."""
+    repaired: list[str] = []
+    if isinstance(node, dict):
+        for key, value in list(node.items()):
+            current_path = (*path, str(key))
+            if key == "description" and isinstance(value, dict) and len(value) == 1:
+                placeholder, marker = next(iter(value.items()))
+                if isinstance(placeholder, str) and marker is None:
+                    node[key] = f"{{{placeholder}}}"
+                    repaired.append(".".join(current_path))
+                    continue
+            repaired.extend(_coerce_description_placeholders(value, current_path))
+    elif isinstance(node, list):
+        for index, value in enumerate(node):
+            repaired.extend(
+                _coerce_description_placeholders(value, (*path, str(index)))
+            )
+    return repaired
+
+
+class _CompatibleResolvingParser(ResolvingParser):
+    def _validate(self) -> None:
+        repaired = _coerce_description_placeholders(self.specification)
+        if repaired:
+            locations = ", ".join(repaired)
+            warnings.warn(
+                "Coerced YAML description placeholder mapping(s) to strings before "
+                f"OpenAPI validation: {locations}",
+                OpenAPICompatibilityWarning,
+                stacklevel=4,
+            )
+        super()._validate()
+
+
 def load_openapi(path: Path) -> dict[str, Any]:
-    parser = ResolvingParser(str(path), strict=False)
+    parser = _CompatibleResolvingParser(str(path), strict=False)
     return parser.specification
 
 

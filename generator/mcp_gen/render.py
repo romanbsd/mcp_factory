@@ -2,19 +2,57 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any
 
 from jinja2 import Environment, PackageLoader, select_autoescape
 
 from mcp_gen.models import GenerationResult
 
 
+def _rust_string_literal(value: str) -> str:
+    """Return a Rust string literal without JSON-only escape sequences."""
+    escaped: list[str] = []
+    replacements = {
+        '"': r'\"',
+        "\\": r"\\",
+        "\n": r"\n",
+        "\r": r"\r",
+        "\t": r"\t",
+    }
+    for char in value:
+        if char in replacements:
+            escaped.append(replacements[char])
+        elif ord(char) < 0x20 or ord(char) == 0x7F:
+            escaped.append(f"\\u{{{ord(char):x}}}")
+        else:
+            escaped.append(char)
+    return f'"{"".join(escaped)}"'
+
+
+def _rust_json_literal(value: Any) -> str:
+    """Serialize JSON into a Rust raw string with a collision-free delimiter."""
+    serialized = json.dumps(
+        value,
+        ensure_ascii=False,
+        separators=(",", ":"),
+        sort_keys=True,
+    )
+    hashes = ""
+    while f'"{hashes}' in serialized:
+        hashes += "#"
+    return f'r{hashes}"{serialized}"{hashes}'
+
+
 def _env() -> Environment:
-    return Environment(
+    env = Environment(
         loader=PackageLoader("mcp_gen", "templates"),
         autoescape=select_autoescape(enabled_extensions=()),
         trim_blocks=True,
         lstrip_blocks=True,
     )
+    env.filters["rust_string"] = _rust_string_literal
+    env.filters["rust_json"] = _rust_json_literal
+    return env
 
 
 def render_crate(

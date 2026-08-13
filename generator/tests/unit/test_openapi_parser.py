@@ -1,6 +1,13 @@
 from pathlib import Path
 
-from mcp_gen.openapi.parser import parse_openapi
+import pytest
+from prance import ValidationError
+
+from mcp_gen.openapi.parser import (
+    OpenAPICompatibilityWarning,
+    load_openapi,
+    parse_openapi,
+)
 
 
 def test_extracts_single_operation(fixtures_dir: Path) -> None:
@@ -200,6 +207,56 @@ def _write_spec(path: Path, paths: dict, **extra) -> Path:
     spec.update(extra)
     path.write_text(yaml.dump(spec), encoding="utf-8")
     return path
+
+
+def test_coerces_single_key_description_mapping_before_validation(
+    tmp_path: Path,
+) -> None:
+    path = _write_spec(
+        tmp_path / "description-placeholder.yaml",
+        {},
+        components={
+            "schemas": {
+                "Invoice": {
+                    "type": "object",
+                    "properties": {
+                        "price": {
+                            "type": "number",
+                            "description": {"tls_object_price": None},
+                        }
+                    },
+                }
+            }
+        },
+    )
+
+    with pytest.warns(
+        OpenAPICompatibilityWarning,
+        match=r"components\.schemas\.Invoice\.properties\.price\.description",
+    ):
+        spec = load_openapi(path)
+
+    assert spec["components"]["schemas"]["Invoice"]["properties"]["price"][
+        "description"
+    ] == "{tls_object_price}"
+
+
+def test_does_not_coerce_arbitrary_description_mappings(tmp_path: Path) -> None:
+    path = _write_spec(
+        tmp_path / "invalid-description.yaml",
+        {},
+        components={
+            "schemas": {
+                "Invoice": {
+                    "type": "object",
+                    "description": {"text": "not a placeholder"},
+                }
+            }
+        },
+    )
+
+    with pytest.raises(ValidationError):
+        load_openapi(path)
 
 
 def test_detects_base_url_from_servers(tmp_path: Path) -> None:
