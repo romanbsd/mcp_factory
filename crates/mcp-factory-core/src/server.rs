@@ -2,9 +2,10 @@ use std::sync::Arc;
 
 use rmcp::handler::server::ServerHandler;
 use rmcp::model::{
-    CallToolRequestParams, CallToolResult, ContentBlock, ListResourcesResult, ListToolsResult,
-    Meta, PaginatedRequestParams, ReadResourceRequestParams, ReadResourceResult, Resource,
-    ResourceContents, ServerCapabilities, ServerInfo, Tool, ToolAnnotations,
+    CallToolRequestParams, CallToolResponse, CallToolResult, ContentBlock, ListResourcesResult,
+    ListToolsResult, MetaObject, PaginatedRequestParams, ReadResourceRequestParams,
+    ReadResourceResponse, ReadResourceResult, Resource, ResourceContents, ServerCapabilities,
+    ServerInfo, Tool, ToolAnnotations,
 };
 use rmcp::service::{NotificationContext, RequestContext, RoleServer};
 use rmcp::ErrorData as McpError;
@@ -177,7 +178,7 @@ impl ServerHandler for McpProxyServer {
         &self,
         request: CallToolRequestParams,
         _context: RequestContext<RoleServer>,
-    ) -> Result<CallToolResult, McpError> {
+    ) -> Result<CallToolResponse, McpError> {
         let tool = self
             .inner
             .tools
@@ -190,16 +191,12 @@ impl ServerHandler for McpProxyServer {
             .unwrap_or_else(|| Value::Object(Default::default()));
 
         if let Err(err) = self.inner.tools.validate(&request.name, &args) {
-            return Ok(CallToolResult::error(vec![ContentBlock::text(
-                err.to_string(),
-            )]));
+            return Ok(CallToolResult::error(vec![ContentBlock::text(err.to_string())]).into());
         }
 
         match self.dispatch(tool, args).await {
-            Ok(result) => Ok(result_to_call(result, &request.name)),
-            Err(err) => Ok(CallToolResult::error(vec![ContentBlock::text(
-                err.to_string(),
-            )])),
+            Ok(result) => Ok(result_to_call(result, &request.name).into()),
+            Err(err) => Ok(CallToolResult::error(vec![ContentBlock::text(err.to_string())]).into()),
         }
     }
 
@@ -228,7 +225,7 @@ impl ServerHandler for McpProxyServer {
         &self,
         request: ReadResourceRequestParams,
         _context: RequestContext<RoleServer>,
-    ) -> Result<ReadResourceResult, McpError> {
+    ) -> Result<ReadResourceResponse, McpError> {
         let resource = self
             .inner
             .resources
@@ -238,7 +235,8 @@ impl ServerHandler for McpProxyServer {
             resource.content,
             &request.uri,
         )
-        .with_mime_type(&resource.mime_type)]))
+        .with_mime_type(&resource.mime_type)])
+        .into())
     }
 
     async fn on_initialized(&self, _context: NotificationContext<RoleServer>) {
@@ -268,7 +266,7 @@ fn result_to_call(result: ToolResult, tool_name: &str) -> CallToolResult {
     };
     call.structured_content = result.structured;
     if !result.meta.is_empty() {
-        call.meta = Some(Meta(result.meta));
+        call.meta = Some(MetaObject(result.meta));
     }
     call
 }

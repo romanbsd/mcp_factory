@@ -21,7 +21,7 @@ async fn streamable_http_endpoint_accepts_initialize() {
 
     let cancellation = CancellationToken::new();
     let http_config = StreamableHttpServerConfig::default()
-        .with_stateful_mode(true)
+        .with_legacy_session_mode(true)
         .with_cancellation_token(cancellation.clone());
     let service = StreamableHttpService::new(
         move || Ok(server.clone()),

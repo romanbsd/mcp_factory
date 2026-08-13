@@ -60,7 +60,7 @@ async fn run_http(server: McpProxyServer) -> Result<(), ProxyError> {
     let session_manager = Arc::new(LocalSessionManager::default());
     let cancellation = CancellationToken::new();
     let http_config = StreamableHttpServerConfig::default()
-        .with_stateful_mode(true)
+        .with_legacy_session_mode(true)
         .with_cancellation_token(cancellation.clone());
     let path = config.http_path.clone();
 
