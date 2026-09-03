@@ -231,12 +231,11 @@ impl ServerHandler for McpProxyServer {
             .resources
             .get(&request.uri)
             .ok_or_else(|| ProxyError::ResourceNotFound(request.uri.clone()))?;
-        Ok(ReadResourceResult::new(vec![ResourceContents::text(
-            resource.content,
-            &request.uri,
+        Ok(
+            ReadResourceResult::new(vec![ResourceContents::text(resource.content, &request.uri)
+                .with_mime_type(&resource.mime_type)])
+            .into(),
         )
-        .with_mime_type(&resource.mime_type)])
-        .into())
     }
 
     async fn on_initialized(&self, _context: NotificationContext<RoleServer>) {
