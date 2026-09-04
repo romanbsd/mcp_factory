@@ -22,3 +22,10 @@ transport = "{{ transport }}"
 # ahead of time (or for HTTP transport, where auto-login is disabled):
 #   mcp-factory-auth login --config config.toml
 #   cargo run -- --auth-login
+
+# Google service account (renewable in-memory tokens; credential JSON is read
+# from GOOGLE_APPLICATION_CREDENTIALS by default):
+# [auth]
+# type = "google_service_account"
+# scopes = ["https://www.googleapis.com/auth/example"]
+# credentials_path_env = "GOOGLE_APPLICATION_CREDENTIALS"  # optional

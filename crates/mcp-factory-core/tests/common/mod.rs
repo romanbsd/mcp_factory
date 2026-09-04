@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use mcp_factory_core::{
     AuthConfig, ExecutionKind, ParamBinding, ParamLocation, ProxyConfig, ResourceSpec,
     RestOperation, ToolSpec,

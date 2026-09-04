@@ -6,10 +6,10 @@ use mcp_factory_core::{run_oauth_login, McpProxyServer, ProxyConfig};
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     let mut config = ProxyConfig::load_runtime(ProxyConfig {
-        base_url: "{{ base_url }}".to_string(),
-        server_name: "{{ crate_name }}".to_string(),
+        base_url: "https://androidpublisher.googleapis.com".to_string(),
+        server_name: "google-play-mcp".to_string(),
         server_version: env!("CARGO_PKG_VERSION").to_string(),
-        transport: "{{ transport }}".parse().unwrap_or_default(),
+        transport: "stdio".parse().unwrap_or_default(),
         ..ProxyConfig::default()
     })?;
     // A config.toml may omit identity fields. Restore the generation-time
@@ -18,13 +18,13 @@ async fn main() -> anyhow::Result<()> {
         config.server_version = env!("CARGO_PKG_VERSION").to_string();
     }
     if config.base_url.is_empty() {
-        config.base_url = "{{ base_url }}".to_string();
+        config.base_url = "https://androidpublisher.googleapis.com".to_string();
     }
     if config.server_name.is_empty() {
-        config.server_name = "{{ crate_name }}".to_string();
+        config.server_name = "google-play-mcp".to_string();
     }
     if config.transport == ProxyConfig::default().transport {
-        config.transport = "{{ transport }}".parse().unwrap_or_default();
+        config.transport = "stdio".parse().unwrap_or_default();
     }
 
     if std::env::args().any(|a| a == "--auth-login") {

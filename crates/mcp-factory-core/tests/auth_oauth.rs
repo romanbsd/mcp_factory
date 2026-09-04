@@ -2,7 +2,7 @@ mod common;
 
 use chrono::{Duration, Utc};
 use mcp_factory_core::auth::{oauth_provider_from_config, FileTokenStore, StoredTokens};
-use mcp_factory_core::{AuthConfig, McpProxyServer, ProxyConfig};
+use mcp_factory_core::{AuthConfig, McpProxyServer};
 use serde_json::json;
 use wiremock::matchers::{body_string_contains, header, method, path};
 use wiremock::{Mock, MockServer, ResponseTemplate};

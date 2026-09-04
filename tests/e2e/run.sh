@@ -45,4 +45,19 @@ test -x "$PKG_OUT/e2e-openapi"
 test -f "$PKG_OUT/config.toml"
 test -f "$PKG_OUT/README.txt"
 
+# Launch the packaged binary from a different working directory. Its sibling
+# config must still win over generated defaults.
+cat >"$PKG_OUT/config.toml" <<'EOF'
+base_url = "http://127.0.0.1:1"
+server_name = "portable-config-name"
+transport = "stdio"
+EOF
+PORTABLE_RESPONSE="$({
+  cd "$TMPDIR"
+  unset MCP_FACTORY_CONFIG
+  printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"e2e","version":"1.0"}}}' \
+    | "$PKG_OUT/e2e-openapi"
+})"
+grep -q 'portable-config-name' <<<"$PORTABLE_RESPONSE"
+
 echo "cross-layer e2e: ok"

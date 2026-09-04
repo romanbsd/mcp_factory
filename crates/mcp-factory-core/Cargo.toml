@@ -30,6 +30,7 @@ oauth2.workspace = true
 clap.workspace = true
 open.workspace = true
 async-trait.workspace = true
+gcp_auth.workspace = true
 
 [[bin]]
 name = "mcp-factory-auth"
@@ -47,4 +48,4 @@ tokio-test = "0.4"
 tempfile = "3"
 assert-json-diff = "2"
 anyhow = "1"
-rmcp = { version = "3.1", features = ["client", "transport-child-process"] }
+rmcp = { version = "3.2", features = ["client", "transport-child-process"] }

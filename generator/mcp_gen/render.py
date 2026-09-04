@@ -63,6 +63,7 @@ def render_crate(
     base_url: str,
     core_path: str,
     transport: str,
+    config_text: str | None = None,
 ) -> None:
     env = _env()
     context = {
@@ -86,7 +87,11 @@ def render_crate(
     }
 
     for template_name, target in templates.items():
-        target.write_text(env.get_template(template_name).render(**context), encoding="utf-8")
+        if template_name == "config.toml.j2" and config_text is not None:
+            rendered = config_text
+        else:
+            rendered = env.get_template(template_name).render(**context)
+        target.write_text(f"{rendered.rstrip()}\n", encoding="utf-8")
 
     manifest = {
         "crate_name": crate_name,

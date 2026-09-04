@@ -7,7 +7,9 @@ from typing import Literal
 import typer
 import yaml
 
+from mcp_gen.composition import CompositionError, compose_generation_results
 from mcp_gen.graphql.parser import parse_graphql
+from mcp_gen.google_discovery.parser import parse_google_discovery
 from mcp_gen.openapi.parser import parse_openapi
 from mcp_gen.packaging import package_with_temp_crate
 from mcp_gen.paths import resolve_core_path
@@ -39,7 +41,7 @@ def _resolve_base_url(explicit: str | None, detected: str | None) -> str:
     return base_url
 
 
-def detect_kind(path: Path) -> Literal["openapi", "graphql"]:
+def detect_kind(path: Path) -> Literal["openapi", "graphql", "google_discovery"]:
     if path.suffix in {".graphql", ".gql"}:
         return "graphql"
     if path.suffix == ".json":
@@ -52,11 +54,15 @@ def detect_kind(path: Path) -> Literal["openapi", "graphql"]:
             raise typer.BadParameter("unsupported JSON input: expected a JSON object")
         if "openapi" in data:
             return "openapi"
+        if data.get("kind") == "discovery#restDescription":
+            return "google_discovery"
         inner = data.get("data")
         inner = inner if isinstance(inner, dict) else {}
         if data.get("__schema") or inner.get("__schema"):
             return "graphql"
-        raise typer.BadParameter("unsupported JSON input: expected OpenAPI or GraphQL introspection")
+        raise typer.BadParameter(
+            "unsupported JSON input: expected OpenAPI, Google Discovery, or GraphQL introspection"
+        )
     if path.suffix in {".yaml", ".yml"}:
         data = yaml.safe_load(path.read_text(encoding="utf-8"))
         if isinstance(data, dict) and "openapi" in data:
@@ -84,6 +90,8 @@ def _parse_schema(
         )
     if schema_kind == "graphql":
         return parse_graphql(input, read_only=read_only)
+    if schema_kind in {"google_discovery", "google-discovery"}:
+        return parse_google_discovery(input, tags=tag_set, read_only=read_only)
     raise typer.BadParameter(f"unsupported kind: {schema_kind}")
 
 
@@ -91,7 +99,7 @@ def _parse_schema(
 def generate(
     input: Path = typer.Option(..., "--input", "-i", exists=True, dir_okay=False, readable=True),
     output: Path = typer.Option(..., "--output", "-o", file_okay=False),
-    kind: str | None = typer.Option(None, "--kind", help="openapi or graphql"),
+    kind: str | None = typer.Option(None, "--kind", help="openapi, google-discovery, or graphql"),
     base_url: str | None = typer.Option(
         None, "--base-url", help="Upstream base URL (default: OpenAPI servers[0].url)"
     ),
@@ -108,7 +116,7 @@ def generate(
         False, "--read-only", help="Only generate non-mutating tools"
     ),
 ) -> None:
-    """Generate a Rust MCP proxy crate from an OpenAPI or GraphQL schema."""
+    """Generate a Rust MCP proxy crate from an OpenAPI, Google Discovery, or GraphQL schema."""
     _validate_transport(transport)
     result = _parse_schema(
         input,
@@ -123,17 +131,79 @@ def generate(
         output_dir=output,
         crate_name=name,
         base_url=_resolve_base_url(base_url, result.base_url),
-        core_path=resolve_core_path(core_path),
+        core_path=resolve_core_path(core_path, relative_to=output),
         transport=transport,
     )
     typer.echo(f"Generated {len(result.tools)} tools into {output}")
+
+
+@app.command("compose")
+def compose(
+    inputs: list[Path] = typer.Option(
+        ..., "--input", "-i", exists=True, dir_okay=False, readable=True
+    ),
+    output: Path = typer.Option(..., "--output", "-o", file_okay=False),
+    base_url: str | None = typer.Option(
+        None,
+        "--base-url",
+        help="Shared upstream base URL for relative operations",
+    ),
+    name: str = typer.Option("generated-mcp", "--name"),
+    transport: str = typer.Option("stdio", "--transport", help="stdio, http, or both"),
+    core_path: str | None = typer.Option(
+        None,
+        "--core-path",
+        help="Override path to mcp-factory-core (default: auto-detected from mcp-gen install)",
+    ),
+    config: Path | None = typer.Option(
+        None,
+        "--config",
+        exists=True,
+        dir_okay=False,
+        readable=True,
+        help="Use an existing config.toml instead of the generated default",
+    ),
+    include_deprecated: bool = typer.Option(False, "--include-deprecated"),
+    tags: str | None = typer.Option(None, "--tags", help="Comma-separated schema tags filter"),
+    read_only: bool = typer.Option(
+        False, "--read-only", help="Only generate non-mutating tools"
+    ),
+) -> None:
+    """Compose multiple schemas into one generated Rust MCP proxy crate."""
+    _validate_transport(transport)
+    parsed = [
+        _parse_schema(
+            input,
+            kind=None,
+            include_deprecated=include_deprecated,
+            tags=tags,
+            read_only=read_only,
+        )
+        for input in inputs
+    ]
+    try:
+        result = compose_generation_results(parsed, base_url_override=base_url)
+    except CompositionError as error:
+        raise typer.BadParameter(str(error)) from error
+    resolved_base_url = _resolve_base_url(base_url, result.base_url)
+    config_text = config.read_text(encoding="utf-8") if config else None
+    render_crate(
+        result,
+        output_dir=output,
+        crate_name=name,
+        base_url=resolved_base_url,
+        core_path=resolve_core_path(core_path, relative_to=output),
+        transport=transport,
+        config_text=config_text,
+    )
+    typer.echo(f"Composed {len(inputs)} schemas and {len(result.tools)} tools into {output}")
 
 
 @app.command("package")
 def package(
     input: Path = typer.Option(..., "--input", "-i", exists=True, dir_okay=False, readable=True),
     output: Path = typer.Option(..., "--output", "-o", file_okay=False, help="Directory for the portable dist"),
-    kind: str | None = typer.Option(None, "--kind", help="openapi or graphql"),
+    kind: str | None = typer.Option(None, "--kind", help="openapi, google-discovery, or graphql"),
     base_url: str | None = typer.Option(
         None, "--base-url", help="Upstream base URL (default: OpenAPI servers[0].url)"
     ),
@@ -174,7 +244,7 @@ def package(
             output_dir=crate_dir,
             crate_name=name,
             base_url=resolved_base_url,
-            core_path=resolve_core_path(core_path),
+            core_path=resolve_core_path(core_path, relative_to=crate_dir),
             transport=transport,
         )
 

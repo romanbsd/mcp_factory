@@ -57,7 +57,13 @@ def test_golden_minimal_openapi(tmp_path: Path) -> None:
     if os.environ.get("UPDATE_GOLDEN") == "1":
         golden_dir.mkdir(parents=True, exist_ok=True)
         for name in ("tools.rs", "resources.rs", "Cargo.toml"):
-            (golden_dir / name).write_text((output / "src" / name).read_text() if name != "Cargo.toml" else (output / name).read_text())
+            if name == "Cargo.toml":
+                # The core path is machine/tmp-specific; store the normalized
+                # placeholder so the golden file is stable across checkouts.
+                content = _normalize_cargo_toml((output / name).read_text())
+            else:
+                content = (output / "src" / name).read_text()
+            (golden_dir / name).write_text(content)
         return
 
     for name in ("tools.rs", "resources.rs", "Cargo.toml"):

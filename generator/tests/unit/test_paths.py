@@ -25,6 +25,16 @@ def test_resolve_core_path_honors_override(tmp_path: Path) -> None:
     assert resolve_core_path(str(custom)) == str(custom.resolve())
 
 
+def test_resolve_core_path_can_be_relative_to_generated_crate(tmp_path: Path) -> None:
+    custom = tmp_path / "runtime" / "mcp-factory-core"
+    custom.mkdir(parents=True)
+    output = tmp_path / "generated" / "server"
+
+    assert resolve_core_path(str(custom), relative_to=output) == (
+        "../../runtime/mcp-factory-core"
+    )
+
+
 def test_resolve_core_path_missing_dir(tmp_path: Path) -> None:
     with pytest.raises(typer.BadParameter, match="mcp-factory-core not found"):
         resolve_core_path(str(tmp_path / "missing"))
