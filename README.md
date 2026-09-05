@@ -65,6 +65,91 @@ Composition rejects duplicate tool names and resource URIs. Schemas with
 relative operations must share one base URL; independently hosted APIs can be
 combined when their generated operations use absolute URLs.
 
+### Add handwritten high-level tools
+
+Generated crates include a regeneration-safe extension seam for tools that
+orchestrate several generated operations. On the first generation, `mcp-gen`
+creates `src/extensions.rs` with an empty `build_custom_tools()` function. That
+file is handwritten ownership: subsequent `generate` or `compose` runs preserve
+it byte-for-byte while continuing to regenerate `src/main.rs`, `src/tools.rs`,
+and `src/resources.rs`.
+
+Implement a handler with `CustomToolHandler`, describe it with
+`CustomToolSpec`, and return it from `build_custom_tools()`:
+
+```rust
+use std::sync::Arc;
+
+use mcp_factory_core::{
+    async_trait, CustomToolHandler, CustomToolSpec, ProxyError,
+    ReadOnlyToolInvoker, ToolHints, ToolResult,
+};
+use serde_json::{json, Value};
+
+struct SummaryHandler;
+
+#[async_trait]
+impl CustomToolHandler for SummaryHandler {
+    async fn call(
+        &self,
+        invoker: &dyn ReadOnlyToolInvoker,
+        arguments: Value,
+    ) -> Result<ToolResult, ProxyError> {
+        let source = invoker
+            .invoke_read_only("pets_get", arguments)
+            .await?;
+        let report = json!({"summary": source.structured});
+        Ok(ToolResult::text(report.to_string()).with_structured(Some(report)))
+    }
+}
+
+pub fn build_custom_tools() -> Vec<CustomToolSpec> {
+    vec![CustomToolSpec {
+        name: "report_pet".into(),
+        description: "Build a read-only pet summary.".into(),
+        input_schema: json!({"type": "object", "additionalProperties": false}),
+        hints: ToolHints {
+            title: Some("Report pet".into()),
+            output_schema: Some(json!({"type": "object"})),
+            read_only: Some(true),
+            destructive: Some(false),
+            idempotent: Some(true),
+            open_world: Some(true),
+        },
+        handler: Arc::new(SummaryHandler),
+    }]
+}
+```
+
+The runtime validates custom-tool input schemas, rejects duplicate generated or
+custom names at startup, and exposes only generated operations marked
+`readOnly` through `ReadOnlyToolInvoker`. A custom report therefore cannot use
+that interface to invoke a generated mutation. If an extension intentionally
+needs mutations, design and register a separate, confirmation-aware boundary;
+do not weaken the read-only invoker.
+
+Keep larger extensions in their own module tree and make `extensions.rs` a
+small stable entry point. The Google Play server demonstrates this layout:
+
+```text
+google-play-mcp/src/
+  extensions.rs          # preserved entry point
+  high_level/             # handwritten implementation and tests
+  main.rs                 # regenerated; calls build_custom_tools()
+  tools.rs                # regenerated low-level API tools
+```
+
+After changing a schema, regenerate normally and verify both layers:
+
+```bash
+mcp-gen compose ...
+cargo test
+```
+
+The preservation test in `generator/tests/unit/test_render.py` guards this
+ownership boundary. See `google-play-mcp/README.md` for a complete operational
+example using four evidence-bearing reporting tools.
+
 ### Run generated server (stdio)
 
 ```bash

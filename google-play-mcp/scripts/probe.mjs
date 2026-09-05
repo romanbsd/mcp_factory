@@ -63,6 +63,10 @@ try {
     toolCount: tools.length,
     resourceCount: resources.length,
     firstTools: tools.slice(0, 5).map((tool) => tool.name),
+    highLevelTools: tools
+      .map((tool) => tool.name)
+      .filter((name) => name.startsWith("report_"))
+      .sort(),
     resources: resources.map((resource) => resource.uri),
   };
   if (process.argv.includes("--live")) {
@@ -78,14 +82,23 @@ try {
       name: "apps_search",
       arguments: { pageSize: 1 },
     });
+    const capabilities = await request("tools/call", {
+      name: "report_capabilities",
+      arguments: { packageName, probe: true },
+    });
     summary.live = {
       publisherRead: !publisher.isError,
       reportingRead: !reporting.isError,
+      highLevelRead: !capabilities.isError,
+      highLevelStatus: capabilities.structuredContent?.status,
       publisherError: publisher.isError
         ? publisher.content?.[0]?.text?.slice(0, 300)
         : undefined,
       reportingError: reporting.isError
         ? reporting.content?.[0]?.text?.slice(0, 300)
+        : undefined,
+      highLevelError: capabilities.isError
+        ? capabilities.content?.[0]?.text?.slice(0, 300)
         : undefined,
     };
   }
