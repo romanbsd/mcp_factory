@@ -150,6 +150,18 @@ The preservation test in `generator/tests/unit/test_render.py` guards this
 ownership boundary. See `google-play-mcp/README.md` for a complete operational
 example using four evidence-bearing reporting tools.
 
+### Build the Google Play MCP release binary
+
+From the repository root, build the standalone Google Play MCP crate in release
+mode:
+
+```bash
+cargo build --release --manifest-path google-play-mcp/Cargo.toml
+```
+
+The binary is written to
+`google-play-mcp/target/release/google-play-mcp`.
+
 ### Run generated server (stdio)
 
 ```bash
