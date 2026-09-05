@@ -4,6 +4,7 @@ use async_trait::async_trait;
 use reqwest::RequestBuilder;
 
 use crate::auth::oauth2::OAuth2Provider;
+use crate::auth::GoogleServiceAccountAuthProvider;
 use crate::config::AuthConfig;
 use crate::error::ProxyError;
 
@@ -95,6 +96,13 @@ pub fn auth_provider_from_config(
             let provider = Arc::new(OAuth2Provider::new(auth, http, interactive)?);
             Ok(Arc::new(OAuth2AuthProvider::new(provider)))
         }
+        AuthConfig::GoogleServiceAccount {
+            credentials_path_env,
+            scopes,
+        } => Ok(Arc::new(GoogleServiceAccountAuthProvider::from_env(
+            credentials_path_env,
+            scopes,
+        )?)),
         _ => Ok(Arc::new(StaticAuthProvider::new(auth.clone()))),
     }
 }

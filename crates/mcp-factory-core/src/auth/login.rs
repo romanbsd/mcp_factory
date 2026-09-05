@@ -204,6 +204,42 @@ async fn wait_for_callback(
     Ok(result)
 }
 
+pub async fn oauth_status(config: &ProxyConfig) -> Result<(), ProxyError> {
+    let AuthConfig::OAuth2 { token_store, .. } = &config.auth else {
+        return Err(ProxyError::Config("auth.type must be oauth2".to_string()));
+    };
+    let store = crate::auth::token_store::FileTokenStore::new(token_store.clone());
+    match store.load()? {
+        None => println!("No stored OAuth tokens."),
+        Some(tokens) => {
+            println!("Access token: present");
+            println!(
+                "Refresh token: {}",
+                if tokens.refresh_token.is_some() {
+                    "present"
+                } else {
+                    "absent"
+                }
+            );
+            match tokens.expires_at {
+                Some(exp) => println!("Expires at: {exp}"),
+                None => println!("Expires at: unknown"),
+            }
+        }
+    }
+    Ok(())
+}
+
+pub async fn oauth_logout(config: &ProxyConfig) -> Result<(), ProxyError> {
+    let AuthConfig::OAuth2 { token_store, .. } = &config.auth else {
+        return Err(ProxyError::Config("auth.type must be oauth2".to_string()));
+    };
+    let store = crate::auth::token_store::FileTokenStore::new(token_store.clone());
+    store.delete()?;
+    println!("OAuth tokens deleted.");
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -268,40 +304,4 @@ mod tests {
 
         assert_eq!(task.await.unwrap().unwrap(), "good-code");
     }
-}
-
-pub async fn oauth_status(config: &ProxyConfig) -> Result<(), ProxyError> {
-    let AuthConfig::OAuth2 { token_store, .. } = &config.auth else {
-        return Err(ProxyError::Config("auth.type must be oauth2".to_string()));
-    };
-    let store = crate::auth::token_store::FileTokenStore::new(token_store.clone());
-    match store.load()? {
-        None => println!("No stored OAuth tokens."),
-        Some(tokens) => {
-            println!("Access token: present");
-            println!(
-                "Refresh token: {}",
-                if tokens.refresh_token.is_some() {
-                    "present"
-                } else {
-                    "absent"
-                }
-            );
-            match tokens.expires_at {
-                Some(exp) => println!("Expires at: {exp}"),
-                None => println!("Expires at: unknown"),
-            }
-        }
-    }
-    Ok(())
-}
-
-pub async fn oauth_logout(config: &ProxyConfig) -> Result<(), ProxyError> {
-    let AuthConfig::OAuth2 { token_store, .. } = &config.auth else {
-        return Err(ProxyError::Config("auth.type must be oauth2".to_string()));
-    };
-    let store = crate::auth::token_store::FileTokenStore::new(token_store.clone());
-    store.delete()?;
-    println!("OAuth tokens deleted.");
-    Ok(())
 }

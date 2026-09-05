@@ -28,6 +28,7 @@ Edit `config.toml` or set environment variables:
 | `MCP_FACTORY_BASE_URL` | Upstream API base URL (default from generation: `{base_url}`) |
 | `MCP_FACTORY_BEARER_TOKEN` | Bearer auth token |
 | `MCP_FACTORY_API_KEY` | API key (header mode) |
+| `MCP_FACTORY_CONFIG` | Explicit path to `config.toml` |
 | `MCP_TRANSPORT` | `stdio`, `http`, or `both` (default: `{transport}`) |
 | `MCP_FACTORY_BIND_ADDR` | HTTP bind address when using HTTP transport |
 

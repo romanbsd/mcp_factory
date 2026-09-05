@@ -1,7 +1,7 @@
 use std::sync::Arc;
 use std::time::Duration;
 
-use mcp_factory_core::{McpProxyServer, ProxyConfig, TransportMode};
+use mcp_factory_core::McpProxyServer;
 use rmcp::transport::streamable_http_server::session::local::LocalSessionManager;
 use rmcp::transport::streamable_http_server::tower::{
     StreamableHttpServerConfig, StreamableHttpService,

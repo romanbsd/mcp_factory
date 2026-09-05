@@ -1,3 +1,4 @@
+import json
 import re
 from pathlib import Path
 from unittest.mock import patch
@@ -29,6 +30,13 @@ def test_detect_graphql_sdl(fixtures_dir: Path) -> None:
 
 def test_detect_graphql_introspection(fixtures_dir: Path) -> None:
     assert detect_kind(fixtures_dir / "introspection.json") == "graphql"
+
+
+def test_detect_google_discovery(fixtures_dir: Path) -> None:
+    assert (
+        detect_kind(fixtures_dir / "minimal-google-discovery.json")
+        == "google_discovery"
+    )
 
 
 def test_detect_rejects_non_object_json(tmp_path: Path) -> None:
@@ -157,3 +165,53 @@ def test_package_command_with_archive(tmp_path: Path, fixtures_dir: Path) -> Non
         )
     assert result.exit_code == 0, result.output
     assert "Archive:" in result.output
+
+
+def test_compose_generates_one_crate_and_preserves_config(
+    tmp_path: Path, fixtures_dir: Path
+) -> None:
+    output = tmp_path / "combined"
+    config = tmp_path / "config.toml"
+    config.write_text(
+        'base_url = "https://configured.example"\nserver_name = "combined"\n',
+        encoding="utf-8",
+    )
+
+    result = runner.invoke(
+        app,
+        [
+            "compose",
+            "--input",
+            str(fixtures_dir / "minimal-openapi.yaml"),
+            "--input",
+            str(fixtures_dir / "minimal-google-discovery.json"),
+            "--output",
+            str(output),
+            "--name",
+            "combined-mcp",
+            "--base-url",
+            "https://shared.example",
+            "--config",
+            str(config),
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    manifest = json.loads(
+        (output / "mcp-gen.manifest.json").read_text(encoding="utf-8")
+    )
+    assert manifest == {
+        "crate_name": "combined-mcp",
+        "tool_count": 4,
+        "resource_count": 4,
+        "schema_kind": "composed",
+    }
+    tools = (output / "src" / "tools.rs").read_text(encoding="utf-8")
+    assert 'name: "getPet".to_string()' in tools
+    assert 'name: "items_query".to_string()' in tools
+    assert (output / "config.toml").read_text(encoding="utf-8") == config.read_text(
+        encoding="utf-8"
+    )
+    main_rs = (output / "src" / "main.rs").read_text(encoding="utf-8")
+    assert "if config.base_url.is_empty()" in main_rs
+    assert "if config.server_name.is_empty()" in main_rs

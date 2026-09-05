@@ -20,11 +20,11 @@ from graphql import (
 from mcp_gen.models import (
     GenerationResult,
     GraphQLOperation,
-    ResourceSpec,
     ToolSpec,
     sanitize_tool_name,
     unique_name,
 )
+from mcp_gen.resources import build_embedded_resources
 
 SCALAR_TO_JSON: dict[str, dict[str, str]] = {
     "String": {"type": "string"},
@@ -243,29 +243,17 @@ def parse_graphql(path: Path, *, read_only: bool = False) -> GenerationResult:
                 )
             )
 
-    resources = [
-        ResourceSpec(
-            uri="schema://graphql",
-            name="graphql",
-            description="Embedded GraphQL schema",
-            mime_type=mime_type,
-            content=schema_text,
-        ),
-        ResourceSpec(
-            uri="meta://tools",
-            name="tools",
-            description="Generated tool index",
-            mime_type="application/json",
-            content=json.dumps(
-                [{"name": tool.name, "description": tool.description} for tool in tools],
-                indent=2,
-            ),
-        ),
-    ]
+    resources = build_embedded_resources(
+        tools,
+        schema_uri="schema://graphql",
+        schema_name="graphql",
+        schema_description="Embedded GraphQL schema",
+        schema_mime_type=mime_type,
+        schema_text=schema_text,
+    )
 
     return GenerationResult(
         tools=tools,
         resources=resources,
         schema_kind="graphql",
-        schema_text=schema_text,
     )

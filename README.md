@@ -35,15 +35,35 @@ cd generator
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -e ".[dev]"
+```
 
 `mcp-gen` auto-detects `crates/mcp-factory-core` from its install location (the repo checkout when using `pip install -e`). Pass `--core-path` only if the runtime crate lives elsewhere.
 
+```bash
 mcp-gen generate \
   --input tests/fixtures/minimal-openapi.yaml \
   --output ../examples/petstore-openapi \
   --base-url http://127.0.0.1:8080 \
   --name petstore-mcp
 ```
+
+### Compose multiple schemas
+
+Generate one MCP server from several OpenAPI, GraphQL, or Google Discovery
+documents by repeating `--input`:
+
+```bash
+mcp-gen compose \
+  --input schemas/publisher.json \
+  --input schemas/reporting.json \
+  --output ../google-play-mcp \
+  --name google-play-mcp \
+  --config ../google-play-mcp/config.toml
+```
+
+Composition rejects duplicate tool names and resource URIs. Schemas with
+relative operations must share one base URL; independently hosted APIs can be
+combined when their generated operations use absolute URLs.
 
 ### Run generated server (stdio)
 
@@ -201,7 +221,7 @@ bash tests/e2e/run.sh
 | Primitive | Source |
 |-----------|--------|
 | Tools | One per OpenAPI operation or GraphQL query/mutation field |
-| Resources | `schema://openapi` or `schema://graphql`, plus `meta://tools` index |
+| Resources | One `schema://...` resource per input schema, plus `meta://tools` tool indexes (merged when inputs share a URI) |
 
 Each tool also carries hints derived from the schema, so the client sees more
 than just a name and input schema:
@@ -239,6 +259,7 @@ Environment variables:
 
 | Variable | Description |
 |----------|-------------|
+| `MCP_FACTORY_CONFIG` | Explicit path to `config.toml` |
 | `MCP_FACTORY_BASE_URL` | Upstream API base URL |
 | `MCP_FACTORY_BEARER_TOKEN` | Bearer auth token |
 | `MCP_FACTORY_API_KEY` | API key (header mode) |
@@ -248,7 +269,10 @@ Environment variables:
 | `MCP_FACTORY_HTTP_PATH` | HTTP mount path (default `/mcp`) |
 | `MCP_FACTORY_TIMEOUT` | Upstream request timeout, seconds |
 
-Generated crates also ship a `config.toml` template.
+Generated crates also ship a `config.toml` template. At runtime, configuration
+is loaded in this order: `MCP_FACTORY_CONFIG`, `config.toml` in the current
+directory, `config.toml` beside the executable, then generated defaults.
+Environment overrides are applied last.
 
 `--base-url` is optional at generation time when the OpenAPI schema declares a
 `servers[].url` — it's used as the default (and baked into `config.toml`),

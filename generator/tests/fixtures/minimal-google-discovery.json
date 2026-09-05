@@ -1,0 +1,59 @@
+{
+  "kind": "discovery#restDescription",
+  "name": "demo",
+  "version": "v1",
+  "rootUrl": "https://demo.googleapis.com/",
+  "servicePath": "",
+  "schemas": {
+    "Item": {
+      "type": "object",
+      "properties": {
+        "name": {"type": "string", "required": true},
+        "labels": {"type": "string", "repeated": true}
+      }
+    }
+  },
+  "resources": {
+    "items": {
+      "methods": {
+        "get": {
+          "id": "demo.items.get",
+          "path": "v1/items/{name}",
+          "httpMethod": "GET",
+          "description": "Gets an item.",
+          "parameters": {
+            "name": {"type": "string", "location": "path", "required": true},
+            "view": {"type": "string", "location": "query", "enum": ["BASIC", "FULL"]}
+          },
+          "response": {"$ref": "Item"}
+        },
+        "create": {
+          "id": "demo.items.create",
+          "path": "v1/items",
+          "httpMethod": "POST",
+          "description": "Creates an item.",
+          "parameters": {},
+          "request": {"$ref": "Item"},
+          "response": {"$ref": "Item"}
+        },
+        "query": {
+          "id": "demo.items.query",
+          "path": "v1/items:query",
+          "httpMethod": "POST",
+          "description": "Queries items without changing them.",
+          "parameters": {},
+          "request": {"$ref": "Item"},
+          "response": {"$ref": "Item"}
+        },
+        "upload": {
+          "id": "demo.items.upload",
+          "path": "v1/items:upload",
+          "httpMethod": "POST",
+          "description": "Uploads item media.",
+          "parameters": {},
+          "mediaUpload": {"accept": ["application/octet-stream"]}
+        }
+      }
+    }
+  }
+}

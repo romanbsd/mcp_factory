@@ -34,6 +34,10 @@ fn default_client_secret_env() -> String {
     "MCP_FACTORY_OAUTH_CLIENT_SECRET".to_string()
 }
 
+fn default_google_credentials_env() -> String {
+    "GOOGLE_APPLICATION_CREDENTIALS".to_string()
+}
+
 pub fn default_token_store_path() -> PathBuf {
     if let Ok(dir) = env::var("XDG_CONFIG_HOME") {
         return PathBuf::from(dir).join("mcp-factory").join("tokens.json");
@@ -73,6 +77,11 @@ pub enum AuthConfig {
         #[serde(default = "default_token_store_path")]
         token_store: PathBuf,
     },
+    GoogleServiceAccount {
+        #[serde(default = "default_google_credentials_env")]
+        credentials_path_env: String,
+        scopes: Vec<String>,
+    },
 }
 
 fn default_bearer_env() -> String {
@@ -106,7 +115,7 @@ impl AuthConfig {
 
     pub fn resolve_secret(&self) -> Option<String> {
         let env_var = match self {
-            Self::None | Self::OAuth2 { .. } => return None,
+            Self::None | Self::OAuth2 { .. } | Self::GoogleServiceAccount { .. } => return None,
             Self::Bearer { env_var } => env_var,
             Self::ApiKeyHeader { env_var, .. } => env_var,
             Self::ApiKeyQuery { env_var, .. } => env_var,
@@ -181,40 +190,43 @@ impl ProxyConfig {
     }
 
     pub fn from_env() -> Result<Self, ProxyError> {
-        let mut config = Self::default();
+        Self::default().apply_env_overrides()
+    }
 
+    fn apply_env_overrides(mut self) -> Result<Self, ProxyError> {
         if let Ok(base_url) = env::var("MCP_FACTORY_BASE_URL") {
-            config.base_url = base_url;
+            self.base_url = base_url;
         }
         if let Ok(transport) = env::var("MCP_TRANSPORT") {
-            config.transport = transport.parse()?;
+            self.transport = transport.parse()?;
         }
         if let Ok(bind) = env::var("MCP_FACTORY_BIND_ADDR") {
-            config.bind_addr = bind;
+            self.bind_addr = bind;
         }
         if let Ok(path) = env::var("MCP_FACTORY_HTTP_PATH") {
-            config.http_path = path;
+            self.http_path = path;
         }
         if let Ok(timeout) = env::var("MCP_FACTORY_TIMEOUT") {
-            config.timeout_secs = timeout.parse().map_err(|_| {
+            self.timeout_secs = timeout.parse().map_err(|_| {
                 ProxyError::Config(format!("invalid MCP_FACTORY_TIMEOUT: {timeout}"))
             })?;
         }
-        if env::var("MCP_FACTORY_BEARER_TOKEN")
-            .ok()
-            .filter(|v| !v.is_empty())
-            .is_some()
-        {
-            config.auth = AuthConfig::bearer();
-        } else if env::var("MCP_FACTORY_API_KEY")
-            .ok()
-            .filter(|v| !v.is_empty())
-            .is_some()
-        {
-            config.auth = AuthConfig::api_key_header("X-API-Key");
+        if matches!(self.auth, AuthConfig::None) {
+            if env::var("MCP_FACTORY_BEARER_TOKEN")
+                .ok()
+                .filter(|v| !v.is_empty())
+                .is_some()
+            {
+                self.auth = AuthConfig::bearer();
+            } else if env::var("MCP_FACTORY_API_KEY")
+                .ok()
+                .filter(|v| !v.is_empty())
+                .is_some()
+            {
+                self.auth = AuthConfig::api_key_header("X-API-Key");
+            }
         }
-
-        Ok(config)
+        Ok(self)
     }
 
     pub fn load(path: impl AsRef<Path>) -> Result<Self, ProxyError> {
@@ -224,28 +236,55 @@ impl ProxyConfig {
             .map_err(|e| ProxyError::Config(format!("failed to parse config: {e}")))
     }
 
-    pub fn merge_env(mut self) -> Result<Self, ProxyError> {
-        let env_config = Self::from_env()?;
-        if !env_config.base_url.is_empty() {
-            self.base_url = env_config.base_url;
-        }
-        if matches!(self.auth, AuthConfig::None) && env_config.auth != AuthConfig::None {
-            self.auth = env_config.auth;
-        }
-        if env::var("MCP_TRANSPORT").is_ok() {
-            self.transport = env_config.transport;
-        }
-        if env::var("MCP_FACTORY_BIND_ADDR").is_ok() {
-            self.bind_addr = env_config.bind_addr;
-        }
-        if env::var("MCP_FACTORY_HTTP_PATH").is_ok() {
-            self.http_path = env_config.http_path;
-        }
-        if env::var("MCP_FACTORY_TIMEOUT").is_ok() {
-            self.timeout_secs = env_config.timeout_secs;
-        }
-        Ok(self)
+    /// Load runtime configuration using an explicit override first, then the
+    /// process working directory, then the directory containing the executable.
+    /// Generated defaults are used only when none of those files exists.
+    pub fn load_runtime(defaults: Self) -> Result<Self, ProxyError> {
+        let explicit = env::var_os("MCP_FACTORY_CONFIG")
+            .filter(|value| !value.is_empty())
+            .map(PathBuf::from);
+        let config = match select_runtime_config_path(explicit, env::current_dir, env::current_exe)?
+        {
+            Some(path) => Self::load(path)?,
+            None => defaults,
+        };
+        config.apply_env_overrides()
     }
+
+    pub fn merge_env(self) -> Result<Self, ProxyError> {
+        self.apply_env_overrides()
+    }
+}
+
+/// Select the runtime config path: explicit override first, then a
+/// `config.toml` beside the working directory, then beside the executable.
+/// The working directory and executable path are resolved lazily (via the
+/// provided closures) so a failure to read either never aborts startup when
+/// an earlier candidate already answers.
+fn select_runtime_config_path<C, E>(
+    explicit: Option<PathBuf>,
+    cwd: C,
+    executable: E,
+) -> Result<Option<PathBuf>, ProxyError>
+where
+    C: FnOnce() -> std::io::Result<PathBuf>,
+    E: FnOnce() -> std::io::Result<PathBuf>,
+{
+    if explicit.is_some() {
+        return Ok(explicit);
+    }
+    let cwd =
+        cwd().map_err(|e| ProxyError::Config(format!("failed to read current directory: {e}")))?;
+    let cwd_config = cwd.join("config.toml");
+    if cwd_config.is_file() {
+        return Ok(Some(cwd_config));
+    }
+    // A missing executable path only means we skip the beside-binary config
+    // candidate and fall back to generation-time defaults; it must not abort.
+    let executable_config = executable()
+        .ok()
+        .and_then(|exe| exe.parent().map(|dir| dir.join("config.toml")));
+    Ok(executable_config.filter(|path| path.is_file()))
 }
 
 #[cfg(test)]
@@ -280,6 +319,37 @@ mod tests {
     }
 
     #[test]
+    fn runtime_config_path_precedence() {
+        let dir = tempfile::tempdir().unwrap();
+        let cwd = dir.path().join("cwd");
+        let bin = dir.path().join("bin");
+        std::fs::create_dir_all(&cwd).unwrap();
+        std::fs::create_dir_all(&bin).unwrap();
+        let cwd_config = cwd.join("config.toml");
+        let executable_config = bin.join("config.toml");
+        std::fs::write(&cwd_config, "cwd").unwrap();
+        std::fs::write(&executable_config, "bin").unwrap();
+        let executable = bin.join("server");
+
+        let cwd_provider = || Ok(cwd.clone());
+        let exe_provider = || Ok(executable.clone());
+        assert_eq!(
+            select_runtime_config_path(None, cwd_provider, exe_provider).unwrap(),
+            Some(cwd_config.clone())
+        );
+        let explicit = dir.path().join("explicit.toml");
+        assert_eq!(
+            select_runtime_config_path(Some(explicit.clone()), cwd_provider, exe_provider).unwrap(),
+            Some(explicit)
+        );
+        std::fs::remove_file(cwd_config).unwrap();
+        assert_eq!(
+            select_runtime_config_path(None, cwd_provider, exe_provider).unwrap(),
+            Some(executable_config)
+        );
+    }
+
+    #[test]
     fn oauth_config_deserializes() {
         let toml_str = r#"
             type = "oauth2"
@@ -290,6 +360,23 @@ mod tests {
         "#;
         let auth: AuthConfig = toml::from_str(toml_str).unwrap();
         assert!(matches!(auth, AuthConfig::OAuth2 { .. }));
+    }
+
+    #[test]
+    fn google_service_account_config_deserializes() {
+        let toml_str = r#"
+            type = "google_service_account"
+            scopes = ["https://www.googleapis.com/auth/androidpublisher"]
+        "#;
+        let auth: AuthConfig = toml::from_str(toml_str).unwrap();
+        assert!(matches!(
+            auth,
+            AuthConfig::GoogleServiceAccount {
+                credentials_path_env,
+                scopes,
+            } if credentials_path_env == "GOOGLE_APPLICATION_CREDENTIALS"
+                && scopes == ["https://www.googleapis.com/auth/androidpublisher"]
+        ));
     }
 }
 

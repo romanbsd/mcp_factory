@@ -1,0 +1,24 @@
+{
+  "kind": "discovery#restDescription",
+  "name": "demo",
+  "version": "v1",
+  "rootUrl": "https://demo.googleapis.com/",
+  "servicePath": "",
+  "schemas": {
+    "Item": {
+      "type": "object",
+      "properties": {
+        "name": {"type": "string", "required": true}
+      }
+    }
+  },
+  "methods": {
+    "rootOp": {
+      "id": "demo.rootOp",
+      "path": "v1/root",
+      "httpMethod": "GET",
+      "description": "A top-level operation.",
+      "response": {"$ref": "Item"}
+    }
+  }
+}

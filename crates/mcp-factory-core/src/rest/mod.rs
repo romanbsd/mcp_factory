@@ -292,13 +292,7 @@ pub fn substitute_path(template: &str, args: &Value) -> Result<String, ProxyErro
     let mut path = template.to_string();
     if let Some(obj) = args.as_object() {
         for (key, value) in obj {
-            let placeholder = format!("{{{key}}}");
-            if path.contains(&placeholder) {
-                // Percent-encode per segment so a value like "../admin" or "a/b"
-                // can't inject extra path segments (traversal / wrong endpoint).
-                let replacement = encode_path_value(value)?;
-                path = path.replace(&placeholder, &replacement);
-            }
+            path = substitute_path_binding(&path, key, value)?;
         }
     }
     if path.contains('{') {
@@ -309,6 +303,53 @@ pub fn substitute_path(template: &str, args: &Value) -> Result<String, ProxyErro
     Ok(path)
 }
 
+fn substitute_path_binding(path: &str, key: &str, value: &Value) -> Result<String, ProxyError> {
+    let placeholder = format!("{{{key}}}");
+    let reserved_placeholder = format!("{{+{key}}}");
+    let mut resolved = path.to_string();
+    if resolved.contains(&reserved_placeholder) {
+        // Google Discovery uses RFC 6570 reserved expansion for
+        // resource names such as `apps/123`. Preserve separators while
+        // encoding each segment and neutralizing traversal segments.
+        let replacement = encode_reserved_path_value(value)?;
+        resolved = resolved.replace(&reserved_placeholder, &replacement);
+    }
+    if resolved.contains(&placeholder) {
+        // Percent-encode per segment so a value like "../admin" or "a/b"
+        // can't inject extra path segments (traversal / wrong endpoint).
+        let replacement = encode_path_value(value)?;
+        resolved = resolved.replace(&placeholder, &replacement);
+    }
+    Ok(resolved)
+}
+
+fn reject_dot_segment(segment: &str) -> Result<(), ProxyError> {
+    // The WHATWG URL parser normalizes both "." / ".." and their percent-encoded
+    // forms (%2E) during Url::parse and Url::set_path, which would silently undo
+    // any segment-level encoding and redirect the request to another path. Reject
+    // such segments outright instead of trying to neutralize them.
+    if segment == "." || segment == ".." {
+        return Err(ProxyError::Validation(format!(
+            "path parameter value contains dot segment {segment:?}"
+        )));
+    }
+    Ok(())
+}
+
+fn encode_reserved_path_value(value: &Value) -> Result<String, ProxyError> {
+    let raw = value_to_string(value)?;
+    let segments = raw.split('/').collect::<Vec<_>>();
+    for segment in &segments {
+        reject_dot_segment(segment)?;
+    }
+    let encoded = segments
+        .iter()
+        .map(|segment| Ok(utf8_percent_encode(segment, PATH_VALUE).to_string()))
+        .collect::<Result<Vec<_>, ProxyError>>()?
+        .join("/");
+    Ok(encoded)
+}
+
 pub fn build_url(
     base_url: &str,
     operation: &RestOperation,
@@ -316,38 +357,86 @@ pub fn build_url(
     auth: &dyn AuthProvider,
 ) -> Result<String, ProxyError> {
     let path = substitute_path(&operation.path_template, args)?;
-    let mut url = reqwest::Url::parse(base_url)
-        .map_err(|e| ProxyError::Config(format!("invalid base_url: {e}")))?;
-    url.set_path(&join_paths(url.path(), &path));
-    {
-        let mut query_pairs = url.query_pairs_mut();
-        if let Some((param, secret)) = auth.api_key_query() {
-            query_pairs.append_pair(&param, &secret);
+    let mut url = resolve_operation_url(base_url, &path)?;
+    apply_query_parameters(&mut url, operation, args, auth)?;
+    Ok(url.to_string())
+}
+
+fn resolve_operation_url(base_url: &str, path: &str) -> Result<reqwest::Url, ProxyError> {
+    if is_absolute_operation_url(path) {
+        // An absolute operation URL supports schemas that span multiple upstream
+        // services (for example, a combined Google API Discovery surface). The
+        // value is fixed at generation time; tool arguments can only replace
+        // percent-encoded path segments, so callers cannot select another host.
+        reqwest::Url::parse(path)
+            .map_err(|e| ProxyError::Config(format!("invalid operation URL: {e}")))
+    } else {
+        let mut url = reqwest::Url::parse(base_url)
+            .map_err(|e| ProxyError::Config(format!("invalid base_url: {e}")))?;
+        url.set_path(&join_paths(url.path(), path));
+        Ok(url)
+    }
+}
+
+fn is_absolute_operation_url(path: &str) -> bool {
+    path.starts_with("https://") || path.starts_with("http://")
+}
+
+fn apply_query_parameters(
+    url: &mut reqwest::Url,
+    operation: &RestOperation,
+    args: &Value,
+    auth: &dyn AuthProvider,
+) -> Result<(), ProxyError> {
+    if let Some((param, secret)) = auth.api_key_query() {
+        append_query_pair(url, &param, &secret);
+    }
+    append_bound_query_parameters(url, operation, args)?;
+    canonicalize_empty_query(url);
+    Ok(())
+}
+
+fn append_bound_query_parameters(
+    url: &mut reqwest::Url,
+    operation: &RestOperation,
+    args: &Value,
+) -> Result<(), ProxyError> {
+    let Some(obj) = args.as_object() else {
+        return Ok(());
+    };
+    for binding in &operation.params {
+        if binding.location != ParamLocation::Query {
+            continue;
         }
-        if let Some(obj) = args.as_object() {
-            for binding in &operation.params {
-                if binding.location != ParamLocation::Query {
-                    continue;
+        let Some(value) = obj.get(&binding.name) else {
+            continue;
+        };
+        // Array query params expand to repeated pairs (?id=1&id=2), the
+        // OpenAPI `form`/explode default; scalars append a single pair.
+        match value {
+            Value::Array(items) => {
+                for item in items {
+                    append_query_pair(url, &binding.name, &value_to_string(item)?);
                 }
-                let Some(value) = obj.get(&binding.name) else {
-                    continue;
-                };
-                // Array query params expand to repeated pairs (?id=1&id=2), the
-                // OpenAPI `form`/explode default; scalars append a single pair.
-                match value {
-                    Value::Array(items) => {
-                        for item in items {
-                            query_pairs.append_pair(&binding.name, &value_to_string(item)?);
-                        }
-                    }
-                    _ => {
-                        query_pairs.append_pair(&binding.name, &value_to_string(value)?);
-                    }
-                }
+            }
+            _ => {
+                append_query_pair(url, &binding.name, &value_to_string(value)?);
             }
         }
     }
-    Ok(url.to_string())
+    Ok(())
+}
+
+fn append_query_pair(url: &mut reqwest::Url, name: &str, value: &str) {
+    url.query_pairs_mut().append_pair(name, value);
+}
+
+fn canonicalize_empty_query(url: &mut reqwest::Url) {
+    // `query_pairs_mut` materializes an empty `?` even when there are no
+    // query arguments. Keep no-query URLs canonical.
+    if url.query() == Some("") {
+        url.set_query(None);
+    }
 }
 
 fn join_paths(base: &str, path: &str) -> String {
@@ -432,7 +521,11 @@ fn encode_path_value(value: &Value) -> Result<String, ProxyError> {
                 .collect::<Result<Vec<_>, ProxyError>>()?;
             Ok(encoded.join(","))
         }
-        _ => Ok(utf8_percent_encode(&value_to_string(value)?, PATH_VALUE).to_string()),
+        _ => {
+            let raw = value_to_string(value)?;
+            reject_dot_segment(&raw)?;
+            Ok(utf8_percent_encode(&raw, PATH_VALUE).to_string())
+        }
     }
 }
 
@@ -466,6 +559,47 @@ mod tests {
     }
 
     #[test]
+    fn reserved_path_expansion_rejects_dot_segments() {
+        let err = substitute_path(
+            "/v1/{+name}:fetch",
+            &json!({"name": "apps/org.example/../release"}),
+        )
+        .unwrap_err();
+        assert!(err.to_string().contains("dot segment"));
+    }
+
+    #[test]
+    fn plain_path_value_rejects_dot_segments() {
+        let err = substitute_path("/pets/{id}", &json!({"id": ".."})).unwrap_err();
+        assert!(err.to_string().contains("dot segment"));
+    }
+
+    #[test]
+    fn absolute_operation_url_rejects_dot_segments() {
+        let operation = RestOperation {
+            method: "GET".to_string(),
+            path_template: "https://reports.example.com/v1/{+name}".to_string(),
+            params: vec![ParamBinding {
+                name: "name".to_string(),
+                location: ParamLocation::Path,
+            }],
+            body_fields: vec![],
+            content_type: None,
+            raw_body: false,
+        };
+        let auth =
+            auth_provider_from_config(&AuthConfig::None, reqwest::Client::new(), false).unwrap();
+        let err = build_url(
+            "https://publisher.example.com",
+            &operation,
+            &json!({"name": "../admin"}),
+            auth.as_ref(),
+        )
+        .unwrap_err();
+        assert!(err.to_string().contains("dot segment"));
+    }
+
+    #[test]
     fn array_query_param_expands_to_repeated_pairs() {
         let operation = RestOperation {
             method: "GET".to_string(),
@@ -488,6 +622,31 @@ mod tests {
         )
         .unwrap();
         assert_eq!(url, "https://api.example.com/v1/pets?tag=dog&tag=cat");
+    }
+
+    #[test]
+    fn absolute_operation_url_overrides_base_url() {
+        let operation = RestOperation {
+            method: "GET".to_string(),
+            path_template: "https://reports.example.com/v1/apps/{app}".to_string(),
+            params: vec![ParamBinding {
+                name: "app".to_string(),
+                location: ParamLocation::Path,
+            }],
+            body_fields: vec![],
+            content_type: None,
+            raw_body: false,
+        };
+        let auth =
+            auth_provider_from_config(&AuthConfig::None, reqwest::Client::new(), false).unwrap();
+        let url = build_url(
+            "https://publisher.example.com",
+            &operation,
+            &json!({"app": "org.example.app"}),
+            auth.as_ref(),
+        )
+        .unwrap();
+        assert_eq!(url, "https://reports.example.com/v1/apps/org.example.app");
     }
 
     #[test]

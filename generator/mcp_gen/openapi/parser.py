@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import re
 import warnings
 from pathlib import Path
@@ -12,12 +11,12 @@ from prance import ResolvingParser
 from mcp_gen.models import (
     GenerationResult,
     ParamBinding,
-    ResourceSpec,
     RestOperation,
     ToolSpec,
     sanitize_tool_name,
     unique_name,
 )
+from mcp_gen.resources import build_embedded_resources
 
 
 class OpenAPICompatibilityWarning(UserWarning):
@@ -179,6 +178,117 @@ def _verb_annotations(method: str) -> dict[str, bool]:
 _READ_ONLY_METHODS = frozenset({"get", "head", "options"})
 
 
+def _build_param_inputs(
+    path_parameters: list[dict[str, Any]],
+    operation_parameters: list[dict[str, Any]],
+) -> tuple[list[ParamBinding], list[dict[str, Any]]]:
+    params: list[ParamBinding] = []
+    schema_parts: list[dict[str, Any]] = []
+
+    for parameter in _merged_parameters(path_parameters, operation_parameters):
+        name = parameter["name"]
+        location = parameter["in"]
+        if location not in {"path", "query", "header"}:
+            continue
+        params.append(ParamBinding(name=name, location=location))
+        schema = parameter.get("schema", {"type": "string"})
+        schema_parts.append(
+            {
+                "type": "object",
+                "properties": {name: schema},
+                "required": [name] if parameter.get("required", False) else [],
+            }
+        )
+
+    return params, schema_parts
+
+
+def _build_body_inputs(
+    operation: dict[str, Any],
+) -> tuple[list[str], str | None, bool, list[dict[str, Any]]]:
+    body_fields: list[str] = []
+    content_type: str | None = None
+    raw_body = False
+    schema_parts: list[dict[str, Any]] = []
+
+    body_schema = _request_body_schema(operation)
+    if body_schema is None:
+        return body_fields, content_type, raw_body, schema_parts
+
+    request_body = operation.get("requestBody", {})
+    content = request_body.get("content", {})
+    if "application/json" in content:
+        content_type = "application/json"
+    elif "application/x-www-form-urlencoded" in content:
+        # Runtime urlencodes the body fields instead of sending JSON.
+        content_type = "application/x-www-form-urlencoded"
+
+    if body_schema.get("properties"):
+        body_fields = list(body_schema["properties"].keys())
+        if request_body.get("required"):
+            schema_parts.append(body_schema)
+        else:
+            schema_parts.append(_as_optional_object_schema(body_schema))
+        return body_fields, content_type, raw_body, schema_parts
+
+    # Array / scalar / free-form body: expose a single `body` argument sent
+    # verbatim rather than silently dropping it.
+    raw_body = True
+    body_fields = ["body"]
+    schema_parts.append(
+        {
+            "type": "object",
+            "properties": {"body": body_schema},
+            "required": ["body"] if request_body.get("required") else [],
+        }
+    )
+    return body_fields, content_type, raw_body, schema_parts
+
+
+def _build_tool_spec(
+    method: str,
+    path_name: str,
+    operation: dict[str, Any],
+    path_parameters: list[dict[str, Any]],
+    seen_names: set[str],
+) -> ToolSpec:
+    operation_id = operation.get("operationId") or _slugify(f"{method}_{path_name}")
+    tool_name = unique_name(sanitize_tool_name(operation_id), seen_names)
+    params, schema_parts = _build_param_inputs(
+        path_parameters=path_parameters,
+        operation_parameters=operation.get("parameters", []),
+    )
+    (
+        body_fields,
+        content_type,
+        raw_body,
+        body_schema_parts,
+    ) = _build_body_inputs(operation=operation)
+    schema_parts.extend(body_schema_parts)
+
+    annotations = _verb_annotations(method)
+    return ToolSpec(
+        name=tool_name,
+        description=_operation_description(operation),
+        input_schema=_merge_schemas(schema_parts),
+        execution_kind="rest",
+        rest=RestOperation(
+            method=method.upper(),
+            path_template=path_name,
+            params=params,
+            body_fields=body_fields,
+            content_type=content_type,
+            raw_body=raw_body,
+        ),
+        title=operation.get("summary"),
+        output_schema=_response_schema(operation),
+        read_only=annotations["read_only"],
+        idempotent=annotations["idempotent"],
+        destructive=annotations["destructive"],
+        open_world=annotations["open_world"],
+    )
+
+
 def parse_openapi(
     path: Path,
     *,
@@ -201,111 +311,34 @@ def parse_openapi(
                 continue
             if read_only and method not in _READ_ONLY_METHODS:
                 continue
-
-            operation_id = operation.get("operationId") or _slugify(f"{method}_{path_name}")
-            tool_name = unique_name(sanitize_tool_name(operation_id), seen_names)
-            params: list[ParamBinding] = []
-            schema_parts: list[dict[str, Any]] = []
-
-            for parameter in _merged_parameters(
-                path_item.get("parameters", []),
-                operation.get("parameters", []),
-            ):
-                name = parameter["name"]
-                location = parameter["in"]
-                if location not in {"path", "query", "header"}:
-                    continue
-                params.append(ParamBinding(name=name, location=location))
-                schema = parameter.get("schema", {"type": "string"})
-                schema_parts.append(
-                    {
-                        "type": "object",
-                        "properties": {name: schema},
-                        "required": [name] if parameter.get("required", False) else [],
-                    }
-                )
-
-            body_schema = _request_body_schema(operation)
-            body_fields: list[str] = []
-            content_type: str | None = None
-            raw_body = False
-            if body_schema:
-                request_body = operation.get("requestBody", {})
-                content = request_body.get("content", {})
-                if "application/json" in content:
-                    content_type = "application/json"
-                elif "application/x-www-form-urlencoded" in content:
-                    # Runtime urlencodes the body fields instead of sending JSON.
-                    content_type = "application/x-www-form-urlencoded"
-                if body_schema.get("properties"):
-                    body_fields = list(body_schema["properties"].keys())
-                    if request_body.get("required"):
-                        schema_parts.append(body_schema)
-                    else:
-                        schema_parts.append(_as_optional_object_schema(body_schema))
-                else:
-                    # Array / scalar / free-form body: expose a single `body`
-                    # argument sent verbatim rather than silently dropping it.
-                    raw_body = True
-                    body_fields = ["body"]
-                    schema_parts.append(
-                        {
-                            "type": "object",
-                            "properties": {"body": body_schema},
-                            "required": ["body"] if request_body.get("required") else [],
-                        }
-                    )
-
-            annotations = _verb_annotations(method)
             tools.append(
-                ToolSpec(
-                    name=tool_name,
-                    description=_operation_description(operation),
-                    input_schema=_merge_schemas(schema_parts),
-                    execution_kind="rest",
-                    rest=RestOperation(
-                        method=method.upper(),
-                        path_template=path_name,
-                        params=params,
-                        body_fields=body_fields,
-                        content_type=content_type,
-                        raw_body=raw_body,
-                    ),
-                    title=operation.get("summary"),
-                    output_schema=_response_schema(operation),
-                    read_only=annotations["read_only"],
-                    idempotent=annotations["idempotent"],
-                    destructive=annotations["destructive"],
-                    open_world=annotations["open_world"],
+                _build_tool_spec(
+                    method=method,
+                    path_name=path_name,
+                    operation=operation,
+                    path_parameters=path_item.get("parameters", []),
+                    seen_names=seen_names,
                 )
             )
 
     schema_text = path.read_text(encoding="utf-8")
-    mime_type = "application/yaml" if path.suffix in {".yaml", ".yml"} else "application/json"
-    resources = [
-        ResourceSpec(
-            uri="schema://openapi",
-            name="openapi",
-            description="Embedded OpenAPI schema",
-            mime_type=mime_type,
-            content=schema_text,
-        ),
-        ResourceSpec(
-            uri="meta://tools",
-            name="tools",
-            description="Generated tool index",
-            mime_type="application/json",
-            content=json.dumps(
-                [{"name": tool.name, "description": tool.description} for tool in tools],
-                indent=2,
-            ),
-        ),
-    ]
+    mime_type = (
+        "application/yaml"
+        if path.suffix in {".yaml", ".yml"}
+        else "application/json"
+    )
+    resources = build_embedded_resources(
+        tools,
+        schema_uri="schema://openapi",
+        schema_name="openapi",
+        schema_description="Embedded OpenAPI schema",
+        schema_mime_type=mime_type,
+        schema_text=schema_text,
+    )
 
     return GenerationResult(
         tools=tools,
         resources=resources,
         schema_kind="openapi",
-        schema_text=schema_text,
         base_url=_detect_base_url(spec),
     )
