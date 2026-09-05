@@ -12,6 +12,7 @@ use rmcp::ErrorData as McpError;
 use serde_json::Value;
 
 use crate::config::ProxyConfig;
+use crate::custom::{CustomToolRegistry, CustomToolSpec, ReadOnlyToolInvoker};
 use crate::error::ProxyError;
 use crate::graphql::GraphQLProxyExecutor;
 use crate::resources::{ResourceRegistry, ResourceSpec};
@@ -26,6 +27,7 @@ pub struct McpProxyServer {
 struct McpProxyServerInner {
     config: ProxyConfig,
     tools: ToolRegistry,
+    custom_tools: CustomToolRegistry,
     resources: ResourceRegistry,
     rest: RestProxyExecutor,
     graphql: GraphQLProxyExecutor,
@@ -34,6 +36,7 @@ struct McpProxyServerInner {
 pub struct McpProxyServerBuilder {
     config: ProxyConfig,
     tools: ToolRegistry,
+    custom_tools: CustomToolRegistry,
     resources: ResourceRegistry,
 }
 
@@ -51,21 +54,20 @@ impl McpProxyServer {
     }
 
     pub fn tool_count(&self) -> usize {
-        self.inner.tools.len()
+        self.inner.tools.len() + self.inner.custom_tools.len()
     }
 
     pub fn tool_names(&self) -> Vec<String> {
-        self.inner.tools.iter().map(|t| t.name.clone()).collect()
+        self.inner
+            .tools
+            .iter()
+            .map(|tool| tool.name.clone())
+            .chain(self.inner.custom_tools.iter().map(|tool| tool.name.clone()))
+            .collect()
     }
 
     pub async fn invoke_tool(&self, name: &str, args: Value) -> Result<String, ProxyError> {
-        let tool = self
-            .inner
-            .tools
-            .get(name)
-            .ok_or_else(|| ProxyError::ToolNotFound(name.to_string()))?;
-        self.inner.tools.validate(name, &args)?;
-        let result = self.dispatch(tool, args).await?;
+        let result = self.dispatch_by_name(name, args).await?;
         if result.is_error {
             return Err(ProxyError::Other(result.into_text()));
         }
@@ -81,6 +83,18 @@ impl McpProxyServer {
         }
     }
 
+    async fn dispatch_by_name(&self, name: &str, args: Value) -> Result<ToolResult, ProxyError> {
+        if let Some(tool) = self.inner.tools.get(name) {
+            self.inner.tools.validate(name, &args)?;
+            return self.dispatch(tool, args).await;
+        }
+        if let Some(tool) = self.inner.custom_tools.get(name) {
+            self.inner.custom_tools.validate(name, &args)?;
+            return tool.handler.call(self, args).await;
+        }
+        Err(ProxyError::ToolNotFound(name.to_string()))
+    }
+
     pub fn read_resource_content(&self, uri: &str) -> Result<String, ProxyError> {
         let resource = self
             .inner
@@ -91,17 +105,57 @@ impl McpProxyServer {
     }
 }
 
+#[async_trait::async_trait]
+impl ReadOnlyToolInvoker for McpProxyServer {
+    async fn invoke_read_only(
+        &self,
+        name: &str,
+        arguments: Value,
+    ) -> Result<ToolResult, ProxyError> {
+        let tool = self
+            .inner
+            .tools
+            .get(name)
+            .ok_or_else(|| ProxyError::ToolNotFound(name.to_string()))?;
+        if tool.hints.read_only != Some(true) {
+            return Err(ProxyError::Validation(format!(
+                "custom tools may invoke only generated read-only tools: {name}"
+            )));
+        }
+        self.inner.tools.validate(name, &arguments)?;
+        self.dispatch(tool, arguments).await
+    }
+}
+
 impl McpProxyServerBuilder {
     pub fn new(config: ProxyConfig) -> Self {
         Self {
             config,
             tools: ToolRegistry::new(),
+            custom_tools: CustomToolRegistry::default(),
             resources: ResourceRegistry::new(),
         }
     }
 
     pub fn tools(mut self, tools: &[ToolSpec]) -> Result<Self, ProxyError> {
+        if let Some(duplicate) = tools
+            .iter()
+            .find(|tool| self.custom_tools.contains(&tool.name))
+        {
+            return Err(ProxyError::DuplicateTool(duplicate.name.clone()));
+        }
         self.tools.register_many(tools.iter().cloned())?;
+        Ok(self)
+    }
+
+    pub fn custom_tools(mut self, tools: &[CustomToolSpec]) -> Result<Self, ProxyError> {
+        if let Some(duplicate) = tools
+            .iter()
+            .find(|tool| self.tools.get(&tool.name).is_some())
+        {
+            return Err(ProxyError::DuplicateTool(duplicate.name.clone()));
+        }
+        self.custom_tools.register_many(tools.iter().cloned())?;
         Ok(self)
     }
 
@@ -132,6 +186,7 @@ impl McpProxyServerBuilder {
             inner: Arc::new(McpProxyServerInner {
                 config: self.config,
                 tools: self.tools,
+                custom_tools: self.custom_tools,
                 resources: self.resources,
                 rest,
                 graphql,
@@ -167,6 +222,7 @@ impl ServerHandler for McpProxyServer {
             .tools
             .iter()
             .map(tool_spec_to_rmcp)
+            .chain(self.inner.custom_tools.iter().map(custom_tool_spec_to_rmcp))
             .collect::<Result<Vec<_>, _>>()?;
         Ok(ListToolsResult {
             tools,
@@ -179,22 +235,12 @@ impl ServerHandler for McpProxyServer {
         request: CallToolRequestParams,
         _context: RequestContext<RoleServer>,
     ) -> Result<CallToolResponse, McpError> {
-        let tool = self
-            .inner
-            .tools
-            .get(&request.name)
-            .ok_or_else(|| ProxyError::ToolNotFound(request.name.to_string()))?;
-
         let args = request
             .arguments
             .map(Value::Object)
             .unwrap_or_else(|| Value::Object(Default::default()));
 
-        if let Err(err) = self.inner.tools.validate(&request.name, &args) {
-            return Ok(CallToolResult::error(vec![ContentBlock::text(err.to_string())]).into());
-        }
-
-        match self.dispatch(tool, args).await {
+        match self.dispatch_by_name(&request.name, args).await {
             Ok(result) => Ok(result_to_call(result, &request.name).into()),
             Err(err) => Ok(CallToolResult::error(vec![ContentBlock::text(err.to_string())]).into()),
         }
@@ -241,7 +287,7 @@ impl ServerHandler for McpProxyServer {
     async fn on_initialized(&self, _context: NotificationContext<RoleServer>) {
         tracing::info!(
             server = %self.inner.config.server_name,
-            tools = self.inner.tools.len(),
+            tools = self.tool_count(),
             resources = self.inner.resources.iter().count(),
             "MCP proxy server initialized"
         );
@@ -297,17 +343,39 @@ fn body_to_content(body: ToolBody, tool_name: &str) -> ContentBlock {
 }
 
 fn tool_spec_to_rmcp(spec: &ToolSpec) -> Result<Tool, ProxyError> {
-    let schema_obj =
-        spec.input_schema.as_object().cloned().ok_or_else(|| {
-            ProxyError::Validation("tool input_schema must be an object".to_string())
-        })?;
+    metadata_to_rmcp(
+        &spec.name,
+        &spec.description,
+        &spec.input_schema,
+        &spec.hints,
+    )
+}
+
+fn custom_tool_spec_to_rmcp(spec: &CustomToolSpec) -> Result<Tool, ProxyError> {
+    metadata_to_rmcp(
+        &spec.name,
+        &spec.description,
+        &spec.input_schema,
+        &spec.hints,
+    )
+}
+
+fn metadata_to_rmcp(
+    name: &str,
+    description: &str,
+    input_schema: &Value,
+    hints: &crate::tools::ToolHints,
+) -> Result<Tool, ProxyError> {
+    let schema_obj = input_schema
+        .as_object()
+        .cloned()
+        .ok_or_else(|| ProxyError::Validation("tool input_schema must be an object".to_string()))?;
     let mut tool = Tool::new(
-        spec.name.clone(),
-        spec.description.clone(),
+        name.to_string(),
+        description.to_string(),
         Arc::new(schema_obj),
     );
 
-    let hints = &spec.hints;
     tool.title = hints.title.clone();
     if let Some(schema) = &hints.output_schema {
         let obj = schema.as_object().cloned().ok_or_else(|| {

@@ -1,3 +1,4 @@
+mod extensions;
 mod resources;
 mod tools;
 
@@ -32,9 +33,11 @@ async fn main() -> anyhow::Result<()> {
     }
 
     let tools = tools::build_tools();
+    let custom_tools = extensions::build_custom_tools();
     let resources = resources::build_resources();
     let server = McpProxyServer::builder(config)
         .tools(&tools)?
+        .custom_tools(&custom_tools)?
         .resources(&resources)?
         .build()?;
 

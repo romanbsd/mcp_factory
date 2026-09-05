@@ -8,3 +8,4 @@ target/
 .codegraph/
 .serena/
 .coverage
+.claude/

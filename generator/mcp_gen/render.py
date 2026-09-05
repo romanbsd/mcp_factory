@@ -93,6 +93,12 @@ def render_crate(
             rendered = env.get_template(template_name).render(**context)
         target.write_text(f"{rendered.rstrip()}\n", encoding="utf-8")
 
+    # Handwritten extension code is scaffolded once and never generator-owned.
+    extension_path = output_dir / "src" / "extensions.rs"
+    if not extension_path.exists():
+        rendered = env.get_template("extensions.rs.j2").render(**context)
+        extension_path.write_text(f"{rendered.rstrip()}\n", encoding="utf-8")
+
     manifest = {
         "crate_name": crate_name,
         "tool_count": len(result.tools),

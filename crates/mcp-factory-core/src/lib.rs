@@ -2,6 +2,7 @@
 
 pub mod auth;
 pub mod config;
+pub mod custom;
 pub mod error;
 pub mod graphql;
 pub mod resources;
@@ -10,8 +11,11 @@ pub mod server;
 pub mod tools;
 pub mod transport;
 
+pub use async_trait::async_trait;
 pub use auth::{oauth_logout, oauth_status, run_oauth_login, AuthProvider};
+pub use chrono;
 pub use config::{AuthConfig, ProxyConfig, TransportMode};
+pub use custom::{CustomToolHandler, CustomToolSpec, ReadOnlyToolInvoker};
 pub use error::ProxyError;
 pub use graphql::{GraphQLOperation, GraphQLProxyExecutor};
 pub use resources::ResourceSpec;
