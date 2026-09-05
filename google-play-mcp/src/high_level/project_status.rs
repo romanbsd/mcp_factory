@@ -207,7 +207,13 @@ fn normalize_track(track: &Value) -> (String, bool) {
     } else if kind.contains("open") {
         ("beta".to_string(), true)
     } else if kind.contains("closed") {
-        ("alpha".to_string(), true)
+        track["displayName"]
+            .as_str()
+            .filter(|track_id| !track_id.is_empty())
+            .map_or_else(
+                || ("alpha".to_string(), true),
+                |track_id| (track_id.to_string(), false),
+            )
     } else {
         (
             track["displayName"]

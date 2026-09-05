@@ -675,7 +675,7 @@ async fn explain_skips_release_correlation_for_unknown_console_area() {
 }
 
 #[tokio::test]
-async fn custom_testing_track_with_inferred_id_flags_unresolved_releases() {
+async fn custom_testing_track_uses_source_provided_identifier() {
     let invoker = FakeInvoker::default()
         .with(
             "apps_fetchReleaseFilterOptions",
@@ -692,9 +692,11 @@ async fn custom_testing_track_with_inferred_id_flags_unresolved_releases() {
                     "releaseLifecycleState": "RELEASE_LIFECYCLE_STATE_PUBLISHED",
                     "activeArtifacts": [{"versionCode": 11}]
                 }]})),
-                // The inferred "alpha" parent does not match the custom track, so
-                // its releases come back empty.
-                ok(json!({"releases": []})),
+                ok(json!({"releases": [{
+                    "releaseName": "1.1.0",
+                    "releaseLifecycleState": "RELEASE_LIFECYCLE_STATE_PUBLISHED",
+                    "activeArtifacts": [{"versionCode": 12}]
+                }]})),
             ],
         );
 
@@ -711,7 +713,14 @@ async fn custom_testing_track_with_inferred_id_flags_unresolved_releases() {
     assert_eq!(production["releasesUnresolved"], false);
 
     let custom = &report["tracks"][1];
-    assert_eq!(custom["track"], "alpha");
-    assert_eq!(custom["trackIdInferred"], true);
-    assert_eq!(custom["releasesUnresolved"], true);
+    assert_eq!(custom["track"], "qa-ring");
+    assert_eq!(custom["trackIdInferred"], false);
+    assert_eq!(custom["releasesUnresolved"], false);
+
+    let calls = invoker.calls();
+    assert_eq!(
+        calls[2].1["parent"],
+        "applications/org.example.app/tracks/qa-ring"
+    );
+    assert_eq!(report["sourceCalls"][2]["id"], "call-qa-ring-releases");
 }
