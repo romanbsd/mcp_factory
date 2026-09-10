@@ -153,11 +153,18 @@ impl RestProxyExecutor {
             return Ok(error_result(status, &content_type, body, meta));
         }
 
-        // 204 / empty success: report it explicitly rather than an empty string.
+        // 204 / empty success: some gRPC-transcoded APIs (e.g. Android
+        // Publisher's App Recovery endpoint) use 204 for an all-default JSON
+        // response rather than "{}". Callers that treat the body as JSON
+        // (mcp-factory-core's own high-level clients included) would otherwise
+        // try to parse the human-readable "204 No Content" status line, which
+        // fails with a confusing "trailing characters" JSON error. Report it as
+        // an empty object, same as an empty-bodied 200.
         if status == reqwest::StatusCode::NO_CONTENT {
             return Ok(ToolResult {
+                structured: Some(Value::Object(Map::new())),
                 meta,
-                ..ToolResult::text(format!("{status}"))
+                ..ToolResult::text("{}".to_string())
             });
         }
 

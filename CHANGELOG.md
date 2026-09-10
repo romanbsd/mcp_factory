@@ -23,6 +23,12 @@
   45-second reporting deadline for `report_quality_health` and
   `report_project_status`. `EvidenceClient` moved its call bookkeeping
   behind a `Mutex` (`&self` instead of `&mut self`) to allow this.
+- REST proxy (`mcp-factory-core`): a successful 204 No Content response is now
+  treated as `{}` instead of the literal text `"204 No Content"`. Callers that
+  parse the body as JSON (e.g. `google-play-mcp`'s high-level report client)
+  previously failed with "trailing characters at line 1 column 5" — some
+  gRPC-transcoded APIs (Android Publisher's App Recovery endpoint) use 204 for
+  an empty list rather than a 200 with `{}`.
 - REST proxy (`mcp-factory-core`): a successful (2xx, non-204) JSON response
   with a zero-byte body is now treated as `{}` instead of a JSON parse
   failure. Some gRPC-transcoded Google APIs (e.g. Android Publisher's
