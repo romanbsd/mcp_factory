@@ -58,6 +58,35 @@ pub fn rest_create_pet_tool() -> ToolSpec {
     }
 }
 
+/// Mirrors `edits_validate`/`edits_commit`: a mutating POST with no body
+/// fields at all (path params only), same shape that surfaced HTTP 411.
+pub fn rest_bodyless_post_tool() -> ToolSpec {
+    ToolSpec {
+        name: "validate_edit".to_string(),
+        description: "Validate an edit".to_string(),
+        input_schema: json!({
+            "type": "object",
+            "properties": {
+                "editId": { "type": "string" }
+            },
+            "required": ["editId"]
+        }),
+        execution: ExecutionKind::Rest(RestOperation {
+            method: "POST".to_string(),
+            path_template: "/edits/{editId}:validate".to_string(),
+            params: vec![ParamBinding {
+                name: "editId".to_string(),
+                location: ParamLocation::Path,
+            }],
+            body_fields: vec![],
+            content_type: None,
+            raw_body: false,
+            media: None,
+        }),
+        hints: Default::default(),
+    }
+}
+
 pub fn graphql_user_tool() -> ToolSpec {
     ToolSpec {
         name: "get_user".to_string(),

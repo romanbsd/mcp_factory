@@ -125,9 +125,13 @@ impl RestProxyExecutor {
         } else if operation.raw_body {
             if let Some(body) = args.as_object().and_then(|obj| obj.get("body")) {
                 request = apply_body(request, content_type, body);
+            } else {
+                request = apply_empty_body(request, &operation.method);
             }
         } else if let Some(body) = build_body(operation, &args)? {
             request = apply_body(request, content_type, &body);
+        } else {
+            request = apply_empty_body(request, &operation.method);
         }
 
         let response = request.send().await?;
@@ -328,6 +332,18 @@ fn apply_body(
         request
             .header(reqwest::header::CONTENT_TYPE, content_type)
             .json(body)
+    }
+}
+
+/// `reqwest` sends no `Content-Length` header at all for a request built
+/// without a `.body(...)` call. Some gRPC-transcoded action endpoints (e.g.
+/// Android Publisher's `edits:validate`/`edits:commit`) reject a bodyless
+/// POST with `411 Length Required` unless `Content-Length: 0` is explicit.
+fn apply_empty_body(request: reqwest::RequestBuilder, method: &str) -> reqwest::RequestBuilder {
+    if matches!(method.to_ascii_uppercase().as_str(), "POST" | "PUT" | "PATCH") {
+        request.header(reqwest::header::CONTENT_LENGTH, "0")
+    } else {
+        request
     }
 }
 

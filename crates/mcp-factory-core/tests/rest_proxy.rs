@@ -237,6 +237,30 @@ async fn rest_proxy_omits_optional_body_when_fields_absent() {
     assert!(requests[0].headers.get("content-type").is_none());
 }
 
+#[tokio::test]
+async fn rest_proxy_sends_content_length_zero_for_bodyless_post() {
+    let mock_server = MockServer::start().await;
+    Mock::given(method("POST"))
+        .and(path("/edits/123:validate"))
+        .and(header("content-length", "0"))
+        .respond_with(ResponseTemplate::new(200).set_body_string("{}"))
+        .mount(&mock_server)
+        .await;
+
+    let config = common::proxy_config(&mock_server.uri());
+    let server = McpProxyServer::builder(config)
+        .tools(&[common::rest_bodyless_post_tool()])
+        .unwrap()
+        .build()
+        .unwrap();
+
+    let result = server
+        .invoke_tool("validate_edit", json!({"editId": "123"}))
+        .await
+        .unwrap();
+    assert_eq!(result, "{}");
+}
+
 fn binary_tool() -> ToolSpec {
     ToolSpec {
         name: "get_image".to_string(),

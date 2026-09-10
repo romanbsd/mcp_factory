@@ -11,6 +11,12 @@
   including 10 Android Publisher / App Store media-upload operations.
 
 ### Fixed
+- REST proxy (`mcp-factory-core`): POST/PUT/PATCH requests with no request
+  body now send `Content-Length: 0` explicitly. `reqwest` sends no
+  `Content-Length` at all for a request built without a `.body(...)` call,
+  and some gRPC-transcoded action endpoints (Android Publisher's
+  `edits:validate`/`edits:commit`) reject a bodyless POST with `411 Length
+  Required` unless the header is present, even as `0`.
 - REST proxy (`mcp-factory-core`): `reqwest` now advertises and decompresses
   `gzip`/`brotli`/`deflate`. Without these features `reqwest` neither sent
   `Accept-Encoding` nor decoded compressed bodies, so upstream gRPC-transcoded
