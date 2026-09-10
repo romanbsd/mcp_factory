@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import warnings
 from pathlib import Path
 from typing import Any
 
@@ -17,7 +16,7 @@ from mcp_gen.models import (
 
 
 class GoogleDiscoveryCompatibilityWarning(UserWarning):
-    """A Discovery operation could not be represented faithfully and was skipped."""
+    """A Discovery operation cannot be represented faithfully."""
 
 
 def load_google_discovery(path: Path) -> dict[str, Any]:
@@ -231,6 +230,42 @@ def _method_to_tool(
         definitions,
         body_required=not semantically_read_only,
     )
+    media = method.get("mediaUpload")
+    media_path_template: str | None = None
+    media_accept: list[str] = []
+    media_max_size: int | None = None
+    if isinstance(media, dict):
+        protocols = media.get("protocols")
+        simple = protocols.get("simple") if isinstance(protocols, dict) else None
+        media_path = simple.get("path") if isinstance(simple, dict) else None
+        if not isinstance(media_path, str) or not media_path:
+            raise GoogleDiscoveryCompatibilityWarning(
+                f"{method_id} has no simple media-upload path"
+            )
+        media_path_template = (
+            f"{upstream_base_url.rstrip('/')}/{media_path.lstrip('/')}"
+            if upstream_base_url
+            else f"/{media_path.lstrip('/')}"
+        )
+        accepted = media.get("accept")
+        if isinstance(accepted, list):
+            media_accept = [value for value in accepted if isinstance(value, str)]
+        raw_max_size = media.get("maxSize")
+        if isinstance(raw_max_size, str) and raw_max_size.isdigit():
+            media_max_size = int(raw_max_size)
+        input_schema["properties"]["mediaFile"] = {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255,
+            "description": "Path relative to the configured MCP media root.",
+        }
+        input_schema["properties"]["mediaContentType"] = {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 200,
+            "description": "Content type; must match an accepted media type.",
+        }
+        input_schema.setdefault("required", []).append("mediaFile")
     return ToolSpec(
         name=tool_name,
         description=str(method.get("description") or method_id),
@@ -243,6 +278,9 @@ def _method_to_tool(
             body_fields=body_fields,
             content_type="application/json" if raw_body else None,
             raw_body=raw_body,
+            media_path_template=media_path_template,
+            media_accept=media_accept,
+            media_max_size=media_max_size,
         ),
         title=method_id,
         output_schema=_method_output_schema(method, definitions),
@@ -265,7 +303,6 @@ def parse_google_discovery(
     definitions = definitions if isinstance(definitions, dict) else {}
     tools: list[ToolSpec] = []
     seen_names: set[str] = set()
-    skipped_media: list[str] = []
 
     for resource_path, method_name, method in _walk_methods(spec):
         if tags and not tags.intersection(resource_path):
@@ -275,9 +312,6 @@ def parse_google_discovery(
         method_id = str(method.get("id") or ".".join((*resource_path, method_name)))
         semantically_read_only = _is_read_only(method_id, http_method)
         if read_only and not semantically_read_only:
-            continue
-        if method.get("mediaUpload"):
-            skipped_media.append(str(method.get("id") or ".".join((*resource_path, method_name))))
             continue
 
         api_name_value = spec.get("name")
@@ -299,14 +333,6 @@ def parse_google_discovery(
                 definitions=definitions,
                 read_only=semantically_read_only,
             )
-        )
-
-    if skipped_media:
-        warnings.warn(
-            "Skipped Google Discovery media-upload operations because mcp-factory "
-            f"does not yet model binary request bodies: {', '.join(skipped_media)}",
-            GoogleDiscoveryCompatibilityWarning,
-            stacklevel=2,
         )
 
     schema_text = path.read_text(encoding="utf-8")

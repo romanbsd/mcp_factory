@@ -25,6 +25,7 @@ fn smoke_tool() -> ToolSpec {
             body_fields: vec![],
             content_type: None,
             raw_body: false,
+            media: None,
         }),
         hints: Default::default(),
     }

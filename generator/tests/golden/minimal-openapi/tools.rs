@@ -19,9 +19,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 ],
                 body_fields: vec![
                 ],
-                content_type: None,
-                raw_body: false,
-            }),
+            content_type: None,
+            raw_body: false,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("Get a pet".to_string()),
                 output_schema: None,

@@ -202,7 +202,7 @@ def test_compose_generates_one_crate_and_preserves_config(
     )
     assert manifest == {
         "crate_name": "combined-mcp",
-        "tool_count": 4,
+        "tool_count": 5,
         "resource_count": 4,
         "schema_kind": "composed",
     }

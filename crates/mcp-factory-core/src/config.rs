@@ -151,6 +151,10 @@ pub struct ProxyConfig {
     pub server_name: String,
     #[serde(default = "default_server_version")]
     pub server_version: String,
+    /// Root containing files exposed to generated media-upload tools. Media
+    /// tools fail closed when this is not configured.
+    #[serde(default)]
+    pub media_root: Option<PathBuf>,
 }
 
 fn default_timeout_secs() -> u64 {
@@ -180,6 +184,7 @@ impl Default for ProxyConfig {
             http_path: default_http_path(),
             server_name: String::new(),
             server_version: default_server_version(),
+            media_root: None,
         }
     }
 }
@@ -210,6 +215,11 @@ impl ProxyConfig {
             self.timeout_secs = timeout.parse().map_err(|_| {
                 ProxyError::Config(format!("invalid MCP_FACTORY_TIMEOUT: {timeout}"))
             })?;
+        }
+        if let Some(media_root) =
+            env::var_os("MCP_FACTORY_MEDIA_ROOT").filter(|value| !value.is_empty())
+        {
+            self.media_root = Some(PathBuf::from(media_root));
         }
         if matches!(self.auth, AuthConfig::None) {
             if env::var("MCP_FACTORY_BEARER_TOKEN")
@@ -315,6 +325,14 @@ mod tests {
         });
         temp_env::with_var("MCP_FACTORY_TIMEOUT", Some("nope"), || {
             assert!(ProxyConfig::default().merge_env().is_err());
+        });
+    }
+
+    #[test]
+    fn media_root_from_env() {
+        temp_env::with_var("MCP_FACTORY_MEDIA_ROOT", Some("/tmp/mcp-media"), || {
+            let config = ProxyConfig::default().merge_env().unwrap();
+            assert_eq!(config.media_root, Some(PathBuf::from("/tmp/mcp-media")));
         });
     }
 

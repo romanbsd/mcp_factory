@@ -1,6 +1,8 @@
 base_url = "https://androidpublisher.googleapis.com"
 server_name = "google-play-mcp"
 transport = "stdio"
+# Media uploads are disabled unless MCP_FACTORY_MEDIA_ROOT is set to an
+# operator-controlled staging directory. Never place credentials in that root.
 
 [auth]
 type = "google_service_account"

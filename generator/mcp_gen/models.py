@@ -40,6 +40,11 @@ class RestOperation:
     # When True, the single `body` argument is sent verbatim as the request
     # body (used for array/scalar/free-form request bodies).
     raw_body: bool = False
+    # Optional Google Discovery simple media-upload endpoint. Files are
+    # resolved relative to an explicit runtime media root and streamed.
+    media_path_template: str | None = None
+    media_accept: list[str] = field(default_factory=list)
+    media_max_size: int | None = None
 
 
 @dataclass

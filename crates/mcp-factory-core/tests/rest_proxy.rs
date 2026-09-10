@@ -1,6 +1,8 @@
 mod common;
 
-use mcp_factory_core::{ExecutionKind, McpProxyServer, RestOperation, ToolSpec};
+use mcp_factory_core::{
+    ExecutionKind, McpProxyServer, MediaUploadOperation, RestOperation, ToolSpec,
+};
 use serde_json::json;
 use wiremock::matchers::{body_string_contains, header, headers, method, path};
 use wiremock::{Mock, MockServer, ResponseTemplate};
@@ -67,6 +69,7 @@ fn form_login_tool() -> ToolSpec {
             body_fields: vec!["user".to_string(), "pass".to_string()],
             content_type: Some("application/x-www-form-urlencoded".to_string()),
             raw_body: false,
+            media: None,
         }),
         hints: Default::default(),
     }
@@ -87,6 +90,7 @@ fn optional_body_tool() -> ToolSpec {
             body_fields: vec!["name".to_string()],
             content_type: Some("application/json".to_string()),
             raw_body: false,
+            media: None,
         }),
         hints: Default::default(),
     }
@@ -159,6 +163,7 @@ fn binary_tool() -> ToolSpec {
             body_fields: vec![],
             content_type: None,
             raw_body: false,
+            media: None,
         }),
         hints: Default::default(),
     }
@@ -235,4 +240,125 @@ async fn rest_proxy_sends_accept_header() {
         .invoke_tool("get_pet", json!({"petId": 42}))
         .await
         .unwrap();
+}
+
+fn media_upload_tool() -> ToolSpec {
+    ToolSpec {
+        name: "upload_item".to_string(),
+        description: "Upload item media".to_string(),
+        input_schema: json!({
+            "type": "object",
+            "properties": {
+                "mediaFile": {"type": "string"},
+                "mediaContentType": {"type": "string"}
+            },
+            "required": ["mediaFile"]
+        }),
+        execution: ExecutionKind::Rest(RestOperation {
+            method: "POST".to_string(),
+            path_template: "/items".to_string(),
+            params: vec![],
+            body_fields: vec![],
+            content_type: None,
+            raw_body: false,
+            media: Some(MediaUploadOperation {
+                path_template: "/upload/items".to_string(),
+                accepted_content_types: vec!["application/octet-stream".to_string()],
+                max_size: Some(32),
+            }),
+        }),
+        hints: Default::default(),
+    }
+}
+
+#[tokio::test]
+async fn rest_proxy_streams_media_only_from_configured_root() {
+    let mock_server = MockServer::start().await;
+    Mock::given(method("POST"))
+        .and(path("/upload/items"))
+        .and(wiremock::matchers::query_param("uploadType", "media"))
+        .and(header("content-type", "application/octet-stream"))
+        .and(header("content-length", "6"))
+        .and(wiremock::matchers::body_bytes(b"bundle"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({"versionCode": 42})))
+        .mount(&mock_server)
+        .await;
+    let media_root = tempfile::tempdir().unwrap();
+    std::fs::write(media_root.path().join("app.aab"), b"bundle").unwrap();
+    let mut config = common::proxy_config(&mock_server.uri());
+    config.media_root = Some(media_root.path().to_path_buf());
+    let server = McpProxyServer::builder(config)
+        .tools(&[media_upload_tool()])
+        .unwrap()
+        .build()
+        .unwrap();
+
+    let result = server
+        .invoke_tool(
+            "upload_item",
+            json!({"mediaFile": "app.aab", "mediaContentType": "application/octet-stream"}),
+        )
+        .await
+        .unwrap();
+    assert!(result.contains("42"));
+}
+
+#[tokio::test]
+async fn rest_proxy_media_upload_fails_closed_without_root_or_with_traversal() {
+    let mock_server = MockServer::start().await;
+    let server = McpProxyServer::builder(common::proxy_config(&mock_server.uri()))
+        .tools(&[media_upload_tool()])
+        .unwrap()
+        .build()
+        .unwrap();
+    let error = server
+        .invoke_tool("upload_item", json!({"mediaFile": "app.aab"}))
+        .await
+        .unwrap_err();
+    assert!(error.to_string().contains("MCP_FACTORY_MEDIA_ROOT"));
+
+    let media_root = tempfile::tempdir().unwrap();
+    let mut config = common::proxy_config(&mock_server.uri());
+    config.media_root = Some(media_root.path().to_path_buf());
+    let server = McpProxyServer::builder(config)
+        .tools(&[media_upload_tool()])
+        .unwrap()
+        .build()
+        .unwrap();
+    let error = server
+        .invoke_tool("upload_item", json!({"mediaFile": "../secret.json"}))
+        .await
+        .unwrap_err();
+    assert!(error.to_string().contains("without traversal"));
+}
+
+#[tokio::test]
+async fn rest_proxy_media_upload_enforces_size_and_content_type() {
+    let mock_server = MockServer::start().await;
+    let media_root = tempfile::tempdir().unwrap();
+    std::fs::write(media_root.path().join("large.aab"), [0_u8; 33]).unwrap();
+    std::fs::write(media_root.path().join("small.aab"), b"bundle").unwrap();
+    let mut config = common::proxy_config(&mock_server.uri());
+    config.media_root = Some(media_root.path().to_path_buf());
+    let server = McpProxyServer::builder(config)
+        .tools(&[media_upload_tool()])
+        .unwrap()
+        .build()
+        .unwrap();
+
+    let error = server
+        .invoke_tool("upload_item", json!({"mediaFile": "large.aab"}))
+        .await
+        .unwrap_err();
+    assert!(error.to_string().contains("exceeds provider limit"));
+
+    let error = server
+        .invoke_tool(
+            "upload_item",
+            json!({"mediaFile": "small.aab", "mediaContentType": "text/plain"}),
+        )
+        .await
+        .unwrap_err();
+    assert!(error.to_string().contains("not accepted"));
+    assert!(mock_server.received_requests().await.unwrap().is_empty());
 }

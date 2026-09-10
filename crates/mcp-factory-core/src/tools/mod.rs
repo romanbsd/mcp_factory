@@ -180,6 +180,7 @@ mod tests {
                 body_fields: vec![],
                 content_type: None,
                 raw_body: false,
+                media: None,
             }),
             hints: ToolHints::default(),
         }

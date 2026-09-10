@@ -1,19 +1,11 @@
 from pathlib import Path
 import json
 
-import pytest
-
-from mcp_gen.google_discovery.parser import (
-    GoogleDiscoveryCompatibilityWarning,
-    parse_google_discovery,
-)
+from mcp_gen.google_discovery.parser import parse_google_discovery
 
 
-def test_parses_methods_and_skips_media_uploads(fixtures_dir: Path) -> None:
-    with pytest.warns(GoogleDiscoveryCompatibilityWarning, match="items.upload"):
-        result = parse_google_discovery(
-            fixtures_dir / "minimal-google-discovery.json"
-        )
+def test_parses_methods_and_media_uploads(fixtures_dir: Path) -> None:
+    result = parse_google_discovery(fixtures_dir / "minimal-google-discovery.json")
 
     assert result.base_url == "https://demo.googleapis.com"
     assert result.schema_kind == "google_discovery"
@@ -21,6 +13,7 @@ def test_parses_methods_and_skips_media_uploads(fixtures_dir: Path) -> None:
         "items_get",
         "items_create",
         "items_query",
+        "items_upload",
     ]
 
     get_tool = result.tools[0]
@@ -47,6 +40,16 @@ def test_parses_methods_and_skips_media_uploads(fixtures_dir: Path) -> None:
     assert query_tool.rest.body_fields == ["body"]
     assert "required" not in query_tool.input_schema
 
+    upload_tool = result.tools[3]
+    assert upload_tool.read_only is False
+    assert upload_tool.rest is not None
+    assert upload_tool.rest.media_path_template == (
+        "https://demo.googleapis.com/v1/items:upload"
+    )
+    assert upload_tool.rest.media_accept == ["application/octet-stream"]
+    assert upload_tool.rest.media_max_size == 1024
+    assert upload_tool.input_schema["required"] == ["mediaFile"]
+
     schema_resource = next(
         resource
         for resource in result.resources
@@ -67,6 +70,7 @@ def test_parses_methods_and_skips_media_uploads(fixtures_dir: Path) -> None:
         {"name": "items_get", "description": "Gets an item."},
         {"name": "items_create", "description": "Creates an item."},
         {"name": "items_query", "description": "Queries items without changing them."},
+        {"name": "items_upload", "description": "Uploads item media."},
     ]
 
 

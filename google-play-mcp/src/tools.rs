@@ -1,5 +1,5 @@
 use mcp_factory_core::{
-    ExecutionKind, ParamBinding, ParamLocation, RestOperation, ToolHints, ToolSpec,
+    ExecutionKind, MediaUploadOperation, ParamBinding, ParamLocation, RestOperation, ToolHints, ToolSpec,
 };
 pub fn build_tools() -> Vec<ToolSpec> {
     vec![
@@ -20,13 +20,102 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                     "body".to_string(),
                 ],
-                content_type: Some("application/json".to_string()),
-                raw_body: true,
-            }),
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("appstoreappsreview.createappstorehostedapp".to_string()),
                 output_schema: Some(
                     serde_json::from_str(r#"{"description":"Response for creating a new app record for an app store hosted app.","properties":{},"type":"object"}"#)
+                        .expect("generated output schema must be valid JSON"),
+                ),
+                read_only: Some(false),
+                destructive: Some(false),
+                idempotent: Some(false),
+                open_world: Some(true),
+            },
+        },
+        ToolSpec {
+            name: "appstoreappsreview_uploadimage".to_string(),
+            description: "Upload a screenshot or app icon for the hosted app. Returns an ID to track the image.".to_string(),
+            input_schema: serde_json::from_str(r#"{"properties":{"appStorePackageName":{"description":"Required. Package name of the third-party app store.","type":"string"},"body":{"description":"Request to upload an image.","properties":{},"type":"object"},"mediaContentType":{"description":"Content type; must match an accepted media type.","maxLength":200,"minLength":3,"type":"string"},"mediaFile":{"description":"Path relative to the configured MCP media root.","maxLength":255,"minLength":1,"type":"string"},"packageName":{"description":"Required. Package name of the app.","type":"string"}},"required":["packageName","appStorePackageName","body","mediaFile"],"type":"object"}"#)
+                .expect("generated input schema must be valid JSON"),
+            execution: ExecutionKind::Rest(RestOperation {
+                method: "POST".to_string(),
+                path_template: "https://androidpublisher.googleapis.com/androidpublisher/v3/appstore/{appStorePackageName}/apps/{packageName}/images:upload".to_string(),
+                params: vec![
+                    ParamBinding {
+                        name: "packageName".to_string(),
+                        location: ParamLocation::Path,
+                    },
+                    ParamBinding {
+                        name: "appStorePackageName".to_string(),
+                        location: ParamLocation::Path,
+                    },
+                ],
+                body_fields: vec![
+                    "body".to_string(),
+                ],
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: Some(MediaUploadOperation {
+                path_template: "https://androidpublisher.googleapis.com/upload/androidpublisher/v3/appstore/{appStorePackageName}/apps/{packageName}/images:upload".to_string(),
+                accepted_content_types: vec![
+"image/*".to_string(),
+                ],
+                max_size: Some(15728640),
+            }),
+        }),
+            hints: ToolHints {
+                title: Some("appstoreappsreview.uploadimage".to_string()),
+                output_schema: Some(
+                    serde_json::from_str(r#"{"description":"Response for uploading an image.","properties":{"imageId":{"description":"The unique ID of the uploaded image.","type":"string"}},"type":"object"}"#)
+                        .expect("generated output schema must be valid JSON"),
+                ),
+                read_only: Some(false),
+                destructive: Some(false),
+                idempotent: Some(false),
+                open_world: Some(true),
+            },
+        },
+        ToolSpec {
+            name: "appstoreappsreview_uploadappstoreapppolicydeclarationfile".to_string(),
+            description: "Upload a policy declaration file for the hosted app. Returns an ID to track the file.".to_string(),
+            input_schema: serde_json::from_str(r#"{"properties":{"appStorePackageName":{"description":"Required. Package name of the third-party app store.","type":"string"},"body":{"description":"Request to upload a policy declaration file.","properties":{"fileType":{"description":"Required. Type of the policy declaration file.","enum":["DECLARATION_FILE_TYPE_UNSPECIFIED","DECLARATION_FILE_TYPE_DOCUMENT"],"type":"string"}},"type":"object"},"mediaContentType":{"description":"Content type; must match an accepted media type.","maxLength":200,"minLength":3,"type":"string"},"mediaFile":{"description":"Path relative to the configured MCP media root.","maxLength":255,"minLength":1,"type":"string"},"packageName":{"description":"Required. Package name of the app.","type":"string"}},"required":["packageName","appStorePackageName","body","mediaFile"],"type":"object"}"#)
+                .expect("generated input schema must be valid JSON"),
+            execution: ExecutionKind::Rest(RestOperation {
+                method: "POST".to_string(),
+                path_template: "https://androidpublisher.googleapis.com/androidpublisher/v3/appstore/{appStorePackageName}/apps/{packageName}/policyDeclarationFiles:upload".to_string(),
+                params: vec![
+                    ParamBinding {
+                        name: "packageName".to_string(),
+                        location: ParamLocation::Path,
+                    },
+                    ParamBinding {
+                        name: "appStorePackageName".to_string(),
+                        location: ParamLocation::Path,
+                    },
+                ],
+                body_fields: vec![
+                    "body".to_string(),
+                ],
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: Some(MediaUploadOperation {
+                path_template: "https://androidpublisher.googleapis.com/upload/androidpublisher/v3/appstore/{appStorePackageName}/apps/{packageName}/policyDeclarationFiles:upload".to_string(),
+                accepted_content_types: vec![
+"application/pdf".to_string(),
+"image/jpeg".to_string(),
+"image/png".to_string(),
+                ],
+                max_size: Some(10485760),
+            }),
+        }),
+            hints: ToolHints {
+                title: Some("appstoreappsreview.uploadappstoreapppolicydeclarationfile".to_string()),
+                output_schema: Some(
+                    serde_json::from_str(r#"{"description":"Response for uploading a policy declaration file.","properties":{"fileId":{"description":"The unique ID of the uploaded file.","type":"string"}},"type":"object"}"#)
                         .expect("generated output schema must be valid JSON"),
                 ),
                 read_only: Some(false),
@@ -56,13 +145,58 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                     "body".to_string(),
                 ],
-                content_type: Some("application/json".to_string()),
-                raw_body: true,
-            }),
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("appstoreappsreview.updateappstorehostedapppublishstatus".to_string()),
                 output_schema: Some(
                     serde_json::from_str(r#"{"description":"Response for updating the publish status of an app store hosted app.","properties":{},"type":"object"}"#)
+                        .expect("generated output schema must be valid JSON"),
+                ),
+                read_only: Some(false),
+                destructive: Some(false),
+                idempotent: Some(false),
+                open_world: Some(true),
+            },
+        },
+        ToolSpec {
+            name: "appstoreappsreview_uploadapk".to_string(),
+            description: "Upload an APK file for the hosted app. Returns an ID to track this APK.".to_string(),
+            input_schema: serde_json::from_str(r#"{"properties":{"appStorePackageName":{"description":"Required. Package name of the third-party app store.","type":"string"},"body":{"description":"Request to upload an APK.","properties":{},"type":"object"},"mediaContentType":{"description":"Content type; must match an accepted media type.","maxLength":200,"minLength":3,"type":"string"},"mediaFile":{"description":"Path relative to the configured MCP media root.","maxLength":255,"minLength":1,"type":"string"},"packageName":{"description":"Required. Package name of the app.","type":"string"}},"required":["appStorePackageName","packageName","body","mediaFile"],"type":"object"}"#)
+                .expect("generated input schema must be valid JSON"),
+            execution: ExecutionKind::Rest(RestOperation {
+                method: "POST".to_string(),
+                path_template: "https://androidpublisher.googleapis.com/androidpublisher/v3/appstore/{appStorePackageName}/apps/{packageName}/apks:upload".to_string(),
+                params: vec![
+                    ParamBinding {
+                        name: "appStorePackageName".to_string(),
+                        location: ParamLocation::Path,
+                    },
+                    ParamBinding {
+                        name: "packageName".to_string(),
+                        location: ParamLocation::Path,
+                    },
+                ],
+                body_fields: vec![
+                    "body".to_string(),
+                ],
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: Some(MediaUploadOperation {
+                path_template: "https://androidpublisher.googleapis.com/upload/androidpublisher/v3/appstore/{appStorePackageName}/apps/{packageName}/apks:upload".to_string(),
+                accepted_content_types: vec![
+"application/octet-stream".to_string(),
+"application/vnd.android.package-archive".to_string(),
+                ],
+                max_size: Some(10737418240),
+            }),
+        }),
+            hints: ToolHints {
+                title: Some("appstoreappsreview.uploadapk".to_string()),
+                output_schema: Some(
+                    serde_json::from_str(r#"{"description":"Response for uploading an APK.","properties":{"apkId":{"description":"The unique ID of the uploaded APK.","type":"string"}},"type":"object"}"#)
                         .expect("generated output schema must be valid JSON"),
                 ),
                 read_only: Some(false),
@@ -88,9 +222,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                     "body".to_string(),
                 ],
-                content_type: Some("application/json".to_string()),
-                raw_body: true,
-            }),
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("appstoreappsreview.updateappstorehostedapp".to_string()),
                 output_schema: Some(
@@ -120,9 +255,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                     "body".to_string(),
                 ],
-                content_type: Some("application/json".to_string()),
-                raw_body: true,
-            }),
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("appsigning.enrollApp".to_string()),
                 output_schema: Some(
@@ -152,9 +288,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                     "body".to_string(),
                 ],
-                content_type: Some("application/json".to_string()),
-                raw_body: true,
-            }),
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("appsigning.rotateAppSigningKey".to_string()),
                 output_schema: Some(
@@ -191,9 +328,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 ],
                 body_fields: vec![
                 ],
-                content_type: None,
-                raw_body: false,
-            }),
+            content_type: None,
+            raw_body: false,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("systemapks.variants.get".to_string()),
                 output_schema: Some(
@@ -226,9 +364,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 ],
                 body_fields: vec![
                 ],
-                content_type: None,
-                raw_body: false,
-            }),
+            content_type: None,
+            raw_body: false,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("systemapks.variants.list".to_string()),
                 output_schema: Some(
@@ -265,9 +404,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 ],
                 body_fields: vec![
                 ],
-                content_type: None,
-                raw_body: false,
-            }),
+            content_type: None,
+            raw_body: false,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("systemapks.variants.download".to_string()),
                 output_schema: None,
@@ -298,9 +438,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                     "body".to_string(),
                 ],
-                content_type: Some("application/json".to_string()),
-                raw_body: true,
-            }),
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("systemapks.variants.create".to_string()),
                 output_schema: Some(
@@ -333,9 +474,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 ],
                 body_fields: vec![
                 ],
-                content_type: None,
-                raw_body: false,
-            }),
+            content_type: None,
+            raw_body: false,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("edits.get".to_string()),
                 output_schema: Some(
@@ -368,9 +510,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 ],
                 body_fields: vec![
                 ],
-                content_type: None,
-                raw_body: false,
-            }),
+            content_type: None,
+            raw_body: false,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("edits.validate".to_string()),
                 output_schema: Some(
@@ -411,9 +554,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 ],
                 body_fields: vec![
                 ],
-                content_type: None,
-                raw_body: false,
-            }),
+            content_type: None,
+            raw_body: false,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("edits.commit".to_string()),
                 output_schema: Some(
@@ -443,9 +587,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                     "body".to_string(),
                 ],
-                content_type: Some("application/json".to_string()),
-                raw_body: true,
-            }),
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("edits.insert".to_string()),
                 output_schema: Some(
@@ -478,9 +623,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 ],
                 body_fields: vec![
                 ],
-                content_type: None,
-                raw_body: false,
-            }),
+            content_type: None,
+            raw_body: false,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("edits.delete".to_string()),
                 output_schema: None,
@@ -518,9 +664,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 ],
                 body_fields: vec![
                 ],
-                content_type: None,
-                raw_body: false,
-            }),
+            content_type: None,
+            raw_body: false,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("edits.expansionfiles.get".to_string()),
                 output_schema: Some(
@@ -562,13 +709,64 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                     "body".to_string(),
                 ],
-                content_type: Some("application/json".to_string()),
-                raw_body: true,
-            }),
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("edits.expansionfiles.patch".to_string()),
                 output_schema: Some(
                     serde_json::from_str(r#"{"description":"An expansion file. The resource for ExpansionFilesService.","properties":{"fileSize":{"description":"If set, this field indicates that this APK has an expansion file uploaded to it: this APK does not reference another APK's expansion file. The field's value is the size of the uploaded expansion file in bytes.","format":"int64","type":"string"},"referencesVersion":{"description":"If set, this APK's expansion file references another APK's expansion file. The file_size field will not be set.","format":"int32","type":"integer"}},"type":"object"}"#)
+                        .expect("generated output schema must be valid JSON"),
+                ),
+                read_only: Some(false),
+                destructive: Some(false),
+                idempotent: Some(false),
+                open_world: Some(true),
+            },
+        },
+        ToolSpec {
+            name: "edits_expansionfiles_upload".to_string(),
+            description: "Uploads a new expansion file and attaches to the specified APK.".to_string(),
+            input_schema: serde_json::from_str(r#"{"properties":{"apkVersionCode":{"description":"The version code of the APK whose expansion file configuration is being read or modified.","format":"int32","type":"integer"},"editId":{"description":"Identifier of the edit.","type":"string"},"expansionFileType":{"description":"The file type of the expansion file configuration which is being updated.","enum":["expansionFileTypeUnspecified","main","patch"],"type":"string"},"mediaContentType":{"description":"Content type; must match an accepted media type.","maxLength":200,"minLength":3,"type":"string"},"mediaFile":{"description":"Path relative to the configured MCP media root.","maxLength":255,"minLength":1,"type":"string"},"packageName":{"description":"Package name of the app.","type":"string"}},"required":["packageName","apkVersionCode","editId","expansionFileType","mediaFile"],"type":"object"}"#)
+                .expect("generated input schema must be valid JSON"),
+            execution: ExecutionKind::Rest(RestOperation {
+                method: "POST".to_string(),
+                path_template: "https://androidpublisher.googleapis.com/androidpublisher/v3/applications/{packageName}/edits/{editId}/apks/{apkVersionCode}/expansionFiles/{expansionFileType}".to_string(),
+                params: vec![
+                    ParamBinding {
+                        name: "packageName".to_string(),
+                        location: ParamLocation::Path,
+                    },
+                    ParamBinding {
+                        name: "apkVersionCode".to_string(),
+                        location: ParamLocation::Path,
+                    },
+                    ParamBinding {
+                        name: "editId".to_string(),
+                        location: ParamLocation::Path,
+                    },
+                    ParamBinding {
+                        name: "expansionFileType".to_string(),
+                        location: ParamLocation::Path,
+                    },
+                ],
+                body_fields: vec![
+                ],
+            content_type: None,
+            raw_body: false,
+            media: Some(MediaUploadOperation {
+                path_template: "https://androidpublisher.googleapis.com/upload/androidpublisher/v3/applications/{packageName}/edits/{editId}/apks/{apkVersionCode}/expansionFiles/{expansionFileType}".to_string(),
+                accepted_content_types: vec![
+"application/octet-stream".to_string(),
+                ],
+                max_size: Some(2147483648),
+            }),
+        }),
+            hints: ToolHints {
+                title: Some("edits.expansionfiles.upload".to_string()),
+                output_schema: Some(
+                    serde_json::from_str(r#"{"description":"Response for uploading an expansion file.","properties":{"expansionFile":{"description":"An expansion file. The resource for ExpansionFilesService.","properties":{"fileSize":{"description":"If set, this field indicates that this APK has an expansion file uploaded to it: this APK does not reference another APK's expansion file. The field's value is the size of the uploaded expansion file in bytes.","format":"int64","type":"string"},"referencesVersion":{"description":"If set, this APK's expansion file references another APK's expansion file. The file_size field will not be set.","format":"int32","type":"integer"}},"type":"object"}},"type":"object"}"#)
                         .expect("generated output schema must be valid JSON"),
                 ),
                 read_only: Some(false),
@@ -606,9 +804,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                     "body".to_string(),
                 ],
-                content_type: Some("application/json".to_string()),
-                raw_body: true,
-            }),
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("edits.expansionfiles.update".to_string()),
                 output_schema: Some(
@@ -646,9 +845,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                     "body".to_string(),
                 ],
-                content_type: Some("application/json".to_string()),
-                raw_body: true,
-            }),
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("edits.testers.patch".to_string()),
                 output_schema: Some(
@@ -685,9 +885,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 ],
                 body_fields: vec![
                 ],
-                content_type: None,
-                raw_body: false,
-            }),
+            content_type: None,
+            raw_body: false,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("edits.testers.get".to_string()),
                 output_schema: Some(
@@ -725,9 +926,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                     "body".to_string(),
                 ],
-                content_type: Some("application/json".to_string()),
-                raw_body: true,
-            }),
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("edits.testers.update".to_string()),
                 output_schema: Some(
@@ -737,6 +939,60 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 read_only: Some(false),
                 destructive: Some(false),
                 idempotent: Some(true),
+                open_world: Some(true),
+            },
+        },
+        ToolSpec {
+            name: "edits_images_upload".to_string(),
+            description: "Uploads an image of the specified language and image type, and adds to the edit.".to_string(),
+            input_schema: serde_json::from_str(r#"{"properties":{"aiGeneratedState":{"description":"Optional. Whether the image was generated by AI. Attested by the developer.","enum":["aiGeneratedStateUnspecified","aiGeneratedStateNotAiGenerated","aiGeneratedStateAiGeneratedDeveloperAttested"],"type":"string"},"editId":{"description":"Identifier of the edit.","type":"string"},"imageType":{"description":"Type of the Image.","enum":["appImageTypeUnspecified","phoneScreenshots","sevenInchScreenshots","tenInchScreenshots","tvScreenshots","wearScreenshots","icon","featureGraphic","tvBanner"],"type":"string"},"language":{"description":"Language localization code (a BCP-47 language tag; for example, \"de-AT\" for Austrian German). Providing a language that is not supported by the App is a no-op.","type":"string"},"mediaContentType":{"description":"Content type; must match an accepted media type.","maxLength":200,"minLength":3,"type":"string"},"mediaFile":{"description":"Path relative to the configured MCP media root.","maxLength":255,"minLength":1,"type":"string"},"packageName":{"description":"Package name of the app.","type":"string"}},"required":["packageName","editId","language","imageType","mediaFile"],"type":"object"}"#)
+                .expect("generated input schema must be valid JSON"),
+            execution: ExecutionKind::Rest(RestOperation {
+                method: "POST".to_string(),
+                path_template: "https://androidpublisher.googleapis.com/androidpublisher/v3/applications/{packageName}/edits/{editId}/listings/{language}/{imageType}".to_string(),
+                params: vec![
+                    ParamBinding {
+                        name: "packageName".to_string(),
+                        location: ParamLocation::Path,
+                    },
+                    ParamBinding {
+                        name: "editId".to_string(),
+                        location: ParamLocation::Path,
+                    },
+                    ParamBinding {
+                        name: "language".to_string(),
+                        location: ParamLocation::Path,
+                    },
+                    ParamBinding {
+                        name: "imageType".to_string(),
+                        location: ParamLocation::Path,
+                    },
+                    ParamBinding {
+                        name: "aiGeneratedState".to_string(),
+                        location: ParamLocation::Query,
+                    },
+                ],
+                body_fields: vec![
+                ],
+            content_type: None,
+            raw_body: false,
+            media: Some(MediaUploadOperation {
+                path_template: "https://androidpublisher.googleapis.com/upload/androidpublisher/v3/applications/{packageName}/edits/{editId}/listings/{language}/{imageType}".to_string(),
+                accepted_content_types: vec![
+"image/*".to_string(),
+                ],
+                max_size: Some(15728640),
+            }),
+        }),
+            hints: ToolHints {
+                title: Some("edits.images.upload".to_string()),
+                output_schema: Some(
+                    serde_json::from_str(r#"{"description":"Response for uploading an image.","properties":{"image":{"description":"An uploaded image. The resource for ImagesService.","properties":{"aiGeneratedState":{"description":"Optional. Whether the image was generated by AI. Attested by the developer.","enum":["aiGeneratedStateUnspecified","aiGeneratedStateNotAiGenerated","aiGeneratedStateAiGeneratedDeveloperAttested"],"type":"string"},"id":{"description":"A unique id representing this image.","type":"string"},"sha1":{"description":"A sha1 hash of the image.","type":"string"},"sha256":{"description":"A sha256 hash of the image.","type":"string"},"url":{"description":"A URL that will serve a preview of the image.","type":"string"}},"type":"object"}},"type":"object"}"#)
+                        .expect("generated output schema must be valid JSON"),
+                ),
+                read_only: Some(false),
+                destructive: Some(false),
+                idempotent: Some(false),
                 open_world: Some(true),
             },
         },
@@ -772,9 +1028,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 ],
                 body_fields: vec![
                 ],
-                content_type: None,
-                raw_body: false,
-            }),
+            content_type: None,
+            raw_body: false,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("edits.images.delete".to_string()),
                 output_schema: None,
@@ -812,9 +1069,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 ],
                 body_fields: vec![
                 ],
-                content_type: None,
-                raw_body: false,
-            }),
+            content_type: None,
+            raw_body: false,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("edits.images.deleteall".to_string()),
                 output_schema: Some(
@@ -855,9 +1113,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 ],
                 body_fields: vec![
                 ],
-                content_type: None,
-                raw_body: false,
-            }),
+            content_type: None,
+            raw_body: false,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("edits.images.list".to_string()),
                 output_schema: Some(
@@ -890,9 +1149,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 ],
                 body_fields: vec![
                 ],
-                content_type: None,
-                raw_body: false,
-            }),
+            content_type: None,
+            raw_body: false,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("edits.listings.list".to_string()),
                 output_schema: Some(
@@ -930,9 +1190,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                     "body".to_string(),
                 ],
-                content_type: Some("application/json".to_string()),
-                raw_body: true,
-            }),
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("edits.listings.patch".to_string()),
                 output_schema: Some(
@@ -970,9 +1231,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                     "body".to_string(),
                 ],
-                content_type: Some("application/json".to_string()),
-                raw_body: true,
-            }),
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("edits.listings.update".to_string()),
                 output_schema: Some(
@@ -1005,9 +1267,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 ],
                 body_fields: vec![
                 ],
-                content_type: None,
-                raw_body: false,
-            }),
+            content_type: None,
+            raw_body: false,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("edits.listings.deleteall".to_string()),
                 output_schema: None,
@@ -1041,9 +1304,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 ],
                 body_fields: vec![
                 ],
-                content_type: None,
-                raw_body: false,
-            }),
+            content_type: None,
+            raw_body: false,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("edits.listings.delete".to_string()),
                 output_schema: None,
@@ -1077,9 +1341,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 ],
                 body_fields: vec![
                 ],
-                content_type: None,
-                raw_body: false,
-            }),
+            content_type: None,
+            raw_body: false,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("edits.listings.get".to_string()),
                 output_schema: Some(
@@ -1089,6 +1354,56 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 read_only: Some(true),
                 destructive: Some(false),
                 idempotent: Some(true),
+                open_world: Some(true),
+            },
+        },
+        ToolSpec {
+            name: "edits_deobfuscationfiles_upload".to_string(),
+            description: "Uploads a new deobfuscation file and attaches to the specified APK.".to_string(),
+            input_schema: serde_json::from_str(r#"{"properties":{"apkVersionCode":{"description":"The version code of the APK whose Deobfuscation File is being uploaded.","format":"int32","type":"integer"},"deobfuscationFileType":{"description":"The type of the deobfuscation file.","enum":["deobfuscationFileTypeUnspecified","proguard","nativeCode"],"type":"string"},"editId":{"description":"Unique identifier for this edit.","type":"string"},"mediaContentType":{"description":"Content type; must match an accepted media type.","maxLength":200,"minLength":3,"type":"string"},"mediaFile":{"description":"Path relative to the configured MCP media root.","maxLength":255,"minLength":1,"type":"string"},"packageName":{"description":"Unique identifier for the Android app.","type":"string"}},"required":["packageName","deobfuscationFileType","editId","apkVersionCode","mediaFile"],"type":"object"}"#)
+                .expect("generated input schema must be valid JSON"),
+            execution: ExecutionKind::Rest(RestOperation {
+                method: "POST".to_string(),
+                path_template: "https://androidpublisher.googleapis.com/androidpublisher/v3/applications/{packageName}/edits/{editId}/apks/{apkVersionCode}/deobfuscationFiles/{deobfuscationFileType}".to_string(),
+                params: vec![
+                    ParamBinding {
+                        name: "packageName".to_string(),
+                        location: ParamLocation::Path,
+                    },
+                    ParamBinding {
+                        name: "deobfuscationFileType".to_string(),
+                        location: ParamLocation::Path,
+                    },
+                    ParamBinding {
+                        name: "editId".to_string(),
+                        location: ParamLocation::Path,
+                    },
+                    ParamBinding {
+                        name: "apkVersionCode".to_string(),
+                        location: ParamLocation::Path,
+                    },
+                ],
+                body_fields: vec![
+                ],
+            content_type: None,
+            raw_body: false,
+            media: Some(MediaUploadOperation {
+                path_template: "https://androidpublisher.googleapis.com/upload/androidpublisher/v3/applications/{packageName}/edits/{editId}/apks/{apkVersionCode}/deobfuscationFiles/{deobfuscationFileType}".to_string(),
+                accepted_content_types: vec![
+"application/octet-stream".to_string(),
+                ],
+                max_size: Some(1677721600),
+            }),
+        }),
+            hints: ToolHints {
+                title: Some("edits.deobfuscationfiles.upload".to_string()),
+                output_schema: Some(
+                    serde_json::from_str(r#"{"description":"Responses for the upload.","properties":{"deobfuscationFile":{"description":"Represents a deobfuscation file.","properties":{"symbolType":{"description":"The type of the deobfuscation file.","enum":["deobfuscationFileTypeUnspecified","proguard","nativeCode"],"type":"string"}},"type":"object"}},"type":"object"}"#)
+                        .expect("generated output schema must be valid JSON"),
+                ),
+                read_only: Some(false),
+                destructive: Some(false),
+                idempotent: Some(false),
                 open_world: Some(true),
             },
         },
@@ -1112,9 +1427,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 ],
                 body_fields: vec![
                 ],
-                content_type: None,
-                raw_body: false,
-            }),
+            content_type: None,
+            raw_body: false,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("edits.details.get".to_string()),
                 output_schema: Some(
@@ -1148,9 +1464,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                     "body".to_string(),
                 ],
-                content_type: Some("application/json".to_string()),
-                raw_body: true,
-            }),
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("edits.details.update".to_string()),
                 output_schema: Some(
@@ -1184,13 +1501,57 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                     "body".to_string(),
                 ],
-                content_type: Some("application/json".to_string()),
-                raw_body: true,
-            }),
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("edits.details.patch".to_string()),
                 output_schema: Some(
                     serde_json::from_str(r#"{"description":"The app details. The resource for DetailsService.","properties":{"contactEmail":{"description":"The user-visible support email for this app.","type":"string"},"contactPhone":{"description":"The user-visible support telephone number for this app.","type":"string"},"contactWebsite":{"description":"The user-visible website for this app.","type":"string"},"defaultLanguage":{"description":"Default language code, in BCP 47 format (eg \"en-US\").","type":"string"}},"type":"object"}"#)
+                        .expect("generated output schema must be valid JSON"),
+                ),
+                read_only: Some(false),
+                destructive: Some(false),
+                idempotent: Some(false),
+                open_world: Some(true),
+            },
+        },
+        ToolSpec {
+            name: "edits_apks_upload".to_string(),
+            description: "Uploads an APK and adds to the current edit.".to_string(),
+            input_schema: serde_json::from_str(r#"{"properties":{"editId":{"description":"Identifier of the edit.","type":"string"},"mediaContentType":{"description":"Content type; must match an accepted media type.","maxLength":200,"minLength":3,"type":"string"},"mediaFile":{"description":"Path relative to the configured MCP media root.","maxLength":255,"minLength":1,"type":"string"},"packageName":{"description":"Package name of the app.","type":"string"}},"required":["packageName","editId","mediaFile"],"type":"object"}"#)
+                .expect("generated input schema must be valid JSON"),
+            execution: ExecutionKind::Rest(RestOperation {
+                method: "POST".to_string(),
+                path_template: "https://androidpublisher.googleapis.com/androidpublisher/v3/applications/{packageName}/edits/{editId}/apks".to_string(),
+                params: vec![
+                    ParamBinding {
+                        name: "packageName".to_string(),
+                        location: ParamLocation::Path,
+                    },
+                    ParamBinding {
+                        name: "editId".to_string(),
+                        location: ParamLocation::Path,
+                    },
+                ],
+                body_fields: vec![
+                ],
+            content_type: None,
+            raw_body: false,
+            media: Some(MediaUploadOperation {
+                path_template: "https://androidpublisher.googleapis.com/upload/androidpublisher/v3/applications/{packageName}/edits/{editId}/apks".to_string(),
+                accepted_content_types: vec![
+"application/octet-stream".to_string(),
+"application/vnd.android.package-archive".to_string(),
+                ],
+                max_size: Some(10737418240),
+            }),
+        }),
+            hints: ToolHints {
+                title: Some("edits.apks.upload".to_string()),
+                output_schema: Some(
+                    serde_json::from_str(r#"{"description":"Information about an APK. The resource for ApksService.","properties":{"binary":{"description":"Represents the binary payload of an APK.","properties":{"sha1":{"description":"A sha1 hash of the APK payload, encoded as a hex string and matching the output of the sha1sum command.","type":"string"},"sha256":{"description":"A sha256 hash of the APK payload, encoded as a hex string and matching the output of the sha256sum command.","type":"string"}},"type":"object"},"versionCode":{"description":"The version code of the APK, as specified in the manifest file.","format":"int32","type":"integer"}},"type":"object"}"#)
                         .expect("generated output schema must be valid JSON"),
                 ),
                 read_only: Some(false),
@@ -1220,9 +1581,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                     "body".to_string(),
                 ],
-                content_type: Some("application/json".to_string()),
-                raw_body: true,
-            }),
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("edits.apks.addexternallyhosted".to_string()),
                 output_schema: Some(
@@ -1255,9 +1617,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 ],
                 body_fields: vec![
                 ],
-                content_type: None,
-                raw_body: false,
-            }),
+            content_type: None,
+            raw_body: false,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("edits.apks.list".to_string()),
                 output_schema: Some(
@@ -1267,6 +1630,56 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 read_only: Some(true),
                 destructive: Some(false),
                 idempotent: Some(true),
+                open_world: Some(true),
+            },
+        },
+        ToolSpec {
+            name: "edits_bundles_upload".to_string(),
+            description: "Uploads a new Android App Bundle to this edit. If you are using the Google API client libraries, please increase the timeout of the http request before calling this endpoint (a timeout of 2 minutes is recommended). See [Timeouts and Errors](https://developers.google.com/api-client-library/java/google-api-java-client/errors) for an example in java.".to_string(),
+            input_schema: serde_json::from_str(r#"{"properties":{"ackBundleInstallationWarning":{"description":"Deprecated. The installation warning has been removed, it's not necessary to set this field anymore.","type":"boolean"},"deviceTierConfigId":{"description":"Device tier config (DTC) to be used for generating deliverables (APKs). Contains id of the DTC or \"LATEST\" for last uploaded DTC.","type":"string"},"editId":{"description":"Identifier of the edit.","type":"string"},"mediaContentType":{"description":"Content type; must match an accepted media type.","maxLength":200,"minLength":3,"type":"string"},"mediaFile":{"description":"Path relative to the configured MCP media root.","maxLength":255,"minLength":1,"type":"string"},"packageName":{"description":"Package name of the app.","type":"string"}},"required":["editId","packageName","mediaFile"],"type":"object"}"#)
+                .expect("generated input schema must be valid JSON"),
+            execution: ExecutionKind::Rest(RestOperation {
+                method: "POST".to_string(),
+                path_template: "https://androidpublisher.googleapis.com/androidpublisher/v3/applications/{packageName}/edits/{editId}/bundles".to_string(),
+                params: vec![
+                    ParamBinding {
+                        name: "deviceTierConfigId".to_string(),
+                        location: ParamLocation::Query,
+                    },
+                    ParamBinding {
+                        name: "editId".to_string(),
+                        location: ParamLocation::Path,
+                    },
+                    ParamBinding {
+                        name: "packageName".to_string(),
+                        location: ParamLocation::Path,
+                    },
+                    ParamBinding {
+                        name: "ackBundleInstallationWarning".to_string(),
+                        location: ParamLocation::Query,
+                    },
+                ],
+                body_fields: vec![
+                ],
+            content_type: None,
+            raw_body: false,
+            media: Some(MediaUploadOperation {
+                path_template: "https://androidpublisher.googleapis.com/upload/androidpublisher/v3/applications/{packageName}/edits/{editId}/bundles".to_string(),
+                accepted_content_types: vec![
+"application/octet-stream".to_string(),
+                ],
+                max_size: Some(53687091200),
+            }),
+        }),
+            hints: ToolHints {
+                title: Some("edits.bundles.upload".to_string()),
+                output_schema: Some(
+                    serde_json::from_str(r#"{"description":"Information about an app bundle. The resource for BundlesService.","properties":{"sha1":{"description":"A sha1 hash of the upload payload, encoded as a hex string and matching the output of the sha1sum command.","type":"string"},"sha256":{"description":"A sha256 hash of the upload payload, encoded as a hex string and matching the output of the sha256sum command.","type":"string"},"versionCode":{"description":"The version code of the Android App Bundle, as specified in the Android App Bundle's base module APK manifest file.","format":"int32","type":"integer"}},"type":"object"}"#)
+                        .expect("generated output schema must be valid JSON"),
+                ),
+                read_only: Some(false),
+                destructive: Some(false),
+                idempotent: Some(false),
                 open_world: Some(true),
             },
         },
@@ -1290,9 +1703,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 ],
                 body_fields: vec![
                 ],
-                content_type: None,
-                raw_body: false,
-            }),
+            content_type: None,
+            raw_body: false,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("edits.bundles.list".to_string()),
                 output_schema: Some(
@@ -1326,9 +1740,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                     "body".to_string(),
                 ],
-                content_type: Some("application/json".to_string()),
-                raw_body: true,
-            }),
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("edits.tracks.create".to_string()),
                 output_schema: Some(
@@ -1365,9 +1780,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 ],
                 body_fields: vec![
                 ],
-                content_type: None,
-                raw_body: false,
-            }),
+            content_type: None,
+            raw_body: false,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("edits.tracks.get".to_string()),
                 output_schema: Some(
@@ -1405,9 +1821,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                     "body".to_string(),
                 ],
-                content_type: Some("application/json".to_string()),
-                raw_body: true,
-            }),
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("edits.tracks.update".to_string()),
                 output_schema: Some(
@@ -1445,9 +1862,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                     "body".to_string(),
                 ],
-                content_type: Some("application/json".to_string()),
-                raw_body: true,
-            }),
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("edits.tracks.patch".to_string()),
                 output_schema: Some(
@@ -1480,9 +1898,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 ],
                 body_fields: vec![
                 ],
-                content_type: None,
-                raw_body: false,
-            }),
+            content_type: None,
+            raw_body: false,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("edits.tracks.list".to_string()),
                 output_schema: Some(
@@ -1519,9 +1938,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 ],
                 body_fields: vec![
                 ],
-                content_type: None,
-                raw_body: false,
-            }),
+            content_type: None,
+            raw_body: false,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("edits.countryavailability.get".to_string()),
                 output_schema: Some(
@@ -1551,9 +1971,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                     "body".to_string(),
                 ],
-                content_type: Some("application/json".to_string()),
-                raw_body: true,
-            }),
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("monetization.convertRegionPrices".to_string()),
                 output_schema: Some(
@@ -1583,9 +2004,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                     "body".to_string(),
                 ],
-                content_type: Some("application/json".to_string()),
-                raw_body: true,
-            }),
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("monetization.subscriptions.batchUpdate".to_string()),
                 output_schema: Some(
@@ -1635,9 +2057,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                     "body".to_string(),
                 ],
-                content_type: Some("application/json".to_string()),
-                raw_body: true,
-            }),
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("monetization.subscriptions.patch".to_string()),
                 output_schema: Some(
@@ -1670,9 +2093,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 ],
                 body_fields: vec![
                 ],
-                content_type: None,
-                raw_body: false,
-            }),
+            content_type: None,
+            raw_body: false,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("monetization.subscriptions.delete".to_string()),
                 output_schema: None,
@@ -1710,9 +2134,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 ],
                 body_fields: vec![
                 ],
-                content_type: None,
-                raw_body: false,
-            }),
+            content_type: None,
+            raw_body: false,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("monetization.subscriptions.list".to_string()),
                 output_schema: Some(
@@ -1745,9 +2170,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 ],
                 body_fields: vec![
                 ],
-                content_type: None,
-                raw_body: false,
-            }),
+            content_type: None,
+            raw_body: false,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("monetization.subscriptions.batchGet".to_string()),
                 output_schema: Some(
@@ -1781,9 +2207,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                     "body".to_string(),
                 ],
-                content_type: Some("application/json".to_string()),
-                raw_body: true,
-            }),
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("monetization.subscriptions.archive".to_string()),
                 output_schema: Some(
@@ -1816,9 +2243,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 ],
                 body_fields: vec![
                 ],
-                content_type: None,
-                raw_body: false,
-            }),
+            content_type: None,
+            raw_body: false,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("monetization.subscriptions.get".to_string()),
                 output_schema: Some(
@@ -1856,9 +2284,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                     "body".to_string(),
                 ],
-                content_type: Some("application/json".to_string()),
-                raw_body: true,
-            }),
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("monetization.subscriptions.create".to_string()),
                 output_schema: Some(
@@ -1892,9 +2321,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                     "body".to_string(),
                 ],
-                content_type: Some("application/json".to_string()),
-                raw_body: true,
-            }),
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("monetization.subscriptions.basePlans.batchUpdateStates".to_string()),
                 output_schema: Some(
@@ -1932,9 +2362,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                     "body".to_string(),
                 ],
-                content_type: Some("application/json".to_string()),
-                raw_body: true,
-            }),
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("monetization.subscriptions.basePlans.activate".to_string()),
                 output_schema: Some(
@@ -1968,9 +2399,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                     "body".to_string(),
                 ],
-                content_type: Some("application/json".to_string()),
-                raw_body: true,
-            }),
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("monetization.subscriptions.basePlans.batchMigratePrices".to_string()),
                 output_schema: Some(
@@ -2008,9 +2440,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                     "body".to_string(),
                 ],
-                content_type: Some("application/json".to_string()),
-                raw_body: true,
-            }),
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("monetization.subscriptions.basePlans.migratePrices".to_string()),
                 output_schema: Some(
@@ -2047,9 +2480,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 ],
                 body_fields: vec![
                 ],
-                content_type: None,
-                raw_body: false,
-            }),
+            content_type: None,
+            raw_body: false,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("monetization.subscriptions.basePlans.delete".to_string()),
                 output_schema: None,
@@ -2084,9 +2518,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                     "body".to_string(),
                 ],
-                content_type: Some("application/json".to_string()),
-                raw_body: true,
-            }),
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("monetization.subscriptions.basePlans.deactivate".to_string()),
                 output_schema: Some(
@@ -2124,9 +2559,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                     "body".to_string(),
                 ],
-                content_type: Some("application/json".to_string()),
-                raw_body: true,
-            }),
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("monetization.subscriptions.basePlans.offers.batchUpdateStates".to_string()),
                 output_schema: Some(
@@ -2167,9 +2603,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 ],
                 body_fields: vec![
                 ],
-                content_type: None,
-                raw_body: false,
-            }),
+            content_type: None,
+            raw_body: false,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("monetization.subscriptions.basePlans.offers.delete".to_string()),
                 output_schema: None,
@@ -2224,9 +2661,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                     "body".to_string(),
                 ],
-                content_type: Some("application/json".to_string()),
-                raw_body: true,
-            }),
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("monetization.subscriptions.basePlans.offers.patch".to_string()),
                 output_schema: Some(
@@ -2268,9 +2706,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                     "body".to_string(),
                 ],
-                content_type: Some("application/json".to_string()),
-                raw_body: true,
-            }),
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("monetization.subscriptions.basePlans.offers.deactivate".to_string()),
                 output_schema: Some(
@@ -2308,9 +2747,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                     "body".to_string(),
                 ],
-                content_type: Some("application/json".to_string()),
-                raw_body: true,
-            }),
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("monetization.subscriptions.basePlans.offers.batchGet".to_string()),
                 output_schema: Some(
@@ -2348,9 +2788,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                     "body".to_string(),
                 ],
-                content_type: Some("application/json".to_string()),
-                raw_body: true,
-            }),
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("monetization.subscriptions.basePlans.offers.batchUpdate".to_string()),
                 output_schema: Some(
@@ -2392,9 +2833,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                     "body".to_string(),
                 ],
-                content_type: Some("application/json".to_string()),
-                raw_body: true,
-            }),
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("monetization.subscriptions.basePlans.offers.activate".to_string()),
                 output_schema: Some(
@@ -2435,9 +2877,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 ],
                 body_fields: vec![
                 ],
-                content_type: None,
-                raw_body: false,
-            }),
+            content_type: None,
+            raw_body: false,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("monetization.subscriptions.basePlans.offers.get".to_string()),
                 output_schema: Some(
@@ -2482,9 +2925,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 ],
                 body_fields: vec![
                 ],
-                content_type: None,
-                raw_body: false,
-            }),
+            content_type: None,
+            raw_body: false,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("monetization.subscriptions.basePlans.offers.list".to_string()),
                 output_schema: Some(
@@ -2530,9 +2974,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                     "body".to_string(),
                 ],
-                content_type: Some("application/json".to_string()),
-                raw_body: true,
-            }),
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("monetization.subscriptions.basePlans.offers.create".to_string()),
                 output_schema: Some(
@@ -2569,9 +3014,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 ],
                 body_fields: vec![
                 ],
-                content_type: None,
-                raw_body: false,
-            }),
+            content_type: None,
+            raw_body: false,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("monetization.onetimeproducts.delete".to_string()),
                 output_schema: None,
@@ -2601,9 +3047,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 ],
                 body_fields: vec![
                 ],
-                content_type: None,
-                raw_body: false,
-            }),
+            content_type: None,
+            raw_body: false,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("monetization.onetimeproducts.get".to_string()),
                 output_schema: Some(
@@ -2636,9 +3083,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 ],
                 body_fields: vec![
                 ],
-                content_type: None,
-                raw_body: false,
-            }),
+            content_type: None,
+            raw_body: false,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("monetization.onetimeproducts.batchGet".to_string()),
                 output_schema: Some(
@@ -2675,9 +3123,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 ],
                 body_fields: vec![
                 ],
-                content_type: None,
-                raw_body: false,
-            }),
+            content_type: None,
+            raw_body: false,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("monetization.onetimeproducts.list".to_string()),
                 output_schema: Some(
@@ -2727,9 +3176,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                     "body".to_string(),
                 ],
-                content_type: Some("application/json".to_string()),
-                raw_body: true,
-            }),
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("monetization.onetimeproducts.patch".to_string()),
                 output_schema: Some(
@@ -2759,9 +3209,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                     "body".to_string(),
                 ],
-                content_type: Some("application/json".to_string()),
-                raw_body: true,
-            }),
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("monetization.onetimeproducts.batchUpdate".to_string()),
                 output_schema: Some(
@@ -2791,9 +3242,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                     "body".to_string(),
                 ],
-                content_type: Some("application/json".to_string()),
-                raw_body: true,
-            }),
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("monetization.onetimeproducts.batchDelete".to_string()),
                 output_schema: None,
@@ -2824,9 +3276,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                     "body".to_string(),
                 ],
-                content_type: Some("application/json".to_string()),
-                raw_body: true,
-            }),
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("monetization.onetimeproducts.purchaseOptions.batchUpdateStates".to_string()),
                 output_schema: Some(
@@ -2860,9 +3313,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                     "body".to_string(),
                 ],
-                content_type: Some("application/json".to_string()),
-                raw_body: true,
-            }),
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("monetization.onetimeproducts.purchaseOptions.batchDelete".to_string()),
                 output_schema: None,
@@ -2897,9 +3351,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                     "body".to_string(),
                 ],
-                content_type: Some("application/json".to_string()),
-                raw_body: true,
-            }),
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("monetization.onetimeproducts.purchaseOptions.offers.batchDelete".to_string()),
                 output_schema: None,
@@ -2934,9 +3389,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                     "body".to_string(),
                 ],
-                content_type: Some("application/json".to_string()),
-                raw_body: true,
-            }),
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("monetization.onetimeproducts.purchaseOptions.offers.batchGet".to_string()),
                 output_schema: Some(
@@ -2978,9 +3434,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                     "body".to_string(),
                 ],
-                content_type: Some("application/json".to_string()),
-                raw_body: true,
-            }),
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("monetization.onetimeproducts.purchaseOptions.offers.activate".to_string()),
                 output_schema: Some(
@@ -3018,9 +3475,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                     "body".to_string(),
                 ],
-                content_type: Some("application/json".to_string()),
-                raw_body: true,
-            }),
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("monetization.onetimeproducts.purchaseOptions.offers.batchUpdateStates".to_string()),
                 output_schema: Some(
@@ -3062,9 +3520,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                     "body".to_string(),
                 ],
-                content_type: Some("application/json".to_string()),
-                raw_body: true,
-            }),
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("monetization.onetimeproducts.purchaseOptions.offers.deactivate".to_string()),
                 output_schema: Some(
@@ -3106,9 +3565,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                     "body".to_string(),
                 ],
-                content_type: Some("application/json".to_string()),
-                raw_body: true,
-            }),
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("monetization.onetimeproducts.purchaseOptions.offers.cancel".to_string()),
                 output_schema: Some(
@@ -3153,9 +3613,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 ],
                 body_fields: vec![
                 ],
-                content_type: None,
-                raw_body: false,
-            }),
+            content_type: None,
+            raw_body: false,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("monetization.onetimeproducts.purchaseOptions.offers.list".to_string()),
                 output_schema: Some(
@@ -3193,9 +3654,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                     "body".to_string(),
                 ],
-                content_type: Some("application/json".to_string()),
-                raw_body: true,
-            }),
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("monetization.onetimeproducts.purchaseOptions.offers.batchUpdate".to_string()),
                 output_schema: Some(
@@ -3229,9 +3691,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                     "body".to_string(),
                 ],
-                content_type: Some("application/json".to_string()),
-                raw_body: true,
-            }),
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("users.patch".to_string()),
                 output_schema: Some(
@@ -3268,9 +3731,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 ],
                 body_fields: vec![
                 ],
-                content_type: None,
-                raw_body: false,
-            }),
+            content_type: None,
+            raw_body: false,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("users.list".to_string()),
                 output_schema: Some(
@@ -3300,9 +3764,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                     "body".to_string(),
                 ],
-                content_type: Some("application/json".to_string()),
-                raw_body: true,
-            }),
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("users.create".to_string()),
                 output_schema: Some(
@@ -3331,9 +3796,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 ],
                 body_fields: vec![
                 ],
-                content_type: None,
-                raw_body: false,
-            }),
+            content_type: None,
+            raw_body: false,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("users.delete".to_string()),
                 output_schema: None,
@@ -3363,9 +3829,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 ],
                 body_fields: vec![
                 ],
-                content_type: None,
-                raw_body: false,
-            }),
+            content_type: None,
+            raw_body: false,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("appstorecatalog.recentappviews.get".to_string()),
                 output_schema: Some(
@@ -3410,9 +3877,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 ],
                 body_fields: vec![
                 ],
-                content_type: None,
-                raw_body: false,
-            }),
+            content_type: None,
+            raw_body: false,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("appstorecatalog.recentupdateevents.list".to_string()),
                 output_schema: Some(
@@ -3442,9 +3910,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                     "body".to_string(),
                 ],
-                content_type: Some("application/json".to_string()),
-                raw_body: true,
-            }),
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("applications.dataSafety".to_string()),
                 output_schema: Some(
@@ -3473,9 +3942,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 ],
                 body_fields: vec![
                 ],
-                content_type: None,
-                raw_body: false,
-            }),
+            content_type: None,
+            raw_body: false,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("applications.tracks.releases.list".to_string()),
                 output_schema: Some(
@@ -3512,9 +3982,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 ],
                 body_fields: vec![
                 ],
-                content_type: None,
-                raw_body: false,
-            }),
+            content_type: None,
+            raw_body: false,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("applications.deviceTierConfigs.list".to_string()),
                 output_schema: Some(
@@ -3547,9 +4018,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 ],
                 body_fields: vec![
                 ],
-                content_type: None,
-                raw_body: false,
-            }),
+            content_type: None,
+            raw_body: false,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("applications.deviceTierConfigs.get".to_string()),
                 output_schema: Some(
@@ -3583,9 +4055,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                     "body".to_string(),
                 ],
-                content_type: Some("application/json".to_string()),
-                raw_body: true,
-            }),
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("applications.deviceTierConfigs.create".to_string()),
                 output_schema: Some(
@@ -3618,9 +4091,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 ],
                 body_fields: vec![
                 ],
-                content_type: None,
-                raw_body: false,
-            }),
+            content_type: None,
+            raw_body: false,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("purchases.subscriptionsv2.get".to_string()),
                 output_schema: Some(
@@ -3654,9 +4128,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                     "body".to_string(),
                 ],
-                content_type: Some("application/json".to_string()),
-                raw_body: true,
-            }),
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("purchases.subscriptionsv2.defer".to_string()),
                 output_schema: Some(
@@ -3690,9 +4165,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                     "body".to_string(),
                 ],
-                content_type: Some("application/json".to_string()),
-                raw_body: true,
-            }),
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("purchases.subscriptionsv2.revoke".to_string()),
                 output_schema: Some(
@@ -3726,9 +4202,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                     "body".to_string(),
                 ],
-                content_type: Some("application/json".to_string()),
-                raw_body: true,
-            }),
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("purchases.subscriptionsv2.cancel".to_string()),
                 output_schema: Some(
@@ -3785,9 +4262,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 ],
                 body_fields: vec![
                 ],
-                content_type: None,
-                raw_body: false,
-            }),
+            content_type: None,
+            raw_body: false,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("purchases.voidedpurchases.list".to_string()),
                 output_schema: Some(
@@ -3825,9 +4303,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                     "body".to_string(),
                 ],
-                content_type: Some("application/json".to_string()),
-                raw_body: true,
-            }),
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("purchases.subscriptions.defer".to_string()),
                 output_schema: Some(
@@ -3864,9 +4343,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 ],
                 body_fields: vec![
                 ],
-                content_type: None,
-                raw_body: false,
-            }),
+            content_type: None,
+            raw_body: false,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("purchases.subscriptions.cancel".to_string()),
                 output_schema: None,
@@ -3901,9 +4381,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                     "body".to_string(),
                 ],
-                content_type: Some("application/json".to_string()),
-                raw_body: true,
-            }),
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("purchases.subscriptions.acknowledge".to_string()),
                 output_schema: None,
@@ -3937,9 +4418,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 ],
                 body_fields: vec![
                 ],
-                content_type: None,
-                raw_body: false,
-            }),
+            content_type: None,
+            raw_body: false,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("purchases.products.get".to_string()),
                 output_schema: Some(
@@ -3976,9 +4458,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 ],
                 body_fields: vec![
                 ],
-                content_type: None,
-                raw_body: false,
-            }),
+            content_type: None,
+            raw_body: false,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("purchases.products.consume".to_string()),
                 output_schema: None,
@@ -4013,9 +4496,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                     "body".to_string(),
                 ],
-                content_type: Some("application/json".to_string()),
-                raw_body: true,
-            }),
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("purchases.products.acknowledge".to_string()),
                 output_schema: None,
@@ -4045,9 +4529,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 ],
                 body_fields: vec![
                 ],
-                content_type: None,
-                raw_body: false,
-            }),
+            content_type: None,
+            raw_body: false,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("purchases.productsv2.getproductpurchasev2".to_string()),
                 output_schema: Some(
@@ -4081,9 +4566,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                     "body".to_string(),
                 ],
-                content_type: Some("application/json".to_string()),
-                raw_body: true,
-            }),
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("reviews.reply".to_string()),
                 output_schema: Some(
@@ -4128,9 +4614,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 ],
                 body_fields: vec![
                 ],
-                content_type: None,
-                raw_body: false,
-            }),
+            content_type: None,
+            raw_body: false,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("reviews.list".to_string()),
                 output_schema: Some(
@@ -4167,9 +4654,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 ],
                 body_fields: vec![
                 ],
-                content_type: None,
-                raw_body: false,
-            }),
+            content_type: None,
+            raw_body: false,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("reviews.get".to_string()),
                 output_schema: Some(
@@ -4199,9 +4687,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                     "body".to_string(),
                 ],
-                content_type: Some("application/json".to_string()),
-                raw_body: true,
-            }),
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("grants.create".to_string()),
                 output_schema: Some(
@@ -4230,9 +4719,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 ],
                 body_fields: vec![
                 ],
-                content_type: None,
-                raw_body: false,
-            }),
+            content_type: None,
+            raw_body: false,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("grants.delete".to_string()),
                 output_schema: None,
@@ -4263,9 +4753,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                     "body".to_string(),
                 ],
-                content_type: Some("application/json".to_string()),
-                raw_body: true,
-            }),
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("grants.patch".to_string()),
                 output_schema: Some(
@@ -4294,9 +4785,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 ],
                 body_fields: vec![
                 ],
-                content_type: None,
-                raw_body: false,
-            }),
+            content_type: None,
+            raw_body: false,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("externaltransactions.getexternaltransaction".to_string()),
                 output_schema: Some(
@@ -4330,9 +4822,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                     "body".to_string(),
                 ],
-                content_type: Some("application/json".to_string()),
-                raw_body: true,
-            }),
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("externaltransactions.createexternaltransaction".to_string()),
                 output_schema: Some(
@@ -4362,13 +4855,91 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                     "body".to_string(),
                 ],
-                content_type: Some("application/json".to_string()),
-                raw_body: true,
-            }),
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("externaltransactions.refundexternaltransaction".to_string()),
                 output_schema: Some(
                     serde_json::from_str(r#"{"description":"The details of an external transaction.","properties":{"createTime":{"description":"Output only. The time when this transaction was created. This is the time when Google was notified of the transaction.","format":"date-time","readOnly":true,"type":"string"},"currentPreTaxAmount":{"description":"Definition of a price, i.e. currency and units.","properties":{"currency":{"description":"3 letter Currency code, as defined by ISO 4217. See java/com/google/common/money/CurrencyCode.java","type":"string"},"priceMicros":{"description":"Price in 1/million of the currency base unit, represented as a string.","type":"string"}},"type":"object"},"currentTaxAmount":{"description":"Definition of a price, i.e. currency and units.","properties":{"currency":{"description":"3 letter Currency code, as defined by ISO 4217. See java/com/google/common/money/CurrencyCode.java","type":"string"},"priceMicros":{"description":"Price in 1/million of the currency base unit, represented as a string.","type":"string"}},"type":"object"},"externalContentLinkDetails":{"description":"Reporting details unique to the external content link program.","properties":{"externalAppCategory":{"description":"Optional. The category of the downlaoded app. This must match the category provided in Play Console during the external app verification process. Only required for app installs.","enum":["EXTERNAL_CONTENT_APP_CATEGORY_UNSPECIFIED","APP","GAME"],"type":"string"},"installedAppPackage":{"description":"Optional. The package name of the app downloaded through this transaction. Only required for app installs.","type":"string"},"linkType":{"description":"Required. The type content being reported by this transaction.","enum":["EXTERNAL_CONTENT_LINK_TYPE_UNSPECIFIED","LINK_TO_DIGITAL_CONTENT_OFFER","LINK_TO_APP_DOWNLOAD"],"type":"string"}},"type":"object"},"externalOfferDetails":{"description":"Reporting details unique to the external offers program.","properties":{"appDownloadEventExternalTransactionId":{"description":"Optional. The external transaction id associated with the app download event through an external link. Required when reporting transactions made in externally installed apps.","type":"string"},"installedAppCategory":{"description":"Optional. The category of the downloaded app though this transaction. This must match the category provided in Play Console during the external app verification process. Only required for app downloads.","enum":["EXTERNAL_OFFER_APP_CATEGORY_UNSPECIFIED","APP","GAME"],"type":"string"},"installedAppPackage":{"description":"Optional. The package name of the app downloaded through this transaction. Required when link_type is LINK_TO_APP_DOWNLOAD.","type":"string"},"linkType":{"description":"Optional. The type of content being reported by this transaction. Required when reporting app downloads or purchased digital content offers made in app installed through Google Play.","enum":["EXTERNAL_OFFER_LINK_TYPE_UNSPECIFIED","LINK_TO_DIGITAL_CONTENT_OFFER","LINK_TO_APP_DOWNLOAD"],"type":"string"}},"type":"object"},"externalTransactionId":{"description":"Output only. The id of this transaction. All transaction ids under the same package name must be unique. Set when creating the external transaction.","readOnly":true,"type":"string"},"oneTimeTransaction":{"description":"Represents a one-time transaction.","properties":{"externalTransactionToken":{"description":"Input only. Provided during the call to Create. Retrieved from the client when the alternative billing flow is launched.","type":"string"}},"type":"object"},"originalPreTaxAmount":{"description":"Definition of a price, i.e. currency and units.","properties":{"currency":{"description":"3 letter Currency code, as defined by ISO 4217. See java/com/google/common/money/CurrencyCode.java","type":"string"},"priceMicros":{"description":"Price in 1/million of the currency base unit, represented as a string.","type":"string"}},"type":"object"},"originalTaxAmount":{"description":"Definition of a price, i.e. currency and units.","properties":{"currency":{"description":"3 letter Currency code, as defined by ISO 4217. See java/com/google/common/money/CurrencyCode.java","type":"string"},"priceMicros":{"description":"Price in 1/million of the currency base unit, represented as a string.","type":"string"}},"type":"object"},"packageName":{"description":"Output only. The resource name of the external transaction. The package name of the application the inapp products were sold (for example, 'com.some.app').","readOnly":true,"type":"string"},"recurringTransaction":{"description":"Represents a transaction that is part of a recurring series of payments. This can be a subscription or a one-time product with multiple payments (such as preorder).","properties":{"externalSubscription":{"description":"Details of an external subscription.","properties":{"subscriptionType":{"description":"Required. The type of the external subscription.","enum":["SUBSCRIPTION_TYPE_UNSPECIFIED","RECURRING","PREPAID"],"type":"string"}},"type":"object"},"externalTransactionToken":{"description":"Input only. Provided during the call to Create. Retrieved from the client when the alternative billing flow is launched. Required only for the initial purchase.","type":"string"},"initialExternalTransactionId":{"description":"The external transaction id of the first transaction of this recurring series of transactions. For example, for a subscription this would be the transaction id of the first payment. Required when creating recurring external transactions.","type":"string"},"migratedTransactionProgram":{"description":"Input only. Provided during the call to Create. Must only be used when migrating a subscription from manual monthly reporting to automated reporting.","enum":["EXTERNAL_TRANSACTION_PROGRAM_UNSPECIFIED","USER_CHOICE_BILLING","ALTERNATIVE_BILLING_ONLY"],"type":"string"},"otherRecurringProduct":{"description":"Details of a recurring external transaction product which doesn't belong to any other more specific category.","properties":{},"type":"object"}},"type":"object"},"testPurchase":{"description":"Represents a transaction performed using a test account. These transactions will not be charged by Google.","properties":{},"type":"object"},"transactionProgramCode":{"description":"Optional. The transaction program code, used to help determine service fee for eligible apps participating in partner programs. Developers participating in the Play Media Experience Program (https://play.google.com/console/about/programs/mediaprogram/) must provide the program code when reporting alternative billing transactions. If you are an eligible developer, please contact your BDM for more information on how to set this field. Note: this field can not be used for external offers transactions.","format":"int32","type":"integer"},"transactionState":{"description":"Output only. The current state of the transaction.","enum":["TRANSACTION_STATE_UNSPECIFIED","TRANSACTION_REPORTED","TRANSACTION_CANCELED"],"readOnly":true,"type":"string"},"transactionTime":{"description":"Required. The time when the transaction was completed.","format":"date-time","type":"string"},"userTaxAddress":{"description":"User's address for the external transaction.","properties":{"administrativeArea":{"description":"Optional. Top-level administrative subdivision of the country/region. Only required for transactions in India. Valid values are \"ANDAMAN AND NICOBAR ISLANDS\", \"ANDHRA PRADESH\", \"ARUNACHAL PRADESH\", \"ASSAM\", \"BIHAR\", \"CHANDIGARH\", \"CHHATTISGARH\", \"DADRA AND NAGAR HAVELI\", \"DADRA AND NAGAR HAVELI AND DAMAN AND DIU\", \"DAMAN AND DIU\", \"DELHI\", \"GOA\", \"GUJARAT\", \"HARYANA\", \"HIMACHAL PRADESH\", \"JAMMU AND KASHMIR\", \"JHARKHAND\", \"KARNATAKA\", \"KERALA\", \"LADAKH\", \"LAKSHADWEEP\", \"MADHYA PRADESH\", \"MAHARASHTRA\", \"MANIPUR\", \"MEGHALAYA\", \"MIZORAM\", \"NAGALAND\", \"ODISHA\", \"PUDUCHERRY\", \"PUNJAB\", \"RAJASTHAN\", \"SIKKIM\", \"TAMIL NADU\", \"TELANGANA\", \"TRIPURA\", \"UTTAR PRADESH\", \"UTTARAKHAND\", and \"WEST BENGAL\".","type":"string"},"regionCode":{"description":"Required. Two letter region code based on ISO-3166-1 Alpha-2 (UN region codes).","type":"string"}},"type":"object"}},"type":"object"}"#)
+                        .expect("generated output schema must be valid JSON"),
+                ),
+                read_only: Some(false),
+                destructive: Some(false),
+                idempotent: Some(false),
+                open_world: Some(true),
+            },
+        },
+        ToolSpec {
+            name: "internalappsharingartifacts_uploadbundle".to_string(),
+            description: "Uploads an app bundle to internal app sharing. If you are using the Google API client libraries, please increase the timeout of the http request before calling this endpoint (a timeout of 2 minutes is recommended). See [Timeouts and Errors](https://developers.google.com/api-client-library/java/google-api-java-client/errors) for an example in java.".to_string(),
+            input_schema: serde_json::from_str(r#"{"properties":{"mediaContentType":{"description":"Content type; must match an accepted media type.","maxLength":200,"minLength":3,"type":"string"},"mediaFile":{"description":"Path relative to the configured MCP media root.","maxLength":255,"minLength":1,"type":"string"},"packageName":{"description":"Package name of the app.","type":"string"}},"required":["packageName","mediaFile"],"type":"object"}"#)
+                .expect("generated input schema must be valid JSON"),
+            execution: ExecutionKind::Rest(RestOperation {
+                method: "POST".to_string(),
+                path_template: "https://androidpublisher.googleapis.com/androidpublisher/v3/applications/internalappsharing/{packageName}/artifacts/bundle".to_string(),
+                params: vec![
+                    ParamBinding {
+                        name: "packageName".to_string(),
+                        location: ParamLocation::Path,
+                    },
+                ],
+                body_fields: vec![
+                ],
+            content_type: None,
+            raw_body: false,
+            media: Some(MediaUploadOperation {
+                path_template: "https://androidpublisher.googleapis.com/upload/androidpublisher/v3/applications/internalappsharing/{packageName}/artifacts/bundle".to_string(),
+                accepted_content_types: vec![
+"application/octet-stream".to_string(),
+                ],
+                max_size: Some(10737418240),
+            }),
+        }),
+            hints: ToolHints {
+                title: Some("internalappsharingartifacts.uploadbundle".to_string()),
+                output_schema: Some(
+                    serde_json::from_str(r#"{"description":"An artifact resource which gets created when uploading an APK or Android App Bundle through internal app sharing.","properties":{"certificateFingerprint":{"description":"The sha256 fingerprint of the certificate used to sign the generated artifact.","type":"string"},"downloadUrl":{"description":"The download URL generated for the uploaded artifact. Users that are authorized to download can follow the link to the Play Store app to install it.","type":"string"},"sha256":{"description":"The sha256 hash of the artifact represented as a lowercase hexadecimal number, matching the output of the sha256sum command.","type":"string"}},"type":"object"}"#)
+                        .expect("generated output schema must be valid JSON"),
+                ),
+                read_only: Some(false),
+                destructive: Some(false),
+                idempotent: Some(false),
+                open_world: Some(true),
+            },
+        },
+        ToolSpec {
+            name: "internalappsharingartifacts_uploadapk".to_string(),
+            description: "Uploads an APK to internal app sharing. If you are using the Google API client libraries, please increase the timeout of the http request before calling this endpoint (a timeout of 2 minutes is recommended). See [Timeouts and Errors](https://developers.google.com/api-client-library/java/google-api-java-client/errors) for an example in java.".to_string(),
+            input_schema: serde_json::from_str(r#"{"properties":{"mediaContentType":{"description":"Content type; must match an accepted media type.","maxLength":200,"minLength":3,"type":"string"},"mediaFile":{"description":"Path relative to the configured MCP media root.","maxLength":255,"minLength":1,"type":"string"},"packageName":{"description":"Package name of the app.","type":"string"}},"required":["packageName","mediaFile"],"type":"object"}"#)
+                .expect("generated input schema must be valid JSON"),
+            execution: ExecutionKind::Rest(RestOperation {
+                method: "POST".to_string(),
+                path_template: "https://androidpublisher.googleapis.com/androidpublisher/v3/applications/internalappsharing/{packageName}/artifacts/apk".to_string(),
+                params: vec![
+                    ParamBinding {
+                        name: "packageName".to_string(),
+                        location: ParamLocation::Path,
+                    },
+                ],
+                body_fields: vec![
+                ],
+            content_type: None,
+            raw_body: false,
+            media: Some(MediaUploadOperation {
+                path_template: "https://androidpublisher.googleapis.com/upload/androidpublisher/v3/applications/internalappsharing/{packageName}/artifacts/apk".to_string(),
+                accepted_content_types: vec![
+"application/octet-stream".to_string(),
+"application/vnd.android.package-archive".to_string(),
+                ],
+                max_size: Some(1073741824),
+            }),
+        }),
+            hints: ToolHints {
+                title: Some("internalappsharingartifacts.uploadapk".to_string()),
+                output_schema: Some(
+                    serde_json::from_str(r#"{"description":"An artifact resource which gets created when uploading an APK or Android App Bundle through internal app sharing.","properties":{"certificateFingerprint":{"description":"The sha256 fingerprint of the certificate used to sign the generated artifact.","type":"string"},"downloadUrl":{"description":"The download URL generated for the uploaded artifact. Users that are authorized to download can follow the link to the Play Store app to install it.","type":"string"},"sha256":{"description":"The sha256 hash of the artifact represented as a lowercase hexadecimal number, matching the output of the sha256sum command.","type":"string"}},"type":"object"}"#)
                         .expect("generated output schema must be valid JSON"),
                 ),
                 read_only: Some(false),
@@ -4401,9 +4972,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 ],
                 body_fields: vec![
                 ],
-                content_type: None,
-                raw_body: false,
-            }),
+            content_type: None,
+            raw_body: false,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("orders.refund".to_string()),
                 output_schema: None,
@@ -4434,9 +5006,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                     "body".to_string(),
                 ],
-                content_type: Some("application/json".to_string()),
-                raw_body: true,
-            }),
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("orders.reviewrefund".to_string()),
                 output_schema: None,
@@ -4466,9 +5039,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 ],
                 body_fields: vec![
                 ],
-                content_type: None,
-                raw_body: false,
-            }),
+            content_type: None,
+            raw_body: false,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("orders.batchget".to_string()),
                 output_schema: Some(
@@ -4501,9 +5075,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 ],
                 body_fields: vec![
                 ],
-                content_type: None,
-                raw_body: false,
-            }),
+            content_type: None,
+            raw_body: false,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("orders.get".to_string()),
                 output_schema: Some(
@@ -4533,9 +5108,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                     "body".to_string(),
                 ],
-                content_type: Some("application/json".to_string()),
-                raw_body: true,
-            }),
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("inappproducts.batchDelete".to_string()),
                 output_schema: None,
@@ -4565,9 +5141,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 ],
                 body_fields: vec![
                 ],
-                content_type: None,
-                raw_body: false,
-            }),
+            content_type: None,
+            raw_body: false,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("inappproducts.get".to_string()),
                 output_schema: Some(
@@ -4601,9 +5178,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                     "body".to_string(),
                 ],
-                content_type: Some("application/json".to_string()),
-                raw_body: true,
-            }),
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("inappproducts.insert".to_string()),
                 output_schema: Some(
@@ -4640,9 +5218,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 ],
                 body_fields: vec![
                 ],
-                content_type: None,
-                raw_body: false,
-            }),
+            content_type: None,
+            raw_body: false,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("inappproducts.delete".to_string()),
                 output_schema: None,
@@ -4680,9 +5259,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 ],
                 body_fields: vec![
                 ],
-                content_type: None,
-                raw_body: false,
-            }),
+            content_type: None,
+            raw_body: false,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("inappproducts.list".to_string()),
                 output_schema: Some(
@@ -4728,9 +5308,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                     "body".to_string(),
                 ],
-                content_type: Some("application/json".to_string()),
-                raw_body: true,
-            }),
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("inappproducts.update".to_string()),
                 output_schema: Some(
@@ -4763,9 +5344,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 ],
                 body_fields: vec![
                 ],
-                content_type: None,
-                raw_body: false,
-            }),
+            content_type: None,
+            raw_body: false,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("inappproducts.batchGet".to_string()),
                 output_schema: Some(
@@ -4807,9 +5389,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                     "body".to_string(),
                 ],
-                content_type: Some("application/json".to_string()),
-                raw_body: true,
-            }),
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("inappproducts.patch".to_string()),
                 output_schema: Some(
@@ -4839,9 +5422,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                     "body".to_string(),
                 ],
-                content_type: Some("application/json".to_string()),
-                raw_body: true,
-            }),
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("inappproducts.batchUpdate".to_string()),
                 output_schema: Some(
@@ -4874,9 +5458,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 ],
                 body_fields: vec![
                 ],
-                content_type: None,
-                raw_body: false,
-            }),
+            content_type: None,
+            raw_body: false,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("generatedapks.list".to_string()),
                 output_schema: Some(
@@ -4913,9 +5498,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 ],
                 body_fields: vec![
                 ],
-                content_type: None,
-                raw_body: false,
-            }),
+            content_type: None,
+            raw_body: false,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("generatedapks.download".to_string()),
                 output_schema: None,
@@ -4945,9 +5531,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 ],
                 body_fields: vec![
                 ],
-                content_type: None,
-                raw_body: false,
-            }),
+            content_type: None,
+            raw_body: false,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("apprecovery.list".to_string()),
                 output_schema: Some(
@@ -4981,9 +5568,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                     "body".to_string(),
                 ],
-                content_type: Some("application/json".to_string()),
-                raw_body: true,
-            }),
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("apprecovery.addTargeting".to_string()),
                 output_schema: Some(
@@ -5013,9 +5601,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                     "body".to_string(),
                 ],
-                content_type: Some("application/json".to_string()),
-                raw_body: true,
-            }),
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("apprecovery.create".to_string()),
                 output_schema: Some(
@@ -5049,9 +5638,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                     "body".to_string(),
                 ],
-                content_type: Some("application/json".to_string()),
-                raw_body: true,
-            }),
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("apprecovery.cancel".to_string()),
                 output_schema: Some(
@@ -5085,9 +5675,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                     "body".to_string(),
                 ],
-                content_type: Some("application/json".to_string()),
-                raw_body: true,
-            }),
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("apprecovery.deploy".to_string()),
                 output_schema: Some(
@@ -5128,9 +5719,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 ],
                 body_fields: vec![
                 ],
-                content_type: None,
-                raw_body: false,
-            }),
+            content_type: None,
+            raw_body: false,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("anomalies.list".to_string()),
                 output_schema: Some(
@@ -5159,9 +5751,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 ],
                 body_fields: vec![
                 ],
-                content_type: None,
-                raw_body: false,
-            }),
+            content_type: None,
+            raw_body: false,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("apps.fetchReleaseFilterOptions".to_string()),
                 output_schema: Some(
@@ -5194,9 +5787,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 ],
                 body_fields: vec![
                 ],
-                content_type: None,
-                raw_body: false,
-            }),
+            content_type: None,
+            raw_body: false,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("apps.search".to_string()),
                 output_schema: Some(
@@ -5225,9 +5819,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 ],
                 body_fields: vec![
                 ],
-                content_type: None,
-                raw_body: false,
-            }),
+            content_type: None,
+            raw_body: false,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("vitals.stuckbackgroundwakelockrate.get".to_string()),
                 output_schema: Some(
@@ -5257,9 +5852,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                     "body".to_string(),
                 ],
-                content_type: Some("application/json".to_string()),
-                raw_body: true,
-            }),
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("vitals.stuckbackgroundwakelockrate.query".to_string()),
                 output_schema: Some(
@@ -5288,9 +5884,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 ],
                 body_fields: vec![
                 ],
-                content_type: None,
-                raw_body: false,
-            }),
+            content_type: None,
+            raw_body: false,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("vitals.excessivewakeuprate.get".to_string()),
                 output_schema: Some(
@@ -5320,9 +5917,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                     "body".to_string(),
                 ],
-                content_type: Some("application/json".to_string()),
-                raw_body: true,
-            }),
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("vitals.excessivewakeuprate.query".to_string()),
                 output_schema: Some(
@@ -5352,9 +5950,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                     "body".to_string(),
                 ],
-                content_type: Some("application/json".to_string()),
-                raw_body: true,
-            }),
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("vitals.crashrate.query".to_string()),
                 output_schema: Some(
@@ -5383,9 +5982,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 ],
                 body_fields: vec![
                 ],
-                content_type: None,
-                raw_body: false,
-            }),
+            content_type: None,
+            raw_body: false,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("vitals.crashrate.get".to_string()),
                 output_schema: Some(
@@ -5415,9 +6015,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                     "body".to_string(),
                 ],
-                content_type: Some("application/json".to_string()),
-                raw_body: true,
-            }),
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("vitals.errors.counts.query".to_string()),
                 output_schema: Some(
@@ -5446,9 +6047,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 ],
                 body_fields: vec![
                 ],
-                content_type: None,
-                raw_body: false,
-            }),
+            content_type: None,
+            raw_body: false,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("vitals.errors.counts.get".to_string()),
                 output_schema: Some(
@@ -5569,9 +6171,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 ],
                 body_fields: vec![
                 ],
-                content_type: None,
-                raw_body: false,
-            }),
+            content_type: None,
+            raw_body: false,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("vitals.errors.reports.search".to_string()),
                 output_schema: Some(
@@ -5700,9 +6303,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 ],
                 body_fields: vec![
                 ],
-                content_type: None,
-                raw_body: false,
-            }),
+            content_type: None,
+            raw_body: false,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("vitals.errors.issues.search".to_string()),
                 output_schema: Some(
@@ -5731,9 +6335,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 ],
                 body_fields: vec![
                 ],
-                content_type: None,
-                raw_body: false,
-            }),
+            content_type: None,
+            raw_body: false,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("vitals.slowrenderingrate.get".to_string()),
                 output_schema: Some(
@@ -5763,9 +6368,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                     "body".to_string(),
                 ],
-                content_type: Some("application/json".to_string()),
-                raw_body: true,
-            }),
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("vitals.slowrenderingrate.query".to_string()),
                 output_schema: Some(
@@ -5795,9 +6401,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                     "body".to_string(),
                 ],
-                content_type: Some("application/json".to_string()),
-                raw_body: true,
-            }),
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("vitals.anrrate.query".to_string()),
                 output_schema: Some(
@@ -5826,9 +6433,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 ],
                 body_fields: vec![
                 ],
-                content_type: None,
-                raw_body: false,
-            }),
+            content_type: None,
+            raw_body: false,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("vitals.anrrate.get".to_string()),
                 output_schema: Some(
@@ -5857,9 +6465,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 ],
                 body_fields: vec![
                 ],
-                content_type: None,
-                raw_body: false,
-            }),
+            content_type: None,
+            raw_body: false,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("vitals.lmkrate.get".to_string()),
                 output_schema: Some(
@@ -5889,9 +6498,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                     "body".to_string(),
                 ],
-                content_type: Some("application/json".to_string()),
-                raw_body: true,
-            }),
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("vitals.lmkrate.query".to_string()),
                 output_schema: Some(
@@ -5920,9 +6530,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 ],
                 body_fields: vec![
                 ],
-                content_type: None,
-                raw_body: false,
-            }),
+            content_type: None,
+            raw_body: false,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("vitals.anonrssandswapmemoryusage.get".to_string()),
                 output_schema: Some(
@@ -5952,9 +6563,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                     "body".to_string(),
                 ],
-                content_type: Some("application/json".to_string()),
-                raw_body: true,
-            }),
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("vitals.anonrssandswapmemoryusage.query".to_string()),
                 output_schema: Some(
@@ -5983,9 +6595,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 ],
                 body_fields: vec![
                 ],
-                content_type: None,
-                raw_body: false,
-            }),
+            content_type: None,
+            raw_body: false,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("vitals.slowstartrate.get".to_string()),
                 output_schema: Some(
@@ -6015,9 +6628,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                     "body".to_string(),
                 ],
-                content_type: Some("application/json".to_string()),
-                raw_body: true,
-            }),
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("vitals.slowstartrate.query".to_string()),
                 output_schema: Some(
@@ -6046,9 +6660,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 ],
                 body_fields: vec![
                 ],
-                content_type: None,
-                raw_body: false,
-            }),
+            content_type: None,
+            raw_body: false,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("vitals.bitmapmemoryusage.get".to_string()),
                 output_schema: Some(
@@ -6078,9 +6693,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 body_fields: vec![
                     "body".to_string(),
                 ],
-                content_type: Some("application/json".to_string()),
-                raw_body: true,
-            }),
+            content_type: Some("application/json".to_string()),
+            raw_body: true,
+            media: None,
+        }),
             hints: ToolHints {
                 title: Some("vitals.bitmapmemoryusage.query".to_string()),
                 output_schema: Some(

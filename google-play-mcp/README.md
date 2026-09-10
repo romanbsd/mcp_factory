@@ -6,11 +6,17 @@ It combines:
 - Google Play Android Developer API v3
 - Google Play Developer Reporting API v1beta1
 
-The server exposes 164 tools: 160 generated low-level operations (135 Publisher
-and 25 Reporting) plus four handwritten high-level reports. Ten binary
-media-upload operations are intentionally omitted because `mcp-factory` does
-not yet model binary request bodies. Use CI, Fastlane, or Play Console for
-AAB/APK and image uploads.
+The server exposes 174 tools: 170 generated low-level operations (145 Publisher
+and 25 Reporting) plus four handwritten high-level reports. The Publisher
+surface includes ten streaming media-upload operations, including
+`edits_bundles_upload` for AABs.
+
+Media tools fail closed unless `MCP_FACTORY_MEDIA_ROOT` names an existing
+directory. Pass `mediaFile` as a relative path below that root and optionally
+`mediaContentType`; the runtime canonicalizes both paths, rejects traversal and
+symlink escapes, checks the Discovery-document size and MIME constraints, and
+streams the file without buffering it in the MCP request or process memory.
+Keep credentials outside the media root.
 
 ## High-level reporting
 
@@ -191,7 +197,7 @@ cargo test
 node scripts/probe.mjs
 ```
 
-The probe should report 164 tools. To verify real credentials and both Google
+The probe should report 174 tools. To verify real credentials and both Google
 APIs without exposing credential contents:
 
 ```bash

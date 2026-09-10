@@ -19,6 +19,8 @@ pub use custom::{CustomToolHandler, CustomToolSpec, ReadOnlyToolInvoker};
 pub use error::ProxyError;
 pub use graphql::{GraphQLOperation, GraphQLProxyExecutor};
 pub use resources::ResourceSpec;
-pub use rest::{ParamBinding, ParamLocation, RestOperation, RestProxyExecutor};
+pub use rest::{
+    MediaUploadOperation, ParamBinding, ParamLocation, RestOperation, RestProxyExecutor,
+};
 pub use server::McpProxyServer;
 pub use tools::{ExecutionKind, ToolBody, ToolHints, ToolRegistry, ToolResult, ToolSpec};

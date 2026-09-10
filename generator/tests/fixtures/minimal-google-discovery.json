@@ -51,7 +51,13 @@
           "httpMethod": "POST",
           "description": "Uploads item media.",
           "parameters": {},
-          "mediaUpload": {"accept": ["application/octet-stream"]}
+          "mediaUpload": {
+            "accept": ["application/octet-stream"],
+            "maxSize": "1024",
+            "protocols": {
+              "simple": {"path": "v1/items:upload", "multipart": true}
+            }
+          }
         }
       }
     }

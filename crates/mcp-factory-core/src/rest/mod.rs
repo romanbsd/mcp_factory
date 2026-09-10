@@ -1,9 +1,11 @@
+use std::path::{Component, Path, PathBuf};
 use std::sync::Arc;
 
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 
 use percent_encoding::{utf8_percent_encode, AsciiSet, NON_ALPHANUMERIC};
+use tokio_util::io::ReaderStream;
 
 use crate::auth::AuthProvider;
 use crate::error::ProxyError;
@@ -49,20 +51,38 @@ pub struct RestOperation {
     /// request body (array/scalar/free-form bodies).
     #[serde(default)]
     pub raw_body: bool,
+    #[serde(default)]
+    pub media: Option<MediaUploadOperation>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MediaUploadOperation {
+    pub path_template: String,
+    #[serde(default)]
+    pub accepted_content_types: Vec<String>,
+    #[serde(default)]
+    pub max_size: Option<u64>,
 }
 
 pub struct RestProxyExecutor {
     client: reqwest::Client,
     base_url: String,
     auth: Arc<dyn AuthProvider>,
+    media_root: Option<PathBuf>,
 }
 
 impl RestProxyExecutor {
-    pub fn new(client: reqwest::Client, base_url: String, auth: Arc<dyn AuthProvider>) -> Self {
+    pub fn new(
+        client: reqwest::Client,
+        base_url: String,
+        auth: Arc<dyn AuthProvider>,
+        media_root: Option<PathBuf>,
+    ) -> Self {
         Self {
             client,
             base_url,
             auth,
+            media_root,
         }
     }
 
@@ -70,10 +90,25 @@ impl RestProxyExecutor {
         let ExecutionKindRest(operation) = &tool.execution else {
             return Err(ProxyError::Other("expected REST execution".to_string()));
         };
-        let url = build_url(&self.base_url, operation, &args, self.auth.as_ref())?;
+        let request_operation = operation.media.as_ref().map(|media| {
+            let mut operation = operation.clone();
+            operation.path_template = media.path_template.clone();
+            operation
+        });
+        let request_operation = request_operation.as_ref().unwrap_or(operation);
+        let mut url = reqwest::Url::parse(&build_url(
+            &self.base_url,
+            request_operation,
+            &args,
+            self.auth.as_ref(),
+        )?)
+        .map_err(|error| ProxyError::Config(format!("invalid media URL: {error}")))?;
+        if operation.media.is_some() {
+            url.query_pairs_mut().append_pair("uploadType", "media");
+        }
         let mut request = self
             .client
-            .request(parse_method(&operation.method)?, &url)
+            .request(parse_method(&operation.method)?, url)
             // Prefer JSON so we can attach structuredContent, but still accept
             // anything (e.g. binary downloads).
             .header(reqwest::header::ACCEPT, "application/json, */*");
@@ -85,7 +120,9 @@ impl RestProxyExecutor {
             .content_type
             .as_deref()
             .unwrap_or("application/json");
-        if operation.raw_body {
+        if let Some(media) = &operation.media {
+            request = attach_media_body(request, media, &args, self.media_root.as_deref()).await?;
+        } else if operation.raw_body {
             if let Some(body) = args.as_object().and_then(|obj| obj.get("body")) {
                 request = apply_body(request, content_type, body);
             }
@@ -467,6 +504,100 @@ fn apply_headers(
     Ok(request)
 }
 
+async fn attach_media_body(
+    request: reqwest::RequestBuilder,
+    media: &MediaUploadOperation,
+    args: &Value,
+    configured_root: Option<&Path>,
+) -> Result<reqwest::RequestBuilder, ProxyError> {
+    let root = configured_root.ok_or_else(|| {
+        ProxyError::Config("media upload is disabled; configure MCP_FACTORY_MEDIA_ROOT".to_string())
+    })?;
+    let object = args
+        .as_object()
+        .ok_or_else(|| ProxyError::Validation("media arguments must be an object".to_string()))?;
+    let relative = object
+        .get("mediaFile")
+        .and_then(Value::as_str)
+        .ok_or_else(|| ProxyError::Validation("mediaFile is required".to_string()))?;
+    let relative = PathBuf::from(relative);
+    if relative.as_os_str().is_empty()
+        || relative
+            .components()
+            .any(|component| !matches!(component, Component::Normal(_)))
+    {
+        return Err(ProxyError::Validation(
+            "mediaFile must be a relative path without traversal".to_string(),
+        ));
+    }
+
+    let canonical_root = tokio::fs::canonicalize(root)
+        .await
+        .map_err(|_| ProxyError::Config("configured media root is unavailable".to_string()))?;
+    let canonical_file = tokio::fs::canonicalize(canonical_root.join(relative))
+        .await
+        .map_err(|_| ProxyError::Validation("media file is unavailable".to_string()))?;
+    if !canonical_file.starts_with(&canonical_root) {
+        return Err(ProxyError::Validation(
+            "media file resolves outside the configured root".to_string(),
+        ));
+    }
+    let metadata = tokio::fs::metadata(&canonical_file)
+        .await
+        .map_err(|_| ProxyError::Validation("media file is unavailable".to_string()))?;
+    if !metadata.is_file() {
+        return Err(ProxyError::Validation(
+            "media path does not identify a regular file".to_string(),
+        ));
+    }
+    if let Some(max_size) = media.max_size {
+        if metadata.len() > max_size {
+            return Err(ProxyError::Validation(format!(
+                "media file exceeds provider limit of {max_size} bytes"
+            )));
+        }
+    }
+
+    let content_type = object
+        .get("mediaContentType")
+        .and_then(Value::as_str)
+        .map(str::to_owned)
+        .or_else(|| {
+            media
+                .accepted_content_types
+                .iter()
+                .find(|value| !value.ends_with("/*"))
+                .cloned()
+        })
+        .unwrap_or_else(|| "application/octet-stream".to_string());
+    if !media.accepted_content_types.is_empty()
+        && !media
+            .accepted_content_types
+            .iter()
+            .any(|accepted| media_type_matches(accepted, &content_type))
+    {
+        return Err(ProxyError::Validation(format!(
+            "mediaContentType {content_type:?} is not accepted by the provider"
+        )));
+    }
+    let header_value = reqwest::header::HeaderValue::from_str(&content_type)
+        .map_err(|_| ProxyError::Validation("mediaContentType is invalid".to_string()))?;
+    let file = tokio::fs::File::open(canonical_file)
+        .await
+        .map_err(|_| ProxyError::Validation("media file is unavailable".to_string()))?;
+    Ok(request
+        .header(reqwest::header::CONTENT_TYPE, header_value)
+        .header(reqwest::header::CONTENT_LENGTH, metadata.len())
+        .body(reqwest::Body::wrap_stream(ReaderStream::new(file))))
+}
+
+fn media_type_matches(accepted: &str, actual: &str) -> bool {
+    accepted == actual
+        || accepted
+            .strip_suffix("/*")
+            .is_some_and(|prefix| actual.starts_with(&format!("{prefix}/")))
+}
+
 fn build_body(operation: &RestOperation, args: &Value) -> Result<Option<Value>, ProxyError> {
     if operation.body_fields.is_empty() {
         return Ok(None);
@@ -586,6 +717,7 @@ mod tests {
             body_fields: vec![],
             content_type: None,
             raw_body: false,
+            media: None,
         };
         let auth =
             auth_provider_from_config(&AuthConfig::None, reqwest::Client::new(), false).unwrap();
@@ -611,6 +743,7 @@ mod tests {
             body_fields: vec![],
             content_type: None,
             raw_body: false,
+            media: None,
         };
         let auth =
             auth_provider_from_config(&AuthConfig::None, reqwest::Client::new(), false).unwrap();
@@ -636,6 +769,7 @@ mod tests {
             body_fields: vec![],
             content_type: None,
             raw_body: false,
+            media: None,
         };
         let auth =
             auth_provider_from_config(&AuthConfig::None, reqwest::Client::new(), false).unwrap();
@@ -739,6 +873,7 @@ mod tests {
             body_fields: vec![],
             content_type: None,
             raw_body: false,
+            media: None,
         };
         let auth =
             auth_provider_from_config(&AuthConfig::None, reqwest::Client::new(), false).unwrap();
@@ -761,6 +896,7 @@ mod tests {
             body_fields: vec!["name".to_string(), "tag".to_string()],
             content_type: Some("application/json".to_string()),
             raw_body: false,
+            media: None,
         };
         let body = build_body(
             &operation,
@@ -779,6 +915,7 @@ mod tests {
             body_fields: vec!["name".to_string()],
             content_type: Some("application/json".to_string()),
             raw_body: false,
+            media: None,
         };
         assert_eq!(build_body(&operation, &json!({})).unwrap(), None);
     }

@@ -1,5 +1,5 @@
 use mcp_factory_core::{
-    ExecutionKind{% if tools | selectattr('execution_kind', 'equalto', 'graphql') | list %}, GraphQLOperation{% endif %}{% if tools | selectattr('execution_kind', 'equalto', 'rest') | list %}, ParamBinding, ParamLocation, RestOperation{% endif %}, ToolHints, ToolSpec,
+    ExecutionKind{% if tools | selectattr('execution_kind', 'equalto', 'graphql') | list %}, GraphQLOperation{% endif %}{% if tools | selectattr('execution_kind', 'equalto', 'rest') | list %}, {% if tools | selectattr('rest.media_path_template') | list %}MediaUploadOperation, {% endif %}ParamBinding, ParamLocation, RestOperation{% endif %}, ToolHints, ToolSpec,
 };
 pub fn build_tools() -> Vec<ToolSpec> {
     vec![
@@ -25,9 +25,17 @@ pub fn build_tools() -> Vec<ToolSpec> {
                     {{ field | rust_string }}.to_string(),
 {% endfor %}
                 ],
-                content_type: {% if tool.rest.content_type %}Some({{ tool.rest.content_type | rust_string }}.to_string()){% else %}None{% endif %},
-                raw_body: {% if tool.rest.raw_body %}true{% else %}false{% endif %},
-            }){% else %}GraphQL(GraphQLOperation {
+            content_type: {% if tool.rest.content_type %}Some({{ tool.rest.content_type | rust_string }}.to_string()){% else %}None{% endif %},
+            raw_body: {% if tool.rest.raw_body %}true{% else %}false{% endif %},
+            media: {% if tool.rest.media_path_template %}Some(MediaUploadOperation {
+                path_template: {{ tool.rest.media_path_template | rust_string }}.to_string(),
+                accepted_content_types: vec![
+                    {% for media_type in tool.rest.media_accept %}{{ media_type | rust_string }}.to_string(),
+                    {% endfor %}
+                ],
+                max_size: {% if tool.rest.media_max_size is not none %}Some({{ tool.rest.media_max_size }}){% else %}None{% endif %},
+            }){% else %}None{% endif %},
+        }){% else %}GraphQL(GraphQLOperation {
                 document: {{ tool.graphql.document | rust_string }}.to_string(),
                 variable_bindings: vec![
 {% for binding in tool.graphql.variable_bindings %}

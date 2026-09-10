@@ -179,6 +179,7 @@ impl McpProxyServerBuilder {
             http.clone(),
             self.config.base_url.clone(),
             Arc::clone(&auth),
+            self.config.media_root.clone(),
         );
         let graphql =
             GraphQLProxyExecutor::new(http, self.config.base_url.clone(), Arc::clone(&auth));
@@ -421,6 +422,7 @@ mod tests {
                 body_fields: vec![],
                 content_type: None,
                 raw_body: false,
+                media: None,
             }),
             hints,
         }
