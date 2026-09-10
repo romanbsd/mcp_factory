@@ -350,6 +350,16 @@ Useful response headers (`Location`, `Link`, `Retry-After`, `ETag`,
 rate-limit, `Content-Range`) are surfaced under the result's `_meta` as
 `http.<header>` so the client can chain requests and respect quotas.
 
+### Media uploads
+
+Google Discovery methods with a `mediaUpload.protocols.simple` block generate
+a tool taking `mediaFile` (required, a path relative to `MCP_FACTORY_MEDIA_ROOT`)
+and `mediaContentType`. Uploads fail closed unless `MCP_FACTORY_MEDIA_ROOT` is
+set to an existing directory; the runtime canonicalizes and confines the file
+to that root (rejecting traversal and symlink escapes), enforces the
+Discovery document's `maxSize`/`accept` constraints, and streams the file
+straight to the upstream request body without buffering it in memory.
+
 ## Configuration
 
 Environment variables:
@@ -365,6 +375,7 @@ Environment variables:
 | `MCP_FACTORY_BIND_ADDR` | HTTP bind address (default `127.0.0.1:8080`) |
 | `MCP_FACTORY_HTTP_PATH` | HTTP mount path (default `/mcp`) |
 | `MCP_FACTORY_TIMEOUT` | Upstream request timeout, seconds |
+| `MCP_FACTORY_MEDIA_ROOT` | Directory media-upload tools may read files from (unset disables them) |
 
 Generated crates also ship a `config.toml` template. At runtime, configuration
 is loaded in this order: `MCP_FACTORY_CONFIG`, `config.toml` in the current
