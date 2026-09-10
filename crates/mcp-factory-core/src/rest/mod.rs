@@ -340,7 +340,10 @@ fn apply_body(
 /// Android Publisher's `edits:validate`/`edits:commit`) reject a bodyless
 /// POST with `411 Length Required` unless `Content-Length: 0` is explicit.
 fn apply_empty_body(request: reqwest::RequestBuilder, method: &str) -> reqwest::RequestBuilder {
-    if matches!(method.to_ascii_uppercase().as_str(), "POST" | "PUT" | "PATCH") {
+    if matches!(
+        method.to_ascii_uppercase().as_str(),
+        "POST" | "PUT" | "PATCH"
+    ) {
         request.header(reqwest::header::CONTENT_LENGTH, "0")
     } else {
         request
