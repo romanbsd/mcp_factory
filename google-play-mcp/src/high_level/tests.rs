@@ -287,6 +287,35 @@ async fn capability_probe_retries_service_propagation_and_consumes_all_pages() {
 }
 
 #[tokio::test]
+async fn quota_exceeded_403_is_retried_like_429() {
+    // Some androidpublisher endpoints (e.g. applications.tracks.releases.list)
+    // report quota exhaustion as 403 PERMISSION_DENIED with a "quota" message
+    // instead of 429 RESOURCE_EXHAUSTED; it must still be retried.
+    let quota_exceeded = error(403, "Listing releases quota exceeded.", json!({}));
+    let invoker = FakeInvoker::default()
+        .with(
+            "apps_search",
+            vec![
+                quota_exceeded.clone(),
+                quota_exceeded,
+                ok(json!({"apps": [{"packageName": "org.example.app", "name": "apps/123", "displayName": "Example"}]})),
+            ],
+        )
+        .with("reviews_list", vec![ok(json!({"reviews": []}))]);
+
+    let report = run(
+        "report_capabilities",
+        json!({"packageName": "org.example.app", "probe": true}),
+        &invoker,
+    )
+    .await;
+
+    assert_eq!(report["status"], "complete");
+    assert_eq!(report["sourceCalls"][0]["attempts"], 3);
+    assert_eq!(report["sourceCalls"][0]["resultState"], "success");
+}
+
+#[tokio::test]
 async fn disabled_reporting_keeps_publisher_evidence_and_returns_activation_action() {
     let disabled = error(
         403,

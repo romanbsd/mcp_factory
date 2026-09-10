@@ -263,10 +263,8 @@ fn error_value(result: &ToolResult) -> Value {
 }
 
 fn transient_error(error: &Value) -> bool {
-    if matches!(
-        error.get("status").and_then(Value::as_u64),
-        Some(429 | 500 | 502 | 503 | 504)
-    ) {
+    let status = error.get("status").and_then(Value::as_u64);
+    if matches!(status, Some(429 | 500 | 502 | 503 | 504)) {
         return true;
     }
     let text = error.to_string();
@@ -274,6 +272,11 @@ fn transient_error(error: &Value) -> bool {
         || text.contains("RESOURCE_EXHAUSTED")
         || (text.contains("SERVICE_DISABLED")
             && (text.contains("activationUrl") || text.contains("serviceusage")))
+        // Some androidpublisher endpoints (e.g. applications.tracks.releases.list)
+        // report quota exhaustion as 403 PERMISSION_DENIED instead of 429
+        // RESOURCE_EXHAUSTED — Google's own guidance treats these the same:
+        // back off and retry rather than fail immediately.
+        || (status == Some(403) && text.to_ascii_lowercase().contains("quota"))
 }
 
 async fn retry_delay(attempt: u64, error: &Value) {

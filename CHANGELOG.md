@@ -17,6 +17,12 @@
   APIs that reply compressed anyway (e.g. Android Publisher's track-releases
   and App Recovery endpoints) surfaced in `google-play-mcp`'s high-level
   reports as "malformed/non-JSON data".
+- `google-play-mcp` high-level `report_*` tools: `applications_tracks_releases_list`
+  quota errors ("Listing releases quota exceeded.") return HTTP 403
+  PERMISSION_DENIED instead of 429 RESOURCE_EXHAUSTED. `EvidenceClient`'s
+  retry logic now treats a 403 whose message contains "quota" as transient,
+  matching Google's own guidance to back off and retry these the same as
+  429s.
 - `google-play-mcp` high-level `report_*` tools: source-evidence calls
   (metric x cohort queries, error/anomaly lookups) now run concurrently
   instead of sequentially, reducing wall-clock time well under the
