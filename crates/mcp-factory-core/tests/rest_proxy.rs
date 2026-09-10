@@ -1,5 +1,9 @@
 mod common;
 
+use std::io::Write;
+
+use flate2::write::GzEncoder;
+use flate2::Compression;
 use mcp_factory_core::{
     ExecutionKind, McpProxyServer, MediaUploadOperation, RestOperation, ToolSpec,
 };
@@ -53,6 +57,40 @@ async fn rest_proxy_treats_empty_json_success_body_as_empty_object() {
         .unwrap();
 
     assert_eq!(result, "{}");
+}
+
+#[tokio::test]
+async fn rest_proxy_decompresses_gzip_json_response() {
+    let mut encoder = GzEncoder::new(Vec::new(), Compression::default());
+    encoder
+        .write_all(json!({"id": 42, "name": "fluffy"}).to_string().as_bytes())
+        .unwrap();
+    let gzipped = encoder.finish().unwrap();
+
+    let mock_server = MockServer::start().await;
+    Mock::given(method("GET"))
+        .and(path("/pets/42"))
+        .respond_with(
+            ResponseTemplate::new(200)
+                .set_body_raw(gzipped, "application/json")
+                .insert_header("content-encoding", "gzip"),
+        )
+        .mount(&mock_server)
+        .await;
+
+    let config = common::proxy_config(&mock_server.uri());
+    let server = McpProxyServer::builder(config)
+        .tools(&[common::rest_get_pet_tool()])
+        .unwrap()
+        .build()
+        .unwrap();
+
+    let result = server
+        .invoke_tool("get_pet", json!({"petId": 42}))
+        .await
+        .unwrap();
+
+    assert!(result.contains("fluffy"));
 }
 
 #[tokio::test]

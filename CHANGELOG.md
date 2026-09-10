@@ -11,6 +11,18 @@
   including 10 Android Publisher / App Store media-upload operations.
 
 ### Fixed
+- REST proxy (`mcp-factory-core`): `reqwest` now advertises and decompresses
+  `gzip`/`brotli`/`deflate`. Without these features `reqwest` neither sent
+  `Accept-Encoding` nor decoded compressed bodies, so upstream gRPC-transcoded
+  APIs that reply compressed anyway (e.g. Android Publisher's track-releases
+  and App Recovery endpoints) surfaced in `google-play-mcp`'s high-level
+  reports as "malformed/non-JSON data".
+- `google-play-mcp` high-level `report_*` tools: source-evidence calls
+  (metric x cohort queries, error/anomaly lookups) now run concurrently
+  instead of sequentially, reducing wall-clock time well under the
+  45-second reporting deadline for `report_quality_health` and
+  `report_project_status`. `EvidenceClient` moved its call bookkeeping
+  behind a `Mutex` (`&self` instead of `&mut self`) to allow this.
 - REST proxy (`mcp-factory-core`): a successful (2xx, non-204) JSON response
   with a zero-byte body is now treated as `{}` instead of a JSON parse
   failure. Some gRPC-transcoded Google APIs (e.g. Android Publisher's

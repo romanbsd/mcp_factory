@@ -44,7 +44,8 @@ pub async fn report(client: &mut EvidenceClient<'_>, arguments: &Value) -> Value
             json!({"packageName": package, "maxResults": 1}),
         )
         .await;
-    let reporting_available = method_succeeded(&client.source_calls, "apps_search");
+    let source_calls = client.source_calls();
+    let reporting_available = method_succeeded(&source_calls, "apps_search");
     let reporting_app_access = resolved.is_some();
     // A missing package proves inaccessibility only when every page was read. If
     // apps_search paginated but a later page failed, the package may sit on an
@@ -111,7 +112,7 @@ pub async fn report(client: &mut EvidenceClient<'_>, arguments: &Value) -> Value
         }));
     }
 
-    let activation_url = find_activation_url(&client.source_calls);
+    let activation_url = find_activation_url(&source_calls);
     let actions = activation_url
         .map(|url| {
             vec![json!({
@@ -153,12 +154,12 @@ pub async fn report(client: &mut EvidenceClient<'_>, arguments: &Value) -> Value
             "playDeveloperReporting": if reporting_app_access { "available" } else if reporting_app_unknown { "unknown" } else if reporting_available { "package_not_returned" } else { "unavailable" },
         }),
         json!({
-            "androidPublisher": diagnose_method(&client.source_calls, "reviews_list"),
-            "playDeveloperReporting": diagnose_method(&client.source_calls, "apps_search"),
+            "androidPublisher": diagnose_method(&source_calls, "reviews_list"),
+            "playDeveloperReporting": diagnose_method(&source_calls, "apps_search"),
         }),
         json!(complete),
-        json!(client.source_calls.clone()),
-        json!(client.warnings.clone()),
+        json!(source_calls),
+        json!(client.warnings()),
     )
 }
 

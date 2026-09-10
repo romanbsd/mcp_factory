@@ -1,3 +1,4 @@
+use std::sync::Mutex;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 use mcp_factory_core::chrono::Utc;
@@ -6,39 +7,56 @@ use serde_json::{json, Map, Value};
 
 use super::registry;
 
-pub struct EvidenceClient<'a> {
-    invoker: &'a dyn ReadOnlyToolInvoker,
-    pub source_calls: Vec<Value>,
-    pub warnings: Vec<Value>,
+#[derive(Default)]
+struct ClientState {
+    source_calls: Vec<Value>,
+    warnings: Vec<Value>,
     successes: usize,
     failures: usize,
+}
+
+/// `call`/`call_pages` take `&self` (bookkeeping lives behind a `Mutex`, never
+/// held across an `.await`) so callers can run several source calls
+/// concurrently via `join!`/`join_all` instead of one at a time — the read-only
+/// Google APIs behind a report are independent, and the wall-clock cost of a
+/// report is dominated by serial network latency, not any shared state.
+pub struct EvidenceClient<'a> {
+    invoker: &'a dyn ReadOnlyToolInvoker,
+    state: Mutex<ClientState>,
 }
 
 impl<'a> EvidenceClient<'a> {
     pub fn new(invoker: &'a dyn ReadOnlyToolInvoker) -> Self {
         Self {
             invoker,
-            source_calls: Vec::new(),
-            warnings: Vec::new(),
-            successes: 0,
-            failures: 0,
+            state: Mutex::new(ClientState::default()),
         }
     }
 
     pub fn status(&self) -> &'static str {
-        match (self.successes, self.failures) {
+        let state = self.state.lock().unwrap();
+        match (state.successes, state.failures) {
             (0, 1..) => "unavailable",
             (_, 1..) => "partial",
             _ => "complete",
         }
     }
 
-    pub async fn call(&mut self, id: &str, method: &str, arguments: Value) -> Option<Value> {
+    pub fn source_calls(&self) -> Vec<Value> {
+        self.state.lock().unwrap().source_calls.clone()
+    }
+
+    pub fn warnings(&self) -> Vec<Value> {
+        self.state.lock().unwrap().warnings.clone()
+    }
+
+    pub async fn call(&self, id: &str, method: &str, arguments: Value) -> Option<Value> {
         let started = Instant::now();
         let started_at = Utc::now().to_rfc3339();
         if !registry::allowed(method) {
-            self.failures += 1;
-            self.source_calls.push(call_record(
+            let mut state = self.state.lock().unwrap();
+            state.failures += 1;
+            state.source_calls.push(call_record(
                 id,
                 method,
                 &arguments,
@@ -66,8 +84,9 @@ impl<'a> EvidenceClient<'a> {
                 Ok(result) if !result.is_error => {
                     match result_value(result) {
                         Ok(value) => {
-                            self.successes += 1;
-                            self.source_calls.push(call_record(
+                            let mut state = self.state.lock().unwrap();
+                            state.successes += 1;
+                            state.source_calls.push(call_record(
                                 id,
                                 method,
                                 &arguments,
@@ -83,9 +102,10 @@ impl<'a> EvidenceClient<'a> {
                             return Some(value);
                         }
                         Err(error) => {
-                            self.failures += 1;
+                            let mut state = self.state.lock().unwrap();
+                            state.failures += 1;
                             let error = json!({"message": error.to_string()});
-                            self.source_calls.push(call_record(
+                            state.source_calls.push(call_record(
                                 id,
                                 method,
                                 &arguments,
@@ -98,7 +118,7 @@ impl<'a> EvidenceClient<'a> {
                                     error: Some(error),
                                 },
                             ));
-                            self.warnings.push(json!({
+                            state.warnings.push(json!({
                                 "sourceCall": id,
                                 "message": "Source returned a non-JSON response"
                             }));
@@ -112,8 +132,9 @@ impl<'a> EvidenceClient<'a> {
                         retry_delay(attempts, &error).await;
                         continue;
                     }
-                    self.failures += 1;
-                    self.source_calls.push(call_record(
+                    let mut state = self.state.lock().unwrap();
+                    state.failures += 1;
+                    state.source_calls.push(call_record(
                         id,
                         method,
                         &arguments,
@@ -134,8 +155,9 @@ impl<'a> EvidenceClient<'a> {
                         retry_delay(attempts, &value).await;
                         continue;
                     }
-                    self.failures += 1;
-                    self.source_calls.push(call_record(
+                    let mut state = self.state.lock().unwrap();
+                    state.failures += 1;
+                    state.source_calls.push(call_record(
                         id,
                         method,
                         &arguments,
@@ -161,7 +183,7 @@ impl<'a> EvidenceClient<'a> {
     /// `*_query` tools whose HTTP body is `arguments["body"]` (raw_body), versus
     /// `&["pageToken"]` for GET list/search tools that take it as a query param.
     pub async fn call_pages(
-        &mut self,
+        &self,
         id: &str,
         method: &str,
         mut arguments: Value,
@@ -172,7 +194,8 @@ impl<'a> EvidenceClient<'a> {
         for page_number in 1..=100 {
             let call_id = format!("{id}-page-{page_number}");
             let Some(page) = self.call(&call_id, method, arguments.clone()).await else {
-                if let Some(call) = self.source_calls.last_mut() {
+                let mut state = self.state.lock().unwrap();
+                if let Some(call) = state.source_calls.last_mut() {
                     call["paginationComplete"] = Value::Bool(false);
                 }
                 return (pages, false);
@@ -188,7 +211,7 @@ impl<'a> EvidenceClient<'a> {
             // A token that cannot be placed (misconfigured path, non-object
             // intermediate) would otherwise loop on the same page until the cap.
             if !set_at_path(&mut arguments, request_token_path, Value::String(next)) {
-                self.warnings.push(json!({
+                self.state.lock().unwrap().warnings.push(json!({
                     "sourceCall": id,
                     "message": format!(
                         "Could not place next-page token at {:?}; pagination stopped early",
@@ -198,13 +221,16 @@ impl<'a> EvidenceClient<'a> {
                 return (pages, false);
             }
         }
-        if let Some(call) = self.source_calls.last_mut() {
-            call["paginationComplete"] = Value::Bool(false);
+        {
+            let mut state = self.state.lock().unwrap();
+            if let Some(call) = state.source_calls.last_mut() {
+                call["paginationComplete"] = Value::Bool(false);
+            }
+            state.warnings.push(json!({
+                "sourceCall": id,
+                "message": "Pagination stopped after 100 pages"
+            }));
         }
-        self.warnings.push(json!({
-            "sourceCall": id,
-            "message": "Pagination stopped after 100 pages"
-        }));
         (pages, false)
     }
 }

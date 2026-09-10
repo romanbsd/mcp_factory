@@ -91,8 +91,8 @@ pub async fn report(client: &mut EvidenceClient<'_>, arguments: &Value) -> Value
         }],
         "actions": actions,
         "coverageGaps": registry::console_coverage_gaps(),
-        "sourceCalls": client.source_calls.clone(),
-        "warnings": client.warnings.clone(),
+        "sourceCalls": client.source_calls(),
+        "warnings": client.warnings(),
         "userInput": {
             "message": message,
             "consoleArea": console_area,

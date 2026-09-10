@@ -44,6 +44,7 @@ doc = false
 
 [dev-dependencies]
 wiremock = "0.6"
+flate2 = "1"
 tokio-test = "0.4"
 tempfile = "3"
 assert-json-diff = "2"

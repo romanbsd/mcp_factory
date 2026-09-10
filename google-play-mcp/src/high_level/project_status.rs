@@ -56,29 +56,42 @@ pub async fn report(client: &mut EvidenceClient<'_>, arguments: &Value) -> Value
         }
     }
 
-    let quality_report = if wants("quality") {
-        Some(quality::report(client, arguments).await)
-    } else {
-        None
-    };
-    let reviews = if wants("reviews") {
-        let (pages, complete) = client
-            .call_pages(
-                "call-reviews",
-                "reviews_list",
-                json!({"packageName": package, "maxResults": 100}),
-                &["token"],
-                &["tokenPagination", "nextPageToken"],
-            )
-            .await;
-        Some(json!({
-            "returnedReviews": pages.iter().map(|page| page["reviews"].as_array().map_or(0, Vec::len)).sum::<usize>(),
-            "paginationComplete": complete,
-            "privacy": "Review text and reviewer identity are omitted from this summary."
-        }))
-    } else {
-        None
-    };
+    // quality::report and the reviews pagination below are independent
+    // read-only queries, so they run concurrently rather than one after the
+    // other — a shared reference is safe since `EvidenceClient`'s bookkeeping
+    // lives behind a `Mutex`.
+    let client: &EvidenceClient<'_> = client;
+    let want_quality = wants("quality");
+    let want_reviews = wants("reviews");
+    let (quality_report, reviews) = tokio::join!(
+        async {
+            if want_quality {
+                Some(quality::report(client, arguments).await)
+            } else {
+                None
+            }
+        },
+        async {
+            if want_reviews {
+                let (pages, complete) = client
+                    .call_pages(
+                        "call-reviews",
+                        "reviews_list",
+                        json!({"packageName": package, "maxResults": 100}),
+                        &["token"],
+                        &["tokenPagination", "nextPageToken"],
+                    )
+                    .await;
+                Some(json!({
+                    "returnedReviews": pages.iter().map(|page| page["reviews"].as_array().map_or(0, Vec::len)).sum::<usize>(),
+                    "paginationComplete": complete,
+                    "privacy": "Review text and reviewer identity are omitted from this summary."
+                }))
+            } else {
+                None
+            }
+        }
+    );
     let production = tracks.iter().find(|track| track["track"] == "production");
     let lifecycle = production
         .and_then(|track| track["releases"].as_array())
@@ -192,8 +205,8 @@ pub async fn report(client: &mut EvidenceClient<'_>, arguments: &Value) -> Value
         "findings": findings,
         "actions": review_safe_actions(lifecycle),
         "coverageGaps": registry::console_coverage_gaps(),
-        "sourceCalls": client.source_calls.clone(),
-        "warnings": client.warnings.clone(),
+        "sourceCalls": client.source_calls(),
+        "warnings": client.warnings(),
         "releaseState": lifecycle,
         "publicServingVersionCodes": production_serving,
         "testingServingVersionCodes": testing_serving,

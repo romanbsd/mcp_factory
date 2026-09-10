@@ -1,8 +1,14 @@
+use std::future::Future;
+use std::pin::Pin;
+
+use futures_util::future::{join_all, ready};
 use mcp_factory_core::chrono::{Datelike, Duration, NaiveDate, Utc};
 use serde_json::{json, Value};
 
 use super::client::EvidenceClient;
 use super::registry;
+
+type Job<'a> = Pin<Box<dyn Future<Output = Value> + Send + 'a>>;
 
 const DEFAULT_METRICS: &[&str] = &[
     "crash_rate",
@@ -15,7 +21,14 @@ const DEFAULT_METRICS: &[&str] = &[
     "stuck_background_wakelock_rate",
 ];
 
-pub async fn report(client: &mut EvidenceClient<'_>, arguments: &Value) -> Value {
+pub async fn report(client: &EvidenceClient<'_>, arguments: &Value) -> Value {
+    // Takes `&EvidenceClient`: the metric/cohort grid, error evidence, and
+    // anomalies below are independent read-only queries, so they run
+    // concurrently via `join_all`/`join!` instead of one round trip at a time —
+    // serial network latency across ~30 calls is what exhausts the reporting
+    // deadline otherwise. `EvidenceClient::call` records bookkeeping behind a
+    // `Mutex` internally, so a shared reference is safe here, and it lets
+    // callers also run this report concurrently with their own source calls.
     let package = arguments["packageName"].as_str().unwrap_or_default();
     let lookback = arguments["lookbackDays"]
         .as_i64()
@@ -23,47 +36,59 @@ pub async fn report(client: &mut EvidenceClient<'_>, arguments: &Value) -> Value
         .clamp(1, 365);
     let cohorts = string_list(arguments.get("cohorts"), &["OS_PUBLIC", "APP_TESTERS"]);
     let metrics = string_list(arguments.get("metrics"), DEFAULT_METRICS);
-    let mut results = Vec::new();
 
-    for metric_name in metrics {
-        let Some(capability) = registry::metric(&metric_name) else {
-            results.push(unsupported_metric(&metric_name, "unknown metric"));
+    let mut jobs: Vec<Job<'_>> = Vec::new();
+    for metric_name in &metrics {
+        let Some(capability) = registry::metric(metric_name) else {
+            jobs.push(Box::pin(ready(unsupported_metric(
+                metric_name,
+                "unknown metric",
+            ))));
             continue;
         };
         for cohort in &cohorts {
             if cohort != "OS_PUBLIC" && cohort != "APP_TESTERS" {
-                results.push(unsupported_metric(
-                    &metric_name,
+                jobs.push(Box::pin(ready(unsupported_metric(
+                    metric_name,
                     &format!("unsupported cohort {cohort}"),
-                ));
+                ))));
                 continue;
             }
             if cohort == "APP_TESTERS" && !capability.tester_supported {
-                results.push(json!({
+                jobs.push(Box::pin(ready(json!({
                     "metric": metric_name,
                     "cohort": cohort,
                     "dataState": "unsupported",
                     "evidenceStrength": "none",
                     "assessment": "This metric/cohort combination is excluded by the validated capability registry."
-                }));
+                }))));
                 continue;
             }
-            results.push(query_metric(client, package, lookback, cohort, capability).await);
+            jobs.push(Box::pin(query_metric(
+                client, package, lookback, cohort, capability,
+            )));
         }
     }
 
     let include_issues = arguments["includeIssues"].as_bool().unwrap_or(true);
     let include_anomalies = arguments["includeAnomalies"].as_bool().unwrap_or(true);
-    let error_evidence = if include_issues {
-        Some(query_error_evidence(client, package, lookback).await)
-    } else {
-        None
-    };
-    let anomaly_evidence = if include_anomalies {
-        Some(query_anomalies(client, package, lookback).await)
-    } else {
-        None
-    };
+    let (results, error_evidence, anomaly_evidence) = tokio::join!(
+        join_all(jobs),
+        async {
+            if include_issues {
+                Some(query_error_evidence(client, package, lookback).await)
+            } else {
+                None
+            }
+        },
+        async {
+            if include_anomalies {
+                Some(query_anomalies(client, package, lookback).await)
+            } else {
+                None
+            }
+        }
+    );
 
     let unavailable = results
         .iter()
@@ -87,8 +112,8 @@ pub async fn report(client: &mut EvidenceClient<'_>, arguments: &Value) -> Value
         "findings": [],
         "actions": [],
         "coverageGaps": registry::console_coverage_gaps(),
-        "sourceCalls": client.source_calls.clone(),
-        "warnings": client.warnings.clone(),
+        "sourceCalls": client.source_calls(),
+        "warnings": client.warnings(),
         "metrics": results,
         "errorEvidence": error_evidence,
         "anomalyEvidence": anomaly_evidence,
@@ -97,7 +122,7 @@ pub async fn report(client: &mut EvidenceClient<'_>, arguments: &Value) -> Value
 }
 
 async fn query_error_evidence(
-    client: &mut EvidenceClient<'_>,
+    client: &EvidenceClient<'_>,
     package: &str,
     lookback: i64,
 ) -> Value {
@@ -150,7 +175,7 @@ async fn query_error_evidence(
     })
 }
 
-async fn query_anomalies(client: &mut EvidenceClient<'_>, package: &str, lookback: i64) -> Value {
+async fn query_anomalies(client: &EvidenceClient<'_>, package: &str, lookback: i64) -> Value {
     let end = Utc::now();
     let start = end - Duration::days(lookback);
     let filter = format!(
@@ -196,7 +221,7 @@ fn interval_arguments(package: &str, lookback: i64) -> Value {
 }
 
 async fn query_metric(
-    client: &mut EvidenceClient<'_>,
+    client: &EvidenceClient<'_>,
     package: &str,
     lookback: i64,
     cohort: &str,

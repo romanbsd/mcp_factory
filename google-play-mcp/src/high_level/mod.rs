@@ -36,21 +36,21 @@ impl CustomToolHandler for ReportHandler {
             match self.0 {
                 ReportKind::Capabilities => capabilities::report(&mut client, &arguments).await,
                 ReportKind::ProjectStatus => project_status::report(&mut client, &arguments).await,
-                ReportKind::QualityHealth => quality::report(&mut client, &arguments).await,
+                ReportKind::QualityHealth => quality::report(&client, &arguments).await,
                 ReportKind::ExplainConsoleMessage => explain::report(&mut client, &arguments).await,
             }
         };
         let report = match tokio::time::timeout(Duration::from_secs(45), report_future).await {
             Ok(report) => report,
             Err(_) => json!({
-                "status": if client.source_calls.is_empty() { "unavailable" } else { "partial" },
+                "status": if client.source_calls().is_empty() { "unavailable" } else { "partial" },
                 "generatedAt": mcp_factory_core::chrono::Utc::now().to_rfc3339(),
                 "app": quality::app(arguments["packageName"].as_str().unwrap_or_default()),
                 "summary": "The 45-second reporting deadline was exhausted; completed source evidence is preserved.",
                 "findings": [],
                 "actions": [],
                 "coverageGaps": registry::console_coverage_gaps(),
-                "sourceCalls": client.source_calls,
+                "sourceCalls": client.source_calls(),
                 "warnings": [{"message": "Reporting deadline exhausted"}]
             }),
         };
