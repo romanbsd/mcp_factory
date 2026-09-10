@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use mcp_factory_core::chrono::Utc;
 use serde_json::{json, Value};
 
@@ -24,15 +26,26 @@ pub async fn report(client: &mut EvidenceClient<'_>, arguments: &Value) -> Value
             )
             .await;
         if let Some(filters) = &filters {
+            // Distinct source tracks can resolve to the same Publisher track id
+            // (e.g. several open-testing tracks all map to the default "beta"),
+            // so calls are memoized per id rather than reissued per source track
+            // to avoid burning through the tight "Listing releases" quota.
+            let mut release_calls: HashMap<String, Option<Value>> = HashMap::new();
             for track in filters["tracks"].as_array().into_iter().flatten() {
                 let (track_id, inferred) = normalize_track(track);
-                let direct = client
-                    .call(
-                        &format!("call-{track_id}-releases"),
-                        "applications_tracks_releases_list",
-                        json!({"parent": format!("applications/{package}/tracks/{track_id}")}),
-                    )
-                    .await;
+                let direct = if let Some(cached) = release_calls.get(&track_id) {
+                    cached.clone()
+                } else {
+                    let result = client
+                        .call(
+                            &format!("call-{track_id}-releases"),
+                            "applications_tracks_releases_list",
+                            json!({"parent": format!("applications/{package}/tracks/{track_id}")}),
+                        )
+                        .await;
+                    release_calls.insert(track_id.clone(), result.clone());
+                    result
+                };
                 tracks.push(normalize_release_track(
                     track_id,
                     inferred,
@@ -66,24 +79,6 @@ pub async fn report(client: &mut EvidenceClient<'_>, arguments: &Value) -> Value
     } else {
         None
     };
-    let recoveries = if wants("recoveries") {
-        client
-            .call(
-                "call-recovery-actions",
-                "apprecovery_list",
-                json!({"packageName": package}),
-            )
-            .await
-            .map(|value| {
-                json!({
-                    "count": value["recoveryActions"].as_array().map_or(0, Vec::len),
-                    "actions": value["recoveryActions"]
-                })
-            })
-    } else {
-        None
-    };
-
     let production = tracks.iter().find(|track| track["track"] == "production");
     let lifecycle = production
         .and_then(|track| track["releases"].as_array())
@@ -105,6 +100,34 @@ pub async fn report(client: &mut EvidenceClient<'_>, arguments: &Value) -> Value
                 .cloned()
         })
         .collect();
+
+    // apprecovery_list requires a real target versionCode; the API rejects an
+    // omitted/defaulted 0, so the lookup only runs once a serving production
+    // version is known (computed above).
+    let recoveries = if wants("recoveries") {
+        match production_serving.first() {
+            Some(version_code) => client
+                .call(
+                    "call-recovery-actions",
+                    "apprecovery_list",
+                    json!({"packageName": package, "versionCode": version_code}),
+                )
+                .await
+                .map(|value| {
+                    json!({
+                        "count": value["recoveryActions"].as_array().map_or(0, Vec::len),
+                        "actions": value["recoveryActions"]
+                    })
+                }),
+            None => Some(json!({
+                "count": 0,
+                "actions": [],
+                "assessment": "No production serving version code is known yet; recovery actions require a targeted version."
+            })),
+        }
+    } else {
+        None
+    };
 
     let mut findings = Vec::new();
     if lifecycle == "under_review" && production_serving.is_empty() {

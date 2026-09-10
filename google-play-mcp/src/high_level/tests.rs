@@ -724,3 +724,164 @@ async fn custom_testing_track_uses_source_provided_identifier() {
     );
     assert_eq!(report["sourceCalls"][2]["id"], "call-qa-ring-releases");
 }
+
+#[tokio::test]
+async fn duplicate_track_ids_only_issue_one_releases_call() {
+    // Two open-testing tracks with no distinguishing displayName both resolve
+    // to the default "beta" id; the second must reuse the first's result
+    // instead of re-hitting the tight releases-listing quota.
+    let invoker = FakeInvoker::default()
+        .with(
+            "apps_fetchReleaseFilterOptions",
+            vec![ok(json!({"tracks": [
+                {"type": "OPEN_TESTING", "displayName": "Open A", "servingReleases": []},
+                {"type": "OPEN_TESTING", "displayName": "Open B", "servingReleases": []}
+            ]}))],
+        )
+        .with(
+            "applications_tracks_releases_list",
+            vec![ok(json!({"releases": [{
+                "releaseName": "1.0.0",
+                "releaseLifecycleState": "RELEASE_LIFECYCLE_STATE_PUBLISHED",
+                "activeArtifacts": [{"versionCode": 11}]
+            }]}))],
+        );
+
+    let report = run(
+        "report_project_status",
+        json!({"packageName": "org.example.app", "include": ["releases"]}),
+        &invoker,
+    )
+    .await;
+
+    assert_eq!(report["tracks"][0]["releases"], report["tracks"][1]["releases"]);
+    let calls = invoker.calls();
+    assert_eq!(
+        calls
+            .iter()
+            .filter(|(method, _)| method == "applications_tracks_releases_list")
+            .count(),
+        1
+    );
+}
+
+#[tokio::test]
+async fn recovery_lookup_targets_the_detected_serving_version_code() {
+    let invoker = FakeInvoker::default()
+        .with(
+            "apps_fetchReleaseFilterOptions",
+            vec![ok(json!({"tracks": [
+                {"type": "PRODUCTION", "displayName": "Production", "servingReleases": [{"displayName": "1.0.0", "versionCodes": ["11"]}]}
+            ]}))],
+        )
+        .with(
+            "applications_tracks_releases_list",
+            vec![ok(json!({"releases": []}))],
+        )
+        .with("apprecovery_list", vec![ok(json!({"recoveryActions": []}))]);
+
+    let report = run(
+        "report_project_status",
+        json!({"packageName": "org.example.app", "include": ["releases", "recoveries"]}),
+        &invoker,
+    )
+    .await;
+
+    assert_eq!(report["recoveries"]["count"], 0);
+    let recovery_call = invoker
+        .calls()
+        .into_iter()
+        .find(|(method, _)| method == "apprecovery_list")
+        .expect("apprecovery_list should have been called");
+    assert_eq!(recovery_call.1["versionCode"], "11");
+}
+
+#[tokio::test]
+async fn recovery_lookup_is_skipped_without_a_known_serving_version() {
+    let invoker = FakeInvoker::default().with(
+        "apps_fetchReleaseFilterOptions",
+        vec![ok(json!({"tracks": []}))],
+    );
+
+    let report = run(
+        "report_project_status",
+        json!({"packageName": "org.example.app", "include": ["releases", "recoveries"]}),
+        &invoker,
+    )
+    .await;
+
+    assert_eq!(report["recoveries"]["count"], 0);
+    assert!(invoker
+        .calls()
+        .iter()
+        .all(|(method, _)| method != "apprecovery_list"));
+}
+
+#[tokio::test]
+async fn error_count_query_sends_a_date_only_end_time_from_freshness() {
+    let invoker = FakeInvoker::default()
+        .with(
+            "vitals_errors_counts_get",
+            vec![ok(json!({
+                "freshnessInfo": {"freshnesses": [{
+                    "aggregationPeriod": "DAILY",
+                    "latestEndTime": {
+                        "year": 2026, "month": 9, "day": 3, "hours": 7,
+                        "timeZone": {"id": "America/Los_Angeles"}
+                    }
+                }]}
+            }))],
+        )
+        .with(
+            "vitals_errors_counts_query",
+            vec![ok(json!({"rows": []}))],
+        )
+        .with("vitals_errors_issues_search", vec![ok(json!({"errorIssues": []}))]);
+
+    run(
+        "report_quality_health",
+        json!({"packageName": "org.example.app", "metrics": [], "includeAnomalies": false}),
+        &invoker,
+    )
+    .await;
+
+    let calls = invoker.calls();
+    let counts_call = &calls
+        .iter()
+        .find(|(method, _)| method == "vitals_errors_counts_query")
+        .unwrap()
+        .1;
+    let end_time = &counts_call["body"]["timelineSpec"]["endTime"];
+    assert_eq!(end_time["day"], 3);
+    assert!(end_time.get("hours").is_none());
+}
+
+#[tokio::test]
+async fn grouped_error_lookup_uses_utc_not_los_angeles() {
+    let invoker = FakeInvoker::default()
+        .with(
+            "vitals_errors_counts_get",
+            vec![ok(json!({"freshnessInfo": {"freshnesses": []}}))],
+        )
+        .with(
+            "vitals_errors_counts_query",
+            vec![ok(json!({"rows": []}))],
+        )
+        .with("vitals_errors_issues_search", vec![ok(json!({"errorIssues": []}))]);
+
+    run(
+        "report_quality_health",
+        json!({"packageName": "org.example.app", "metrics": [], "includeAnomalies": false}),
+        &invoker,
+    )
+    .await;
+
+    let calls = invoker.calls();
+    let issues_call = &calls
+        .iter()
+        .find(|(method, _)| method == "vitals_errors_issues_search")
+        .unwrap()
+        .1;
+    assert_eq!(issues_call["interval.startTime.timeZone.id"], "UTC");
+    assert_eq!(issues_call["interval.endTime.timeZone.id"], "UTC");
+}

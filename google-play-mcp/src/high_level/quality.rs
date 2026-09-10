@@ -177,6 +177,9 @@ async fn query_anomalies(client: &mut EvidenceClient<'_>, package: &str, lookbac
 fn interval_arguments(package: &str, lookback: i64) -> Value {
     let end = Utc::now().date_naive();
     let start = end - Duration::days(lookback);
+    // Unlike the DAILY vitals timelineSpecs (which default to
+    // America/Los_Angeles), errorIssues search intervals are UTC-only; the
+    // Los_Angeles id is rejected here.
     json!({
         "parent": format!("apps/{package}"),
         "pageSize": 1000,
@@ -184,11 +187,11 @@ fn interval_arguments(package: &str, lookback: i64) -> Value {
         "interval.startTime.year": start.year(),
         "interval.startTime.month": start.month(),
         "interval.startTime.day": start.day(),
-        "interval.startTime.timeZone.id": "America/Los_Angeles",
+        "interval.startTime.timeZone.id": "UTC",
         "interval.endTime.year": end.year(),
         "interval.endTime.month": end.month(),
         "interval.endTime.day": end.day(),
-        "interval.endTime.timeZone.id": "America/Los_Angeles"
+        "interval.endTime.timeZone.id": "UTC"
     })
 }
 
@@ -383,12 +386,20 @@ fn decimal(value: Option<&Value>) -> f64 {
 }
 
 fn daily_freshness(metadata: &Value) -> Option<Value> {
-    metadata["freshnessInfo"]["freshnesses"]
+    let latest = metadata["freshnessInfo"]["freshnesses"]
         .as_array()?
         .iter()
         .find(|item| item["aggregationPeriod"] == "DAILY")?
-        .get("latestEndTime")
-        .cloned()
+        .get("latestEndTime")?;
+    // DAILY aggregation requires hours/minutes/seconds/nanos to be unset, but
+    // the freshness response is a full DateTime and may carry them — forward
+    // only the calendar date and time zone, or the query is rejected.
+    Some(json!({
+        "year": latest["year"],
+        "month": latest["month"],
+        "day": latest["day"],
+        "timeZone": latest["timeZone"],
+    }))
 }
 
 fn subtract_days(end: &Value, days: i64) -> Option<Value> {
