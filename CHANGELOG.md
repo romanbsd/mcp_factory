@@ -11,6 +11,13 @@
   including 10 Android Publisher / App Store media-upload operations.
 
 ### Fixed
+- REST proxy (`mcp-factory-core`): a successful (2xx, non-204) JSON response
+  with a zero-byte body is now treated as `{}` instead of a JSON parse
+  failure. Some gRPC-transcoded Google APIs (e.g. Android Publisher's
+  track-releases and App Recovery endpoints) send an empty body for an
+  all-default response, which previously surfaced in `google-play-mcp`'s
+  high-level reports as "invalid JSON" / a dropped reviews summary for
+  tracks, recoveries, and reviews with no results.
 - `google-play-mcp` high-level `report_*` tools: deduplicated
   `applications_tracks_releases_list` calls across tracks that resolve to
   the same track ID, avoiding "Listing releases quota exceeded" errors.

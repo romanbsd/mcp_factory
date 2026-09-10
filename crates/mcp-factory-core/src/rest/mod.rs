@@ -169,17 +169,30 @@ impl RestProxyExecutor {
             // JSON objects also ride along as `structuredContent` so clients can
             // read fields directly. MCP requires structuredContent to be an
             // object, so arrays/scalars stay text-only.
-            let structured = if content_type.to_ascii_lowercase().contains("json") {
-                serde_json::from_str::<Value>(&text)
-                    .ok()
-                    .filter(Value::is_object)
+            let is_json = content_type.to_ascii_lowercase().contains("json");
+            // Some gRPC-transcoded APIs (e.g. Android Publisher's release/recovery
+            // endpoints) send a zero-byte 200 body for an all-default response
+            // instead of "{}" — treat that as an empty object rather than a JSON
+            // parse failure.
+            if is_json && text.trim().is_empty() {
+                ToolResult {
+                    structured: Some(Value::Object(Map::new())),
+                    meta,
+                    ..ToolResult::text("{}".to_string())
+                }
             } else {
-                None
-            };
-            ToolResult {
-                structured,
-                meta,
-                ..ToolResult::text(text)
+                let structured = if is_json {
+                    serde_json::from_str::<Value>(&text)
+                        .ok()
+                        .filter(Value::is_object)
+                } else {
+                    None
+                };
+                ToolResult {
+                    structured,
+                    meta,
+                    ..ToolResult::text(text)
+                }
             }
         } else {
             ToolResult {
