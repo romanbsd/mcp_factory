@@ -18,10 +18,11 @@ rmcp = { version = "3.3", features = [
     "reqwest",
 ] }
 tokio = { version = "1", features = ["full"] }
-reqwest = { version = "0.12", default-features = false, features = [
+reqwest = { version = "0.13", default-features = false, features = [
     "json",
-    "rustls-tls",
+    "rustls",
     "stream",
+    "form",
     "gzip",
     "brotli",
     "deflate",
@@ -37,12 +38,15 @@ thiserror = "2"
 anyhow = "1"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
-jsonschema = "0.55"
+jsonschema = "0.56"
 percent-encoding = "2"
 base64 = "0.23"
 toml = "1.1"
 chrono = { version = "0.4", features = ["serde"] }
-oauth2 = { version = "5", features = ["reqwest"] }
+# oauth2 5.0 still depends on reqwest 0.12; `default-features = false` keeps
+# that second copy out of the graph — we supply the HTTP client ourselves
+# (see `auth::oauth2::OAuthHttpAdapter`).
+oauth2 = { version = "5", default-features = false }
 clap = { version = "4", features = ["derive"] }
 open = "5"
 async-trait = "0.1"
