@@ -1,3 +1,6 @@
+use std::future::Future;
+use std::pin::Pin;
+
 use oauth2::basic::BasicClient;
 use oauth2::{
     AuthUrl, AuthorizationCode, ClientId, ClientSecret, EndpointNotSet, EndpointSet,
@@ -15,9 +18,37 @@ pub const REFRESH_SKEW_SECS: i64 = 60;
 type ConfiguredOAuthClient =
     BasicClient<EndpointSet, EndpointNotSet, EndpointNotSet, EndpointNotSet, EndpointSet>;
 
+/// oauth2 5.0 is compiled against reqwest 0.12, so its built-in
+/// `AsyncHttpClient` impl does not cover this crate's reqwest 0.13 client.
+/// This adapts the shared client, so token requests inherit its timeout and
+/// connection pool.
+struct OAuthHttpAdapter(Client);
+
+impl<'c> oauth2::AsyncHttpClient<'c> for OAuthHttpAdapter {
+    type Error = reqwest::Error;
+    type Future =
+        Pin<Box<dyn Future<Output = Result<oauth2::HttpResponse, reqwest::Error>> + Send + 'c>>;
+
+    fn call(&'c self, request: oauth2::HttpRequest) -> Self::Future {
+        Box::pin(async move {
+            let response = self.0.execute(request.try_into()?).await?;
+            let status = response.status();
+            let version = response.version();
+            let headers = response.headers().clone();
+            let body = response.bytes().await?.to_vec();
+
+            let mut adapted = oauth2::HttpResponse::new(body);
+            *adapted.status_mut() = status;
+            *adapted.version_mut() = version;
+            *adapted.headers_mut() = headers;
+            Ok(adapted)
+        })
+    }
+}
+
 pub struct OAuth2Provider {
     client: ConfiguredOAuthClient,
-    http: Client,
+    http: OAuthHttpAdapter,
     token_store: FileTokenStore,
     cache: Mutex<Option<StoredTokens>>,
     /// Full OAuth2 config, kept so we can (re)run the interactive login flow.
@@ -52,7 +83,7 @@ impl OAuth2Provider {
 
         Ok(Self {
             client,
-            http,
+            http: OAuthHttpAdapter(http),
             token_store: FileTokenStore::new(token_store.clone()),
             cache: Mutex::new(None),
             auth: auth.clone(),

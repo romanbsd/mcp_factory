@@ -43,10 +43,10 @@ test = false
 doc = false
 
 [dev-dependencies]
-wiremock = "0.6"
-flate2 = "1"
-tokio-test = "0.4"
-tempfile = "3"
-assert-json-diff = "2"
-anyhow = "1"
-rmcp = { version = "3.2", features = ["client", "transport-child-process"] }
+wiremock.workspace = true
+flate2.workspace = true
+tokio-test.workspace = true
+tempfile.workspace = true
+assert-json-diff.workspace = true
+anyhow.workspace = true
+rmcp = { workspace = true, features = ["client", "transport-child-process"] }
