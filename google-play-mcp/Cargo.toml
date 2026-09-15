@@ -1,11 +1,6 @@
 [workspace]
 
-[package]
-name = "google-play-mcp"
-version = "0.1.0"
-edition = "2021"
-
-[dependencies]
+[workspace.dependencies]
 mcp-factory-core = { path = "../crates/mcp-factory-core" }
 tokio = { version = "1", features = ["full"] }
 serde_json = "1"
@@ -13,6 +8,20 @@ anyhow = "1"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 futures-util = { version = "0.3", default-features = false, features = ["alloc"] }
+
+[package]
+name = "google-play-mcp"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+mcp-factory-core.workspace = true
+tokio.workspace = true
+serde_json.workspace = true
+anyhow.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+futures-util.workspace = true
 
 [[bin]]
 name = "google-play-mcp"
