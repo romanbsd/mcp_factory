@@ -10,7 +10,7 @@ authors = ["MCP Factory Contributors"]
 
 [workspace.dependencies]
 mcp-factory-core = { path = "crates/mcp-factory-core" }
-rmcp = { version = "3.2", features = [
+rmcp = { version = "3.3", features = [
     "server",
     "schemars",
     "transport-io",
