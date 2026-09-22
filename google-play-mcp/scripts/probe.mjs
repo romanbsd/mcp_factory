@@ -59,7 +59,7 @@ try {
   const resources = resourceResult.resources ?? [];
   const summary = {
     protocolVersion: initialized.protocolVersion,
-    server: initialized.clientInfo,
+    server: initialized.serverInfo,
     toolCount: tools.length,
     resourceCount: resources.length,
     firstTools: tools.slice(0, 5).map((tool) => tool.name),
