@@ -102,6 +102,8 @@ pub const ALLOWED_LOW_LEVEL_METHODS: &[&str] = &[
     "generatedapks_list",
     "applications_deviceTierConfigs_list",
     "applications_deviceTierConfigs_get",
+    "edits_bundles_list",
+    "edits_tracks_get",
 ];
 
 pub fn metric(name: &str) -> Option<&'static MetricCapability> {
@@ -153,6 +155,10 @@ pub fn console_coverage_gaps() -> Vec<Value> {
         (
             "review_correspondence",
             "Review correspondence requires Console text or email.",
+        ),
+        (
+            "foreground_service_declaration",
+            "The foreground service permissions declaration is completed and reviewed only in Play Console.",
         ),
         (
             "artifact_warnings",

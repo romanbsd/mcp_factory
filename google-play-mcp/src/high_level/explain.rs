@@ -61,15 +61,19 @@ pub async fn report(client: &mut EvidenceClient<'_>, arguments: &Value) -> Value
     } else {
         "The supplied Console message was classified deterministically and correlated only with applicable API evidence."
     };
-    let actions = vec![json!({
-        "priority": 1,
-        "title": if unknown { "Provide the Console page heading or screenshot" } else { "Review the finding in its named Console area" },
-        "reason": if unknown { "Unknown wording must not be guessed." } else { "The public APIs do not expose the warning resolution state." },
-        "safeDuringReview": true,
-        "mutatesPlayState": false,
-        "requiresConsole": true,
-        "dependsOnFindingIds": ["supplied-console-message"]
-    })];
+    let actions = if category == "foreground_service" {
+        foreground_service_actions()
+    } else {
+        vec![json!({
+            "priority": 1,
+            "title": if unknown { "Provide the Console page heading or screenshot" } else { "Review the finding in its named Console area" },
+            "reason": if unknown { "Unknown wording must not be guessed." } else { "The public APIs do not expose the warning resolution state." },
+            "safeDuringReview": true,
+            "mutatesPlayState": false,
+            "requiresConsole": true,
+            "dependsOnFindingIds": ["supplied-console-message"]
+        })]
+    };
 
     json!({
         "status": client.status(),
@@ -83,6 +87,7 @@ pub async fn report(client: &mut EvidenceClient<'_>, arguments: &Value) -> Value
             "state": if unknown { "unknown" } else { "inferred" },
             "title": "User-supplied Play Console message",
             "detail": "Classification does not prove that the Console message is resolved.",
+            "exactError": message,
             "inference": true,
             "rule": "google-play-console-message-v1",
             "evidenceStrength": if evidence.is_empty() { "none" } else { "low" },
@@ -116,7 +121,13 @@ fn classify(message: &str, area: Option<&str>) -> &'static str {
         area.unwrap_or("").to_ascii_lowercase()
     );
     for (category, terms) in [
-        ("data_safety", &["data safety", "data collection"][..]),
+        // Most specific first: a foreground-service rejection often also
+        // names the app bundle or the App content area.
+        (
+            "foreground_service",
+            &["foreground service", "foreground_service"][..],
+        ),
+        ("data_safety", &["data safety", "data collection"]),
         ("target_api", &["target api", "api level"]),
         ("pre_launch", &["pre-launch", "pre launch"]),
         (
@@ -143,6 +154,41 @@ fn classify(message: &str, area: Option<&str>) -> &'static str {
         }
     }
     "unknown"
+}
+
+/// A foreground-service rejection usually means the Console declaration is
+/// missing for a permission that is in the merged manifest. The permission may
+/// be needed, so the guidance never suggests removing it unverified.
+fn foreground_service_actions() -> Vec<Value> {
+    vec![
+        json!({
+            "priority": 1,
+            "title": "Inspect the merged manifest for foreground service permissions and types",
+            "reason": "Libraries can add FOREGROUND_SERVICE_* permissions or service types. Check `bundletool dump manifest --bundle app.aab` or app/build/intermediates/merged_manifest/ and confirm which ones the app actually uses.",
+            "safeDuringReview": true,
+            "mutatesPlayState": false,
+            "requiresConsole": false,
+            "dependsOnFindingIds": ["supplied-console-message"]
+        }),
+        json!({
+            "priority": 2,
+            "title": "Complete the foreground service permissions declaration in Play Console (App content)",
+            "reason": "The declaration is Console-only; the public APIs cannot read or submit it. Declare each used service type with its use case and video if required.",
+            "safeDuringReview": true,
+            "mutatesPlayState": true,
+            "requiresConsole": true,
+            "dependsOnFindingIds": ["supplied-console-message"]
+        }),
+        json!({
+            "priority": 3,
+            "title": "Do not remove a permission until you confirm the app does not use it",
+            "reason": "Removing a used foreground service permission breaks the feature at runtime; only drop it (e.g. with tools:node=\"remove\") after verifying no code path starts that service type.",
+            "safeDuringReview": true,
+            "mutatesPlayState": false,
+            "requiresConsole": false,
+            "dependsOnFindingIds": ["supplied-console-message"]
+        }),
+    ]
 }
 
 fn track_from_area(area: Option<&str>) -> Option<&'static str> {

@@ -54,6 +54,33 @@ pub async fn report(client: &mut EvidenceClient<'_>, arguments: &Value) -> Value
                 ));
             }
         }
+        // The reporting API does not list every Publisher track (custom testing
+        // tracks, or none at all if its call failed), so a requested track it
+        // omitted is queried directly; its serving state stays unknown. Only a
+        // complete track + versionCode request can use it, so a lone track is
+        // not worth a call against the tight releases quota.
+        if let (Some(track_id), Some(_)) = (
+            arguments["track"].as_str(),
+            arguments["versionCode"].as_i64(),
+        ) {
+            if !tracks.iter().any(|entry| entry["track"] == track_id) {
+                let direct = client
+                    .call(
+                        &format!("call-{track_id}-releases"),
+                        "applications_tracks_releases_list",
+                        json!({"parent": format!("applications/{package}/tracks/{track_id}")}),
+                    )
+                    .await;
+                let mut entry = normalize_release_track(
+                    track_id.to_string(),
+                    false,
+                    &json!({}),
+                    direct.as_ref(),
+                );
+                entry["servingUnknown"] = json!(true);
+                tracks.push(entry);
+            }
+        }
     }
 
     // quality::report and the reviews pagination below are independent
@@ -98,6 +125,9 @@ pub async fn report(client: &mut EvidenceClient<'_>, arguments: &Value) -> Value
         .and_then(|releases| releases.first())
         .and_then(|release| release["lifecycle"].as_str())
         .unwrap_or("unknown");
+    // A production entry added by direct lookup has no Reporting API serving
+    // data, so an empty list there means unknown, not "not serving".
+    let production_serving_known = production.is_some_and(|track| track["servingUnknown"] != true);
     let production_serving: Vec<Value> = production
         .and_then(|track| track["servingVersionCodes"].as_array())
         .cloned()
@@ -143,7 +173,7 @@ pub async fn report(client: &mut EvidenceClient<'_>, arguments: &Value) -> Value
     };
 
     let mut findings = Vec::new();
-    if lifecycle == "under_review" && production_serving.is_empty() {
+    if lifecycle == "under_review" && production_serving_known && production_serving.is_empty() {
         findings.push(json!({
             "id": "production-release-in-review",
             "area": "release",
@@ -179,18 +209,110 @@ pub async fn report(client: &mut EvidenceClient<'_>, arguments: &Value) -> Value
         }
     }
 
-    let summary = if lifecycle == "under_review" {
-        "Production is under review and is not treated as published unless serving evidence exists."
+    let requested = match (
+        arguments["track"].as_str(),
+        arguments["versionCode"].as_i64(),
+    ) {
+        (Some(track), Some(version_code)) if wants("releases") => {
+            Some(requested_release(&tracks, track, version_code))
+        }
+        (Some(_), None) | (None, Some(_)) if wants("releases") => Some(json!({
+            "track": arguments["track"],
+            "versionCode": arguments["versionCode"],
+            "found": null,
+            "lifecycle": "unknown",
+            "unresolved": ["Both track and versionCode are required to report a specific release."],
+        })),
+        _ => None,
+    };
+    if let Some(requested) = &requested {
+        let requested_lifecycle = requested["lifecycle"].as_str().unwrap_or("unknown");
+        // Anything short of published or in review (rejected, draft, approved
+        // but unpublished, missing, or unreadable) means the build has not shipped.
+        if !matches!(requested_lifecycle, "published" | "under_review") {
+            let title = match requested["found"].as_bool() {
+                Some(true) => format!(
+                    "Requested release {} is {requested_lifecycle}",
+                    requested["versionCode"]
+                ),
+                Some(false) => format!(
+                    "Requested release {} was not found on '{}'",
+                    requested["versionCode"],
+                    requested["track"].as_str().unwrap_or_default()
+                ),
+                None => "Requested release could not be checked".to_string(),
+            };
+            findings.push(json!({
+                "id": "requested-release-not-live",
+                "area": "release",
+                "severity": "warning",
+                "state": if requested["found"] == true { "confirmed" } else { "unknown" },
+                "title": title,
+                "detail": "Other releases on this track may still be serving; they are not the requested build.",
+                "inference": false,
+                "evidenceStrength": if requested["unresolved"].as_array().is_some_and(Vec::is_empty) { "high" } else { "low" },
+                "evidenceRefs": [format!("call-{}-releases", requested["track"].as_str().unwrap_or_default())],
+                "limitations": requested["unresolved"]
+            }));
+        }
+    }
+
+    let summary = if let Some(requested) = requested.as_ref().filter(|r| r["found"].is_null()) {
+        format!(
+            "The requested release could not be checked: {}",
+            requested["unresolved"]
+                .as_array()
+                .into_iter()
+                .flatten()
+                .filter_map(Value::as_str)
+                .collect::<Vec<_>>()
+                .join(" ")
+        )
+    } else if let Some(requested) = &requested {
+        let others = requested["otherServingVersionCodes"]
+            .as_array()
+            .filter(|codes| !codes.is_empty())
+            .map(|codes| {
+                format!(
+                    "; '{}' still serves {}",
+                    requested["track"].as_str().unwrap_or_default(),
+                    Value::Array(codes.clone())
+                )
+            })
+            .unwrap_or_default();
+        format!(
+            "Requested release {} on '{}' is {}{}{}.",
+            requested["versionCode"],
+            requested["track"].as_str().unwrap_or_default(),
+            requested["lifecycle"].as_str().unwrap_or("unknown"),
+            if requested["servingOnTrack"] == true {
+                " and serving"
+            } else {
+                ""
+            },
+            others
+        )
+    } else if lifecycle == "under_review" {
+        "The latest production release is under review and is not treated as published unless serving evidence exists.".to_string()
+    } else if lifecycle == "rejected" {
+        "The latest production release was rejected; any serving production version is an older release.".to_string()
     } else if lifecycle == "published" && !production_serving.is_empty() {
-        "A production release is published and serving."
+        "The latest production release is published and serving.".to_string()
     } else {
         "Release and quality evidence were collected; unsupported Console checks remain explicit."
+            .to_string()
     };
-    let overall = if lifecycle == "under_review" {
+    let requested_lifecycle = requested
+        .as_ref()
+        .map(|requested| requested["lifecycle"].as_str().unwrap_or("unknown"));
+    let overall = if matches!(requested_lifecycle, Some("under_review"))
+        || (requested_lifecycle.is_none() && lifecycle == "under_review")
+    {
         "waiting_on_google"
-    } else if findings
-        .iter()
-        .any(|finding| finding["severity"] == "warning")
+    } else if requested_lifecycle.unwrap_or(lifecycle) == "rejected"
+        || findings
+            .iter()
+            .any(|finding| finding["severity"] == "warning")
     {
         "attention_recommended"
     } else {
@@ -207,8 +329,10 @@ pub async fn report(client: &mut EvidenceClient<'_>, arguments: &Value) -> Value
         "coverageGaps": registry::console_coverage_gaps(),
         "sourceCalls": client.source_calls(),
         "warnings": client.warnings(),
+        "requestedRelease": requested,
         "releaseState": lifecycle,
-        "publicServingVersionCodes": production_serving,
+        "releaseStateScope": "app_production_latest",
+        "publicServingVersionCodes": if production_serving_known { json!(production_serving) } else { Value::Null },
         "testingServingVersionCodes": testing_serving,
         "overallAssessment": overall,
         "evidenceStrength": if client.status() == "complete" { "medium" } else { "low" },
@@ -302,6 +426,7 @@ fn normalize_release_track(
         "track": track_id,
         "trackIdInferred": inferred,
         "releasesUnresolved": releases_unresolved,
+        "releasesCallFailed": direct.is_none(),
         "type": track["type"],
         "displayName": track["displayName"],
         "servingVersionCodes": serving,
@@ -309,7 +434,7 @@ fn normalize_release_track(
     })
 }
 
-fn normalize_lifecycle(state: &str) -> &'static str {
+pub(super) fn normalize_lifecycle(state: &str) -> &'static str {
     match state {
         "RELEASE_LIFECYCLE_STATE_DRAFT" => "draft",
         "RELEASE_LIFECYCLE_STATE_NOT_SENT_FOR_REVIEW" => "not_sent_for_review",
@@ -335,4 +460,83 @@ fn review_safe_actions(lifecycle: &str) -> Vec<Value> {
     } else {
         Vec::new()
     }
+}
+
+/// Version codes arrive as integers from the releases API and as strings from
+/// the reporting and edits APIs, so both shapes are compared.
+pub(super) fn version_code_matches(value: &Value, version_code: i64) -> bool {
+    value.as_i64() == Some(version_code)
+        || value.as_str().and_then(|code| code.parse().ok()) == Some(version_code)
+}
+
+/// Finds the release in an `applications_tracks_releases_list` response whose
+/// active artifacts include `version_code`.
+pub(super) fn find_release(releases: &Value, version_code: i64) -> Option<&Value> {
+    releases["releases"].as_array()?.iter().find(|release| {
+        release["activeArtifacts"]
+            .as_array()
+            .into_iter()
+            .flatten()
+            .any(|artifact| version_code_matches(&artifact["versionCode"], version_code))
+    })
+}
+
+/// Status of one caller-named release, so an older release still serving on
+/// the same track is never reported as the outcome of the requested build.
+fn requested_release(tracks: &[Value], track: &str, version_code: i64) -> Value {
+    let mut unresolved = Vec::new();
+    let entry = tracks.iter().find(|entry| entry["track"] == track);
+    let lookup_failed = entry.is_none_or(|entry| entry["releasesCallFailed"] == true);
+    if lookup_failed {
+        unresolved.push(format!(
+            "The releases call for '{track}' failed, so the requested release could not be checked."
+        ));
+    }
+    let serving_unknown = entry.is_some_and(|entry| entry["servingUnknown"] == true);
+    if serving_unknown {
+        unresolved.push(format!(
+            "'{track}' is not listed by the Reporting API, so its serving state is unknown."
+        ));
+    }
+    if entry.is_some_and(|entry| entry["trackIdInferred"] == true) {
+        unresolved.push(format!("Track id '{track}' was inferred from the reporting API and may not be the Publisher track id."));
+    }
+    let release = entry
+        .and_then(|entry| entry["releases"].as_array())
+        .into_iter()
+        .flatten()
+        .find(|release| {
+            release["versionCodes"]
+                .as_array()
+                .into_iter()
+                .flatten()
+                .any(|code| version_code_matches(code, version_code))
+        });
+    if !lookup_failed && release.is_none() {
+        unresolved.push(format!(
+            "No active release on '{track}' contains versionCode {version_code}."
+        ));
+    }
+    let serving_on_track = entry
+        .and_then(|entry| entry["servingVersionCodes"].as_array())
+        .into_iter()
+        .flatten()
+        .any(|code| version_code_matches(code, version_code));
+    let other_serving: Vec<Value> = entry
+        .and_then(|entry| entry["servingVersionCodes"].as_array())
+        .into_iter()
+        .flatten()
+        .filter(|code| !version_code_matches(code, version_code))
+        .cloned()
+        .collect();
+    json!({
+        "track": track,
+        "versionCode": version_code,
+        "found": if lookup_failed { Value::Null } else { json!(release.is_some()) },
+        "releaseName": release.map(|release| release["name"].clone()),
+        "lifecycle": release.and_then(|release| release["lifecycle"].as_str()).unwrap_or("unknown"),
+        "servingOnTrack": if serving_unknown { Value::Null } else { json!(serving_on_track) },
+        "otherServingVersionCodes": other_serving,
+        "unresolved": unresolved,
+    })
 }

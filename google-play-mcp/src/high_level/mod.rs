@@ -4,6 +4,7 @@ mod explain;
 mod project_status;
 mod quality;
 mod registry;
+mod verify_release;
 
 use std::sync::Arc;
 use std::time::Duration;
@@ -20,6 +21,7 @@ enum ReportKind {
     ProjectStatus,
     QualityHealth,
     ExplainConsoleMessage,
+    ReleaseVerification,
 }
 
 struct ReportHandler(ReportKind);
@@ -38,6 +40,9 @@ impl CustomToolHandler for ReportHandler {
                 ReportKind::ProjectStatus => project_status::report(&mut client, &arguments).await,
                 ReportKind::QualityHealth => quality::report(&client, &arguments).await,
                 ReportKind::ExplainConsoleMessage => explain::report(&mut client, &arguments).await,
+                ReportKind::ReleaseVerification => {
+                    verify_release::report(&mut client, &arguments).await
+                }
             }
         };
         let report = match tokio::time::timeout(Duration::from_secs(45), report_future).await {
@@ -77,7 +82,9 @@ pub fn build_tools() -> Vec<CustomToolSpec> {
                 "lookbackDays": {"type": "integer", "minimum": 1, "maximum": 365, "default": 90},
                 "cohorts": {"type": "array", "items": {"enum": ["OS_PUBLIC", "APP_TESTERS"]}},
                 "include": {"type": "array", "items": {"enum": ["releases", "quality", "reviews", "recoveries"]}},
-                "detail": {"enum": ["summary", "evidence"], "default": "summary"}
+                "detail": {"enum": ["summary", "evidence"], "default": "summary"},
+                "track": {"type": "string", "description": "Publisher track id of a release to report on first, e.g. production."},
+                "versionCode": {"type": "integer", "description": "Version code of the release to report on; requires track."}
             })),
             ReportKind::ProjectStatus,
         ),
@@ -107,6 +114,26 @@ pub fn build_tools() -> Vec<CustomToolSpec> {
                 schema
             },
             ReportKind::ExplainConsoleMessage,
+        ),
+        tool(
+            "report_release_verification",
+            "Verify one release in a single call: whether the version code is on the track, its lifecycle, and optionally its bundle checksum and release notes (these two need an open editId).",
+            {
+                let mut schema = package_schema(json!({
+                    "track": {"type": "string", "minLength": 1},
+                    "versionCode": {"type": "integer"},
+                    "expectedChecksum": {"type": "string", "description": "Hex SHA-256 (or 40-char SHA-1) of the uploaded bundle."},
+                    "releaseNotes": {"type": "array", "items": {
+                        "type": "object",
+                        "properties": {"language": {"type": "string"}, "text": {"type": "string"}},
+                        "required": ["language", "text"]
+                    }},
+                    "editId": {"type": "string", "description": "An open edit id (from edits_insert); required to read checksums and release notes."}
+                }));
+                schema["required"] = json!(["packageName", "track", "versionCode"]);
+                schema
+            },
+            ReportKind::ReleaseVerification,
         ),
     ]
 }

@@ -20,7 +20,7 @@ Keep credentials outside the media root.
 
 ## High-level reporting
 
-The four `report_*` tools compose read-only generated methods and return a
+The five `report_*` tools compose read-only generated methods and return a
 normalized evidence envelope. They never publish, create or commit an edit,
 reply to a review, deploy a recovery, refund an order, or otherwise mutate Play
 state.
@@ -28,9 +28,10 @@ state.
 | Tool | Use it for |
 |------|------------|
 | `report_capabilities` | Check Publisher and Developer Reporting access independently, inspect supported metric/cohort combinations, and see Console-only gaps. |
-| `report_project_status` | Summarize serving tracks, direct release lifecycle, quality, review counts, and recovery actions. |
+| `report_project_status` | Summarize serving tracks, direct release lifecycle, quality, review counts, and recovery actions. Pass `track` + `versionCode` to report that release first, so an older serving release is not mistaken for it. |
 | `report_quality_health` | Query freshness and Android vitals without confusing empty data with a measured zero. Optionally include error counts, grouped issues, and anomalies. |
 | `report_explain_console_message` | Classify exact user-supplied Console text and produce safe diagnostic steps without claiming a Console-only warning is resolved. |
+| `report_release_verification` | Verify one release in a single call: version code on track, lifecycle, and optionally bundle checksum and release notes. Checksum and notes need an open `editId` (create with `edits_insert`, delete with `edits_delete` after); without it they are reported `unverifiable`. |
 
 Set `probe` to `false` on `report_capabilities` to inspect the static capability
 registry and coverage matrix without contacting Google; API availability is then
