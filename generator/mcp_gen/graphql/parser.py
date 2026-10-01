@@ -11,7 +11,6 @@ from graphql import (
     GraphQLList,
     GraphQLNonNull,
     GraphQLScalarType,
-    Undefined,
     build_ast_schema,
     build_client_schema,
     parse,
@@ -66,7 +65,7 @@ def _type_to_schema(gql_type: Any) -> dict[str, Any]:
 
 
 def _is_required_argument(arg: GraphQLArgument) -> bool:
-    return isinstance(arg.type, GraphQLNonNull) and arg.default_value is Undefined
+    return isinstance(arg.type, GraphQLNonNull) and arg.default is None
 
 
 def _field_input_schema(arguments: dict[str, GraphQLArgument]) -> dict[str, Any]:
@@ -88,10 +87,7 @@ def _is_leaf(gql_type: Any) -> bool:
 
 def _requires_args(field: Any) -> bool:
     """True if the field has a required argument we cannot supply in a selection."""
-    return any(
-        isinstance(arg.type, GraphQLNonNull) and arg.default_value is Undefined
-        for arg in getattr(field, "args", {}).values()
-    )
+    return any(_is_required_argument(arg) for arg in getattr(field, "args", {}).values())
 
 
 def _selection_for_type(gql_type: Any, depth: int = 2) -> str:
@@ -169,7 +165,7 @@ def _build_document(operation_type: str, field_name: str, args: dict[str, GraphQ
         # str(arg.type) yields the full SDL type reference, preserving `!` and
         # `[...]` so required and list variables are declared correctly.
         variable_type = arg.type
-        if isinstance(arg.type, GraphQLNonNull) and arg.default_value is not Undefined:
+        if isinstance(arg.type, GraphQLNonNull) and arg.default is not None:
             variable_type = arg.type.of_type
         arg_defs.append(f"${name}: {variable_type}")
         arg_vars.append(f"{name}: ${name}")
