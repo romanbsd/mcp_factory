@@ -102,7 +102,8 @@ fn exposes_exactly_the_four_read_only_p0_tools() {
             "report_capabilities",
             "report_project_status",
             "report_quality_health",
-            "report_explain_console_message"
+            "report_explain_console_message",
+            "report_release_verification"
         ]
     );
     assert!(tools
@@ -913,4 +914,328 @@ async fn grouped_error_lookup_uses_utc_not_los_angeles() {
         .1;
     assert_eq!(issues_call["interval.startTime.timeZone.id"], "UTC");
     assert_eq!(issues_call["interval.endTime.timeZone.id"], "UTC");
+}
+
+fn rejected_13_with_12_serving() -> FakeInvoker {
+    FakeInvoker::default()
+        .with(
+            "apps_fetchReleaseFilterOptions",
+            vec![ok(json!({"tracks": [
+                {"type": "PRODUCTION", "displayName": "Production", "servingReleases": [{"displayName": "1.1", "versionCodes": ["12"]}]}
+            ]}))],
+        )
+        .with(
+            "applications_tracks_releases_list",
+            vec![ok(json!({"releases": [
+                {"releaseName": "1.2", "releaseLifecycleState": "RELEASE_LIFECYCLE_STATE_NOT_APPROVED", "activeArtifacts": [{"versionCode": 13}]},
+                {"releaseName": "1.1", "releaseLifecycleState": "RELEASE_LIFECYCLE_STATE_PUBLISHED", "activeArtifacts": [{"versionCode": 12}]}
+            ]}))],
+        )
+}
+
+#[tokio::test]
+async fn project_status_reports_requested_release_not_older_serving_one() {
+    let invoker = rejected_13_with_12_serving();
+    let report = run(
+        "report_project_status",
+        json!({"packageName": "org.example.app", "include": ["releases"], "track": "production", "versionCode": 13}),
+        &invoker,
+    )
+    .await;
+
+    assert_eq!(report["requestedRelease"]["lifecycle"], "rejected");
+    assert_eq!(report["requestedRelease"]["servingOnTrack"], false);
+    assert_eq!(report["requestedRelease"]["otherServingVersionCodes"], json!(["12"]));
+    assert_eq!(report["overallAssessment"], "attention_recommended");
+    let summary = report["summary"].as_str().unwrap();
+    assert!(summary.contains("13") && summary.contains("rejected"), "{summary}");
+    assert_eq!(report["releaseStateScope"], "app_production_latest");
+}
+
+#[tokio::test]
+async fn project_status_flags_requested_release_missing_from_track() {
+    let invoker = rejected_13_with_12_serving();
+    let report = run(
+        "report_project_status",
+        json!({"packageName": "org.example.app", "include": ["releases"], "track": "production", "versionCode": 14}),
+        &invoker,
+    )
+    .await;
+
+    assert_eq!(report["requestedRelease"]["found"], false);
+    assert_eq!(report["requestedRelease"]["unresolved"].as_array().unwrap().len(), 1);
+    assert_eq!(report["findings"][0]["id"], "requested-release-not-live");
+}
+
+#[tokio::test]
+async fn release_verification_matches_checksum_and_notes_inside_an_edit() {
+    let sha = "AB".repeat(32);
+    let invoker = rejected_13_with_12_serving()
+        .with(
+            "edits_bundles_list",
+            vec![ok(json!({"bundles": [{"versionCode": 13, "sha256": sha.to_ascii_lowercase()}]}))],
+        )
+        .with(
+            "edits_tracks_get",
+            vec![ok(json!({"releases": [{"versionCodes": ["13"], "releaseNotes": [{"language": "en-US", "text": "Fixes. "}]}]}))],
+        );
+    let report = run(
+        "report_release_verification",
+        json!({
+            "packageName": "org.example.app", "track": "production", "versionCode": 13,
+            "expectedChecksum": sha, "releaseNotes": [{"language": "en-US", "text": "Fixes."}], "editId": "e1"
+        }),
+        &invoker,
+    )
+    .await;
+
+    assert_eq!(report["lifecycle"], "rejected");
+    assert_eq!(report["checks"]["releaseFound"]["result"], "match");
+    assert_eq!(report["checks"]["checksum"]["result"], "match");
+    assert_eq!(report["checks"]["releaseNotes"]["result"], "match");
+    assert_eq!(report["allMatch"], true);
+    assert!(invoker.calls().iter().all(|(method, _)| registry::allowed(method)));
+}
+
+#[tokio::test]
+async fn release_verification_never_claims_unreadable_checks_match() {
+    let invoker = rejected_13_with_12_serving();
+    let report = run(
+        "report_release_verification",
+        json!({"packageName": "org.example.app", "track": "production", "versionCode": 13, "expectedChecksum": "a".repeat(64)}),
+        &invoker,
+    )
+    .await;
+
+    assert_eq!(report["checks"]["checksum"]["result"], "unverifiable");
+    assert_eq!(report["checks"]["releaseNotes"]["result"], "not_requested");
+    assert_eq!(report["allMatch"], false);
+    assert_eq!(invoker.calls().len(), 1);
+}
+
+#[tokio::test]
+async fn release_verification_reports_checksum_mismatch_and_missing_version() {
+    let invoker = rejected_13_with_12_serving().with(
+        "edits_bundles_list",
+        vec![ok(json!({"bundles": [{"versionCode": 13, "sha256": "b".repeat(64)}]}))],
+    );
+    let report = run(
+        "report_release_verification",
+        json!({"packageName": "org.example.app", "track": "production", "versionCode": 13, "expectedChecksum": "a".repeat(64), "editId": "e1"}),
+        &invoker,
+    )
+    .await;
+    assert_eq!(report["checks"]["checksum"]["result"], "mismatch");
+    assert_eq!(report["allMatch"], false);
+
+    let report = run(
+        "report_release_verification",
+        json!({"packageName": "org.example.app", "track": "production", "versionCode": 99}),
+        &rejected_13_with_12_serving(),
+    )
+    .await;
+    assert_eq!(report["checks"]["releaseFound"]["result"], "mismatch");
+}
+
+#[tokio::test]
+async fn foreground_service_rejection_gets_safe_concrete_steps() {
+    let message = "Your app uses the FOREGROUND_SERVICE_DATA_SYNC permission but has not completed the foreground service permissions declaration.";
+    let report = run(
+        "report_explain_console_message",
+        json!({"packageName": "org.example.app", "message": message}),
+        &FakeInvoker::default(),
+    )
+    .await;
+
+    assert_eq!(report["classification"]["category"], "foreground_service");
+    assert_eq!(report["findings"][0]["exactError"], message);
+    let actions = report["actions"].as_array().unwrap();
+    assert!(actions[0]["title"].as_str().unwrap().contains("merged manifest"));
+    assert!(actions.iter().any(|action| action["requiresConsole"] == true));
+    assert!(actions
+        .iter()
+        .all(|action| !action["title"].as_str().unwrap().starts_with("Remove")));
+    assert!(report["coverageGaps"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|gap| gap["area"] == "foreground_service_declaration"));
+}
+
+#[tokio::test]
+async fn project_status_queries_a_requested_track_the_reporting_api_omits() {
+    let invoker = rejected_13_with_12_serving().with(
+        "applications_tracks_releases_list",
+        vec![
+            ok(json!({"releases": []})),
+            ok(json!({"releases": [{"releaseName": "qa", "releaseLifecycleState": "RELEASE_LIFECYCLE_STATE_PUBLISHED", "activeArtifacts": [{"versionCode": 13}]}]})),
+        ],
+    );
+    let report = run(
+        "report_project_status",
+        json!({"packageName": "org.example.app", "include": ["releases"], "track": "qa-team", "versionCode": 13}),
+        &invoker,
+    )
+    .await;
+
+    assert_eq!(report["requestedRelease"]["found"], true);
+    assert_eq!(report["requestedRelease"]["lifecycle"], "published");
+    assert!(report["requestedRelease"]["servingOnTrack"].is_null());
+    assert!(invoker.calls().iter().any(|(_, args)| args["parent"]
+        == "applications/org.example.app/tracks/qa-team"));
+}
+
+#[tokio::test]
+async fn project_status_does_not_call_a_failed_lookup_missing() {
+    let invoker = FakeInvoker::default()
+        .with(
+            "apps_fetchReleaseFilterOptions",
+            vec![ok(json!({"tracks": [
+                {"type": "PRODUCTION", "displayName": "Production", "servingReleases": [{"versionCodes": ["12"]}]}
+            ]}))],
+        )
+        .with(
+            "applications_tracks_releases_list",
+            vec![error(404, "not found", json!({}))],
+        );
+    let report = run(
+        "report_project_status",
+        json!({"packageName": "org.example.app", "include": ["releases"], "track": "production", "versionCode": 13}),
+        &invoker,
+    )
+    .await;
+
+    assert!(report["requestedRelease"]["found"].is_null());
+    let unresolved = report["requestedRelease"]["unresolved"].to_string();
+    assert!(unresolved.contains("could not be checked"), "{unresolved}");
+    assert!(!unresolved.contains("No active release"), "{unresolved}");
+    assert_eq!(report["findings"][0]["title"], "Requested release could not be checked");
+    assert!(report["summary"].as_str().unwrap().contains("could not be checked"));
+}
+
+#[tokio::test]
+async fn project_status_warns_on_unpublished_requested_release() {
+    let invoker = FakeInvoker::default()
+        .with(
+            "apps_fetchReleaseFilterOptions",
+            vec![ok(json!({"tracks": [{"type": "PRODUCTION", "displayName": "Production", "servingReleases": []}]}))],
+        )
+        .with(
+            "applications_tracks_releases_list",
+            vec![ok(json!({"releases": [{"releaseName": "1.2", "releaseLifecycleState": "RELEASE_LIFECYCLE_STATE_DRAFT", "activeArtifacts": [{"versionCode": 13}]}]}))],
+        );
+    let report = run(
+        "report_project_status",
+        json!({"packageName": "org.example.app", "include": ["releases"], "track": "production", "versionCode": 13}),
+        &invoker,
+    )
+    .await;
+
+    assert_eq!(report["requestedRelease"]["lifecycle"], "draft");
+    assert_eq!(report["findings"][0]["id"], "requested-release-not-live");
+    assert_eq!(report["overallAssessment"], "attention_recommended");
+}
+
+#[tokio::test]
+async fn project_status_flags_version_code_without_track() {
+    let invoker = rejected_13_with_12_serving();
+    let report = run(
+        "report_project_status",
+        json!({"packageName": "org.example.app", "include": ["releases"], "versionCode": 13}),
+        &invoker,
+    )
+    .await;
+
+    assert!(report["requestedRelease"]["found"].is_null());
+    assert!(report["summary"].as_str().unwrap().contains("Both track and versionCode"));
+    assert_eq!(report["overallAssessment"], "attention_recommended");
+}
+
+#[tokio::test]
+async fn foreground_service_wins_over_broader_categories() {
+    let report = run(
+        "report_explain_console_message",
+        json!({
+            "packageName": "org.example.app",
+            "message": "Your app bundle uses foreground service permissions without a declaration.",
+            "consoleArea": "App content"
+        }),
+        &FakeInvoker::default(),
+    )
+    .await;
+
+    assert_eq!(report["classification"]["category"], "foreground_service");
+}
+
+#[tokio::test]
+async fn release_verification_marks_missing_hash_unverifiable_and_labels_edit_source() {
+    let invoker = rejected_13_with_12_serving()
+        .with(
+            "edits_bundles_list",
+            vec![ok(json!({"bundles": [{"versionCode": 13}]}))],
+        )
+        .with(
+            "edits_tracks_get",
+            vec![ok(json!({"releases": [{"versionCodes": ["13"], "releaseNotes": [{"language": "en-US", "text": "Fixes."}]}]}))],
+        );
+    let report = run(
+        "report_release_verification",
+        json!({
+            "packageName": "org.example.app", "track": "production", "versionCode": 13,
+            "expectedChecksum": "a".repeat(64), "releaseNotes": [{"language": "en-US", "text": "Fixes."}], "editId": "e1"
+        }),
+        &invoker,
+    )
+    .await;
+
+    assert_eq!(report["checks"]["checksum"]["result"], "unverifiable");
+    assert!(report["checks"]["releaseNotes"]["source"]
+        .as_str()
+        .unwrap()
+        .contains("uncommitted"));
+    assert_eq!(report["allMatch"], false);
+}
+
+#[tokio::test]
+async fn directly_looked_up_production_does_not_claim_it_is_not_serving() {
+    let invoker = FakeInvoker::default()
+        .with(
+            "apps_fetchReleaseFilterOptions",
+            vec![ok(json!({"tracks": []}))],
+        )
+        .with(
+            "applications_tracks_releases_list",
+            vec![ok(json!({"releases": [{"releaseName": "1.2", "releaseLifecycleState": "RELEASE_LIFECYCLE_STATE_IN_REVIEW", "activeArtifacts": [{"versionCode": 13}]}]}))],
+        );
+    let report = run(
+        "report_project_status",
+        json!({"packageName": "org.example.app", "include": ["releases"], "track": "production", "versionCode": 13}),
+        &invoker,
+    )
+    .await;
+
+    assert_eq!(report["requestedRelease"]["lifecycle"], "under_review");
+    assert!(report["requestedRelease"]["servingOnTrack"].is_null());
+    assert!(report["publicServingVersionCodes"].is_null());
+    assert!(report["findings"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .all(|finding| finding["id"] != "production-release-in-review"));
+}
+
+#[tokio::test]
+async fn lone_track_does_not_spend_a_direct_releases_call() {
+    let invoker = rejected_13_with_12_serving();
+    run(
+        "report_project_status",
+        json!({"packageName": "org.example.app", "include": ["releases"], "track": "qa-team"}),
+        &invoker,
+    )
+    .await;
+
+    assert!(invoker
+        .calls()
+        .iter()
+        .all(|(_, args)| args["parent"] != "applications/org.example.app/tracks/qa-team"));
 }
