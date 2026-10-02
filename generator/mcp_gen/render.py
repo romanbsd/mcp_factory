@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import tomllib
 from pathlib import Path
 from typing import Any
 
@@ -55,6 +56,14 @@ def _env() -> Environment:
     return env
 
 
+def _is_workspace_member_manifest(path: Path) -> bool:
+    """An existing manifest without its own `[workspace]` belongs to an enclosing
+    workspace; it is handwritten from then on, so regeneration must keep it."""
+    if not path.exists():
+        return False
+    return "workspace" not in tomllib.loads(path.read_text(encoding="utf-8"))
+
+
 def render_crate(
     result: GenerationResult,
     *,
@@ -87,6 +96,8 @@ def render_crate(
     }
 
     for template_name, target in templates.items():
+        if template_name == "Cargo.toml.j2" and _is_workspace_member_manifest(target):
+            continue
         if template_name == "config.toml.j2" and config_text is not None:
             rendered = config_text
         else:

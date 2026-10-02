@@ -37,3 +37,26 @@ def test_render_preserves_handwritten_extensions(tmp_path: Path) -> None:
     main = (output / "src" / "main.rs").read_text(encoding="utf-8")
     assert "mod extensions;" in main
     assert ".custom_tools(&custom_tools)?" in main
+
+
+def test_render_preserves_workspace_member_manifest(tmp_path: Path) -> None:
+    output = tmp_path / "server"
+    output.mkdir()
+    manifest = output / "Cargo.toml"
+    member = '[package]\nname = "demo-mcp"\n\n[dependencies]\nextra.workspace = true\n'
+    manifest.write_text(member, encoding="utf-8")
+    result = GenerationResult(tools=[], resources=[], schema_kind="openapi", base_url=None)
+    kwargs = dict(
+        output_dir=output,
+        crate_name="demo-mcp",
+        base_url="https://example.test",
+        core_path="../core",
+        transport="stdio",
+    )
+
+    render_crate(result, **kwargs)
+    assert manifest.read_text(encoding="utf-8") == member
+
+    manifest.write_text("[workspace]\n", encoding="utf-8")
+    render_crate(result, **kwargs)
+    assert "[workspace.dependencies]" in manifest.read_text(encoding="utf-8")

@@ -81,51 +81,49 @@ impl<'a> EvidenceClient<'a> {
                 .invoke_read_only(method, arguments.clone())
                 .await
             {
-                Ok(result) if !result.is_error => {
-                    match result_value(result) {
-                        Ok(value) => {
-                            let mut state = self.state.lock().unwrap();
-                            state.successes += 1;
-                            state.source_calls.push(call_record(
-                                id,
-                                method,
-                                &arguments,
-                                &started_at,
-                                started.elapsed(),
-                                CallOutcome {
-                                    attempts,
-                                    result_state: "success",
-                                    pagination_complete: true,
-                                    error: None,
-                                },
-                            ));
-                            return Some(value);
-                        }
-                        Err(error) => {
-                            let mut state = self.state.lock().unwrap();
-                            state.failures += 1;
-                            let error = json!({"message": error.to_string()});
-                            state.source_calls.push(call_record(
-                                id,
-                                method,
-                                &arguments,
-                                &started_at,
-                                started.elapsed(),
-                                CallOutcome {
-                                    attempts,
-                                    result_state: "error",
-                                    pagination_complete: true,
-                                    error: Some(error),
-                                },
-                            ));
-                            state.warnings.push(json!({
-                                "sourceCall": id,
-                                "message": "Source returned a non-JSON response"
-                            }));
-                            return None;
-                        }
+                Ok(result) if !result.is_error => match result_value(result) {
+                    Ok(value) => {
+                        let mut state = self.state.lock().unwrap();
+                        state.successes += 1;
+                        state.source_calls.push(call_record(
+                            id,
+                            method,
+                            &arguments,
+                            &started_at,
+                            started.elapsed(),
+                            CallOutcome {
+                                attempts,
+                                result_state: "success",
+                                pagination_complete: true,
+                                error: None,
+                            },
+                        ));
+                        return Some(value);
                     }
-                }
+                    Err(error) => {
+                        let mut state = self.state.lock().unwrap();
+                        state.failures += 1;
+                        let error = json!({"message": error.to_string()});
+                        state.source_calls.push(call_record(
+                            id,
+                            method,
+                            &arguments,
+                            &started_at,
+                            started.elapsed(),
+                            CallOutcome {
+                                attempts,
+                                result_state: "error",
+                                pagination_complete: true,
+                                error: Some(error),
+                            },
+                        ));
+                        state.warnings.push(json!({
+                            "sourceCall": id,
+                            "message": "Source returned a non-JSON response"
+                        }));
+                        return None;
+                    }
+                },
                 Ok(result) => {
                     let error = error_value(&result);
                     if attempts < 3 && transient_error(&error) {

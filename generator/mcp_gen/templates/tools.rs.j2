@@ -1,6 +1,19 @@
-use mcp_factory_core::{
-    ExecutionKind{% if tools | selectattr('execution_kind', 'equalto', 'graphql') | list %}, GraphQLOperation{% endif %}{% if tools | selectattr('execution_kind', 'equalto', 'rest') | list %}, {% if tools | selectattr('rest.media_path_template') | list %}MediaUploadOperation, {% endif %}ParamBinding, ParamLocation, RestOperation{% endif %}, ToolHints, ToolSpec,
-};
+{% set has_graphql = tools | selectattr('execution_kind', 'equalto', 'graphql') | list %}
+{% set has_rest = tools | selectattr('execution_kind', 'equalto', 'rest') | list %}
+use mcp_factory_core::ExecutionKind;
+{% if has_graphql %}
+use mcp_factory_core::GraphQLOperation;
+{% endif %}
+{% if has_rest %}
+{% if tools | selectattr('rest.media_path_template') | list %}
+use mcp_factory_core::MediaUploadOperation;
+{% endif %}
+use mcp_factory_core::ParamBinding;
+use mcp_factory_core::ParamLocation;
+use mcp_factory_core::RestOperation;
+{% endif %}
+use mcp_factory_core::ToolHints;
+use mcp_factory_core::ToolSpec;
 pub fn build_tools() -> Vec<ToolSpec> {
     vec![
 {% for tool in tools %}

@@ -203,7 +203,11 @@ fn method_succeeded(source_calls: &[Value], method: &str) -> bool {
 }
 
 fn diagnose_method(source_calls: &[Value], method: &str) -> Value {
-    let Some(call) = source_calls.iter().rev().find(|call| call["method"] == method) else {
+    let Some(call) = source_calls
+        .iter()
+        .rev()
+        .find(|call| call["method"] == method)
+    else {
         return json!({"condition": "not_probed"});
     };
     if call["resultState"] == "success" {

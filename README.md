@@ -152,15 +152,15 @@ example using four evidence-bearing reporting tools.
 
 ### Build the Google Play MCP release binary
 
-From the repository root, build the standalone Google Play MCP crate in release
+From the repository root, build the Google Play MCP workspace member in release
 mode:
 
 ```bash
-cargo build --release --manifest-path google-play-mcp/Cargo.toml
+cargo build --release -p google-play-mcp
 ```
 
 The binary is written to
-`google-play-mcp/target/release/google-play-mcp`.
+`target/release/google-play-mcp`.
 
 ### Run generated server (stdio)
 

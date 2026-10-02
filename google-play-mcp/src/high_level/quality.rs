@@ -121,11 +121,7 @@ pub async fn report(client: &EvidenceClient<'_>, arguments: &Value) -> Value {
     })
 }
 
-async fn query_error_evidence(
-    client: &EvidenceClient<'_>,
-    package: &str,
-    lookback: i64,
-) -> Value {
+async fn query_error_evidence(client: &EvidenceClient<'_>, package: &str, lookback: i64) -> Value {
     let name = format!("apps/{package}/errorCountMetricSet");
     let metadata = client
         .call(

@@ -784,7 +784,10 @@ async fn duplicate_track_ids_only_issue_one_releases_call() {
     )
     .await;
 
-    assert_eq!(report["tracks"][0]["releases"], report["tracks"][1]["releases"]);
+    assert_eq!(
+        report["tracks"][0]["releases"],
+        report["tracks"][1]["releases"]
+    );
     let calls = invoker.calls();
     assert_eq!(
         calls
@@ -862,11 +865,11 @@ async fn error_count_query_sends_a_date_only_end_time_from_freshness() {
                 }]}
             }))],
         )
+        .with("vitals_errors_counts_query", vec![ok(json!({"rows": []}))])
         .with(
-            "vitals_errors_counts_query",
-            vec![ok(json!({"rows": []}))],
-        )
-        .with("vitals_errors_issues_search", vec![ok(json!({"errorIssues": []}))]);
+            "vitals_errors_issues_search",
+            vec![ok(json!({"errorIssues": []}))],
+        );
 
     run(
         "report_quality_health",
@@ -893,11 +896,11 @@ async fn grouped_error_lookup_uses_utc_not_los_angeles() {
             "vitals_errors_counts_get",
             vec![ok(json!({"freshnessInfo": {"freshnesses": []}}))],
         )
+        .with("vitals_errors_counts_query", vec![ok(json!({"rows": []}))])
         .with(
-            "vitals_errors_counts_query",
-            vec![ok(json!({"rows": []}))],
-        )
-        .with("vitals_errors_issues_search", vec![ok(json!({"errorIssues": []}))]);
+            "vitals_errors_issues_search",
+            vec![ok(json!({"errorIssues": []}))],
+        );
 
     run(
         "report_quality_health",
@@ -945,10 +948,16 @@ async fn project_status_reports_requested_release_not_older_serving_one() {
 
     assert_eq!(report["requestedRelease"]["lifecycle"], "rejected");
     assert_eq!(report["requestedRelease"]["servingOnTrack"], false);
-    assert_eq!(report["requestedRelease"]["otherServingVersionCodes"], json!(["12"]));
+    assert_eq!(
+        report["requestedRelease"]["otherServingVersionCodes"],
+        json!(["12"])
+    );
     assert_eq!(report["overallAssessment"], "attention_recommended");
     let summary = report["summary"].as_str().unwrap();
-    assert!(summary.contains("13") && summary.contains("rejected"), "{summary}");
+    assert!(
+        summary.contains("13") && summary.contains("rejected"),
+        "{summary}"
+    );
     assert_eq!(report["releaseStateScope"], "app_production_latest");
 }
 
@@ -963,7 +972,13 @@ async fn project_status_flags_requested_release_missing_from_track() {
     .await;
 
     assert_eq!(report["requestedRelease"]["found"], false);
-    assert_eq!(report["requestedRelease"]["unresolved"].as_array().unwrap().len(), 1);
+    assert_eq!(
+        report["requestedRelease"]["unresolved"]
+            .as_array()
+            .unwrap()
+            .len(),
+        1
+    );
     assert_eq!(report["findings"][0]["id"], "requested-release-not-live");
 }
 
@@ -994,7 +1009,10 @@ async fn release_verification_matches_checksum_and_notes_inside_an_edit() {
     assert_eq!(report["checks"]["checksum"]["result"], "match");
     assert_eq!(report["checks"]["releaseNotes"]["result"], "match");
     assert_eq!(report["allMatch"], true);
-    assert!(invoker.calls().iter().all(|(method, _)| registry::allowed(method)));
+    assert!(invoker
+        .calls()
+        .iter()
+        .all(|(method, _)| registry::allowed(method)));
 }
 
 #[tokio::test]
@@ -1017,7 +1035,9 @@ async fn release_verification_never_claims_unreadable_checks_match() {
 async fn release_verification_reports_checksum_mismatch_and_missing_version() {
     let invoker = rejected_13_with_12_serving().with(
         "edits_bundles_list",
-        vec![ok(json!({"bundles": [{"versionCode": 13, "sha256": "b".repeat(64)}]}))],
+        vec![ok(
+            json!({"bundles": [{"versionCode": 13, "sha256": "b".repeat(64)}]}),
+        )],
     );
     let report = run(
         "report_release_verification",
@@ -1050,8 +1070,13 @@ async fn foreground_service_rejection_gets_safe_concrete_steps() {
     assert_eq!(report["classification"]["category"], "foreground_service");
     assert_eq!(report["findings"][0]["exactError"], message);
     let actions = report["actions"].as_array().unwrap();
-    assert!(actions[0]["title"].as_str().unwrap().contains("merged manifest"));
-    assert!(actions.iter().any(|action| action["requiresConsole"] == true));
+    assert!(actions[0]["title"]
+        .as_str()
+        .unwrap()
+        .contains("merged manifest"));
+    assert!(actions
+        .iter()
+        .any(|action| action["requiresConsole"] == true));
     assert!(actions
         .iter()
         .all(|action| !action["title"].as_str().unwrap().starts_with("Remove")));
@@ -1081,8 +1106,10 @@ async fn project_status_queries_a_requested_track_the_reporting_api_omits() {
     assert_eq!(report["requestedRelease"]["found"], true);
     assert_eq!(report["requestedRelease"]["lifecycle"], "published");
     assert!(report["requestedRelease"]["servingOnTrack"].is_null());
-    assert!(invoker.calls().iter().any(|(_, args)| args["parent"]
-        == "applications/org.example.app/tracks/qa-team"));
+    assert!(invoker
+        .calls()
+        .iter()
+        .any(|(_, args)| args["parent"] == "applications/org.example.app/tracks/qa-team"));
 }
 
 #[tokio::test]
@@ -1109,8 +1136,14 @@ async fn project_status_does_not_call_a_failed_lookup_missing() {
     let unresolved = report["requestedRelease"]["unresolved"].to_string();
     assert!(unresolved.contains("could not be checked"), "{unresolved}");
     assert!(!unresolved.contains("No active release"), "{unresolved}");
-    assert_eq!(report["findings"][0]["title"], "Requested release could not be checked");
-    assert!(report["summary"].as_str().unwrap().contains("could not be checked"));
+    assert_eq!(
+        report["findings"][0]["title"],
+        "Requested release could not be checked"
+    );
+    assert!(report["summary"]
+        .as_str()
+        .unwrap()
+        .contains("could not be checked"));
 }
 
 #[tokio::test]
@@ -1147,7 +1180,10 @@ async fn project_status_flags_version_code_without_track() {
     .await;
 
     assert!(report["requestedRelease"]["found"].is_null());
-    assert!(report["summary"].as_str().unwrap().contains("Both track and versionCode"));
+    assert!(report["summary"]
+        .as_str()
+        .unwrap()
+        .contains("Both track and versionCode"));
     assert_eq!(report["overallAssessment"], "attention_recommended");
 }
 
