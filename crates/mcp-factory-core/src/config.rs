@@ -401,8 +401,14 @@ mod tests {
 #[cfg(test)]
 mod temp_env {
     use std::env;
+    use std::sync::Mutex;
+
+    // Env is process-global and tests run in parallel; serialize every mutation
+    // so one test's override never leaks into another's `merge_env`.
+    static ENV_LOCK: Mutex<()> = Mutex::new(());
 
     pub fn with_var<F: FnOnce()>(key: &str, value: Option<&str>, f: F) {
+        let _guard = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
         let previous = env::var(key).ok();
         match value {
             Some(v) => env::set_var(key, v),
