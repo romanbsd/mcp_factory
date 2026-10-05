@@ -1,6 +1,6 @@
 [package]
 name = "google-play-mcp"
-version = "0.1.0"
+version = "0.2.0"
 edition.workspace = true
 
 [dependencies]
@@ -11,6 +11,15 @@ anyhow.workspace = true
 tracing.workspace = true
 tracing-subscriber.workspace = true
 futures-util.workspace = true
+reqwest.workspace = true
+gcp_auth.workspace = true
+base64.workspace = true
+percent-encoding.workspace = true
+sha2.workspace = true
+csv.workspace = true
+
+[dev-dependencies]
+wiremock.workspace = true
 
 [[bin]]
 name = "google-play-mcp"

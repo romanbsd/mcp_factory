@@ -334,10 +334,13 @@ fn body_to_content(body: ToolBody, tool_name: &str) -> ContentBlock {
             } else if mime.starts_with("audio/") {
                 ContentBlock::audio(encoded, mime)
             } else {
-                ContentBlock::resource(ResourceContents::blob(
-                    encoded,
-                    format!("embedded://tool/{tool_name}/response"),
-                ))
+                ContentBlock::resource(
+                    ResourceContents::blob(
+                        encoded,
+                        format!("embedded://tool/{tool_name}/response"),
+                    )
+                    .with_mime_type(mime),
+                )
             }
         }
     }
@@ -495,9 +498,11 @@ mod tests {
         let ContentBlock::Resource(resource) = block else {
             panic!("expected resource block");
         };
-        let ResourceContents::BlobResourceContents { uri, .. } = resource.resource else {
+        let ResourceContents::BlobResourceContents { uri, mime_type, .. } = resource.resource
+        else {
             panic!("expected blob resource");
         };
+        assert_eq!(mime_type.as_deref(), Some("application/octet-stream"));
         assert_eq!(uri, "embedded://tool/download/response");
     }
 }

@@ -52,6 +52,8 @@ open = "5"
 async-trait = "0.1"
 futures-util = { version = "0.3", default-features = false, features = ["alloc"] }
 gcp_auth = "0.12.7"
+sha2 = "0.10"
+csv = "1"
 
 # Test-only dependencies.
 wiremock = "0.6"

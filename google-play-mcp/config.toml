@@ -11,3 +11,6 @@ scopes = [
   "https://www.googleapis.com/auth/androidpublisher",
   "https://www.googleapis.com/auth/playdeveloperreporting",
 ]
+# Install reports (reports_install* tools) reuse this service-account key with a
+# separate devstorage.read_only token; do not add that scope here. Configure
+# them with GOOGLE_PLAY_DEVELOPER_ID or GOOGLE_PLAY_REPORTS_BUCKET (see README).

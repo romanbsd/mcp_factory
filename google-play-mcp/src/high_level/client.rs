@@ -277,7 +277,7 @@ fn transient_error(error: &Value) -> bool {
         || (status == Some(403) && text.to_ascii_lowercase().contains("quota"))
 }
 
-async fn retry_delay(attempt: u64, error: &Value) {
+pub(super) async fn retry_delay(attempt: u64, error: &Value) {
     let guided_millis = error
         .get("retry_after")
         .and_then(Value::as_str)
@@ -292,14 +292,14 @@ async fn retry_delay(attempt: u64, error: &Value) {
     tokio::time::sleep(Duration::from_millis(millis)).await;
 }
 
-struct CallOutcome {
-    attempts: u64,
-    result_state: &'static str,
-    pagination_complete: bool,
-    error: Option<Value>,
+pub(super) struct CallOutcome {
+    pub(super) attempts: u64,
+    pub(super) result_state: &'static str,
+    pub(super) pagination_complete: bool,
+    pub(super) error: Option<Value>,
 }
 
-fn call_record(
+pub(super) fn call_record(
     id: &str,
     method: &str,
     arguments: &Value,
