@@ -1,6 +1,7 @@
 mod capabilities;
 mod client;
 mod explain;
+pub mod installs;
 mod project_status;
 mod quality;
 mod registry;
@@ -24,6 +25,9 @@ enum ReportKind {
     ReleaseVerification,
 }
 
+/// Wall-clock budget for one report call, shared by every handwritten tool.
+const REPORT_DEADLINE: Duration = Duration::from_secs(45);
+
 struct ReportHandler(ReportKind);
 
 #[async_trait]
@@ -45,7 +49,7 @@ impl CustomToolHandler for ReportHandler {
                 }
             }
         };
-        let report = match tokio::time::timeout(Duration::from_secs(45), report_future).await {
+        let report = match tokio::time::timeout(REPORT_DEADLINE, report_future).await {
             Ok(report) => report,
             Err(_) => json!({
                 "status": if client.source_calls().is_empty() { "unavailable" } else { "partial" },
@@ -153,6 +157,20 @@ fn package_schema(extra_properties: Value) -> Value {
 }
 
 fn tool(name: &str, description: &str, input_schema: Value, kind: ReportKind) -> CustomToolSpec {
+    read_only_spec(
+        name,
+        description,
+        input_schema,
+        Arc::new(ReportHandler(kind)),
+    )
+}
+
+fn read_only_spec(
+    name: &str,
+    description: &str,
+    input_schema: Value,
+    handler: Arc<dyn CustomToolHandler>,
+) -> CustomToolSpec {
     CustomToolSpec {
         name: name.to_string(),
         description: description.to_string(),
@@ -165,7 +183,7 @@ fn tool(name: &str, description: &str, input_schema: Value, kind: ReportKind) ->
             idempotent: Some(true),
             open_world: Some(true),
         },
-        handler: Arc::new(ReportHandler(kind)),
+        handler,
     }
 }
 

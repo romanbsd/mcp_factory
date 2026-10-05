@@ -33,7 +33,7 @@ async fn main() -> anyhow::Result<()> {
     }
 
     let tools = tools::build_tools();
-    let custom_tools = extensions::build_custom_tools();
+    let custom_tools = extensions::build_custom_tools(&config);
     let resources = resources::build_resources();
     let server = McpProxyServer::builder(config)
         .tools(&tools)?
