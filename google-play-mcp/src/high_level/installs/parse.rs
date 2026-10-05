@@ -175,6 +175,29 @@ pub fn parse_installs(
             .filter(|metric| column(metric.column).is_some())
             .collect(),
     };
+    // A repeated header leaves no way to tell which column holds the value;
+    // reject it when it is one we read (unrelated duplicates are tolerated).
+    let used: Vec<&str> = [DATE_COLUMN, PACKAGE_COLUMN, VERSION_COLUMN]
+        .into_iter()
+        .chain(metrics.iter().map(|metric| metric.column))
+        .collect();
+    let duplicated: Vec<&str> = used
+        .iter()
+        .copied()
+        .filter(|name| {
+            headers
+                .iter()
+                .filter(|header| header.eq_ignore_ascii_case(name))
+                .count()
+                > 1
+        })
+        .collect();
+    if !duplicated.is_empty() {
+        return Err(SchemaError {
+            message: format!("ambiguous duplicate columns: {}", duplicated.join(", ")),
+            headers,
+        });
+    }
     let missing: Vec<&str> = [DATE_COLUMN, PACKAGE_COLUMN, VERSION_COLUMN]
         .into_iter()
         .chain(metrics.iter().map(|metric| metric.column))

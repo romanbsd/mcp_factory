@@ -23,6 +23,9 @@ struct FakeStorage {
     transient_failures: Mutex<u32>,
     /// Call-description prefix (e.g. `"download "`) -> error for that call.
     call_failures: Mutex<Vec<(String, StorageError)>>,
+    /// Reported stored size, as for a gzip-encoded export whose stored
+    /// (compressed) size is far below the delivered size.
+    stored_size: Mutex<Option<u64>>,
     calls: Mutex<Vec<String>>,
 }
 
@@ -135,10 +138,14 @@ impl Storage for FakeStorage {
 
     async fn metadata(&self, bucket: &str, object: &str) -> Result<ObjectMeta, StorageError> {
         let objects = self.objects(bucket, format!("metadata {object}"))?;
+        let stored_size = *self.stored_size.lock().unwrap();
         objects
             .iter()
             .find(|(name, _, _)| name == object)
-            .map(|(n, g, b)| meta(n, g, b))
+            .map(|(n, g, b)| ObjectMeta {
+                size: stored_size.unwrap_or(b.len() as u64),
+                ..meta(n, g, b)
+            })
             .ok_or_else(|| StorageError::ObjectNotFound("HTTP 404: No such object".into()))
     }
 
@@ -1299,4 +1306,126 @@ fn storage_errors_have_stable_codes_and_messages() {
         "storage_unavailable"
     );
     assert_eq!(StorageError::Other("o".into()).code(), "storage_error");
+}
+
+// ---------- review regressions ----------
+
+#[tokio::test]
+async fn probe_ignores_packages_that_extend_the_name() {
+    // `org.example.app_beta` shares the listing prefix of `org.example.app`.
+    let sibling = format!("stats/installs/installs_{PKG}_beta_202610_app_version.csv");
+    let storage = FakeStorage::default()
+        .bucket("pubsite_prod_123", vec![(sibling, "1", vec![])])
+        .bucket(
+            "pubsite_prod_rev_123",
+            vec![(object("202610"), "1", october())],
+        );
+    let report = probe(storage).await;
+    assert_eq!(report["status"], "ok", "{report:#}");
+    assert_eq!(report["resolution"]["bucket"], "pubsite_prod_rev_123");
+    assert_eq!(
+        report["discovery"]["candidates"][0]["state"],
+        "accessible_empty"
+    );
+}
+
+#[tokio::test]
+async fn cached_mapping_is_per_package() {
+    let other = "org.example.other";
+    let storage = FakeStorage::default()
+        .bucket("pubsite_prod_123", vec![(object("202610"), "1", october())])
+        .bucket(
+            "pubsite_prod_rev_123",
+            vec![(object("202610").replace(PKG, other), "1", vec![])],
+        );
+    let ctx = context(dev("123"), Arc::new(storage));
+    let list = |package: &str| {
+        run(
+            &ctx,
+            "reports_installs_list",
+            json!({"packageName": package}),
+        )
+    };
+    assert_eq!(list(PKG).await["resolution"]["bucket"], "pubsite_prod_123");
+    let second = list(other).await;
+    assert_eq!(
+        second["resolution"]["provenance"], "probe:pubsite_prod_rev",
+        "{other} is probed on its own, not served from {PKG}'s mapping"
+    );
+    assert_eq!(second["resolution"]["bucket"], "pubsite_prod_rev_123");
+}
+
+#[tokio::test]
+async fn cached_object_still_respects_the_inline_limit() {
+    // Stored (gzip) size is tiny, delivered CSV exceeds the original_csv limit.
+    let big = vec![b'a'; super::MAX_ORIGINAL_BYTES as usize + 1];
+    let storage = FakeStorage::default().bucket(
+        "pubsite_prod_123",
+        vec![(object("202610"), "1", big.clone())],
+    );
+    *storage.stored_size.lock().unwrap() = Some(1024);
+    let ctx = raw_context(storage);
+    let id = raw_id("202610", "1", &big);
+    // rows mode allows up to MAX_PARSE_BYTES and caches the object...
+    let rows = run(&ctx, "reports_installs_get_raw", json!({"reportId": id})).await;
+    assert_eq!(rows["status"], "ok");
+    // ...which must not let original_csv skip its smaller limit.
+    let original = run(
+        &ctx,
+        "reports_installs_get_raw",
+        json!({"reportId": id, "mode": "original_csv"}),
+    )
+    .await;
+    assert_eq!(original["error"]["code"], "too_large_for_host");
+}
+
+#[test]
+fn duplicate_used_header_is_a_schema_error() {
+    let text = format!(
+        "Date,Package Name,App Version Code,Daily Device Installs,Daily Device Installs\n2026-10-01,{PKG},26,1,99\n"
+    );
+    let error = parse_installs(&text, PKG, None).unwrap_err();
+    assert!(
+        error.message.contains("Daily Device Installs"),
+        "{}",
+        error.message
+    );
+
+    let tolerated = format!(
+        "Date,Package Name,App Version Code,Daily Device Installs,Note,note\n2026-10-01,{PKG},26,1,a,b\n"
+    );
+    assert_eq!(parse_installs(&tolerated, PKG, None).unwrap().rows.len(), 1);
+}
+
+#[tokio::test]
+async fn storage_initialization_failure_is_retried() {
+    let variable = "GOOGLE_PLAY_MCP_TEST_RETRY_KEY";
+    let ctx = Arc::new(InstallsContext::new(
+        dev("123"),
+        StorageSource::KeyEnv(variable.to_string()),
+    ));
+    let first = probe_ctx(&ctx).await;
+    assert!(first["error"]["message"]
+        .as_str()
+        .unwrap()
+        .contains("is not set"));
+
+    // Fixing the configuration takes effect without a restart. Only this test
+    // reads this variable, so setting it cannot race other tests.
+    let missing = std::env::temp_dir().join("google-play-mcp-test-missing-key.json");
+    std::env::set_var(variable, &missing);
+    let second = probe_ctx(&ctx).await;
+    std::env::remove_var(variable);
+    assert_eq!(second["error"]["code"], "auth_failed");
+    assert!(
+        second["error"]["message"]
+            .as_str()
+            .unwrap()
+            .contains("cannot read credential file"),
+        "the second call re-read the configuration: {second:#}"
+    );
+}
+
+async fn probe_ctx(ctx: &Arc<InstallsContext>) -> Value {
+    run(ctx, ACCESS, json!({"packageName": PKG})).await
 }

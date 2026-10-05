@@ -179,9 +179,12 @@ enum StorageSource {
 pub struct InstallsContext {
     reports: ReportsConfig,
     source: StorageSource,
-    storage: OnceCell<Result<Arc<dyn Storage>, Failure>>,
-    /// Verified bucket per (account, principal); never shared across either.
-    mappings: Mutex<HashMap<(String, String), Resolution>>,
+    /// Only a successfully built client is kept: a missing or bad key is
+    /// retried on the next call, so fixing it needs no restart.
+    storage: OnceCell<Arc<dyn Storage>>,
+    /// Verified bucket per (account, principal, package). Relevance is proven
+    /// per package, so one package's probe never vouches for another's.
+    mappings: Mutex<HashMap<(String, String, String), Resolution>>,
     /// Downloaded exports keyed by bucket/object#generation, so a changed
     /// monthly file is a cache miss rather than stale data.
     // ponytail: FIFO of 8 objects; switch to LRU with a byte budget if raw paging gets heavy.
@@ -201,7 +204,7 @@ impl InstallsContext {
 
     async fn storage(&self) -> Result<Arc<dyn Storage>, Failure> {
         self.storage
-            .get_or_init(|| async {
+            .get_or_try_init(|| async {
                 match &self.source {
                     StorageSource::KeyEnv(variable) => {
                         let path = std::env::var(variable)
@@ -224,7 +227,7 @@ impl InstallsContext {
                 }
             })
             .await
-            .clone()
+            .cloned()
     }
 
     /// Bucket for an account: explicit configuration wins, then a cached
@@ -245,7 +248,7 @@ impl InstallsContext {
             };
             return (Ok(resolution), Vec::new());
         }
-        let key = (account.key(), storage.principal().to_string());
+        let key = mapping_key(account, storage, package);
         if let Some(cached) = self.mappings.lock().unwrap().get(&key).cloned() {
             let provenance = format!("cache({})", cached.provenance);
             return (
@@ -264,25 +267,37 @@ impl InstallsContext {
         )
         .await;
         if let Ok(resolution) = &outcome.result {
-            self.remember(account, storage, resolution);
+            self.remember(account, storage, package, resolution);
         }
         (outcome.result, outcome.candidates)
     }
 
     /// Caches a mapping only when probing (not an explicit bucket) found this
     /// package's reports; an empty-but-accessible bucket proves too little.
-    fn remember(&self, account: &AccountConfig, storage: &dyn Storage, resolution: &Resolution) {
+    fn remember(
+        &self,
+        account: &AccountConfig,
+        storage: &dyn Storage,
+        package: &str,
+        resolution: &Resolution,
+    ) {
         if resolution.relevant == Some(true) && resolution.provenance.starts_with("probe:") {
-            self.mappings.lock().unwrap().insert(
-                (account.key(), storage.principal().to_string()),
-                resolution.clone(),
-            );
+            self.mappings
+                .lock()
+                .unwrap()
+                .insert(mapping_key(account, storage, package), resolution.clone());
         }
     }
 
     /// Drops a cached mapping after an access failure so the next call probes
     /// again instead of trusting a mapping that stopped working.
-    fn evict(&self, account: &AccountConfig, storage: &dyn Storage, failed: &StorageError) {
+    fn evict(
+        &self,
+        account: &AccountConfig,
+        storage: &dyn Storage,
+        package: &str,
+        failed: &StorageError,
+    ) {
         if matches!(
             failed,
             StorageError::PermissionDenied(_)
@@ -292,7 +307,7 @@ impl InstallsContext {
             self.mappings
                 .lock()
                 .unwrap()
-                .remove(&(account.key(), storage.principal().to_string()));
+                .remove(&mapping_key(account, storage, package));
         }
     }
 
@@ -312,6 +327,14 @@ impl InstallsContext {
         }
         let key = format!("{bucket}/{}#{}", meta.name, meta.generation);
         if let Some((_, bytes)) = self.objects.lock().unwrap().iter().find(|(k, _)| *k == key) {
+            // `meta.size` is the stored size, which for a gzip-encoded export is
+            // the compressed size; the limit applies to the delivered bytes.
+            if bytes.len() as u64 > max_bytes {
+                return Err(StorageError::TooLarge {
+                    size: bytes.len() as u64,
+                    limit: max_bytes,
+                });
+            }
             return Ok(bytes.clone());
         }
         let bytes = Arc::new(recorder.download(storage, bucket, meta, max_bytes).await?);
@@ -322,6 +345,18 @@ impl InstallsContext {
         }
         Ok(bytes)
     }
+}
+
+fn mapping_key(
+    account: &AccountConfig,
+    storage: &dyn Storage,
+    package: &str,
+) -> (String, String, String) {
+    (
+        account.key(),
+        storage.principal().to_string(),
+        package.to_string(),
+    )
 }
 
 /// Records every Storage call in the same `sourceCalls` shape as the other
@@ -586,7 +621,7 @@ async fn access_check(ctx: &InstallsContext, recorder: &Recorder, arguments: &Va
     });
     match outcome.result {
         Ok(resolution) => {
-            ctx.remember(&account, storage.as_ref(), &resolution);
+            ctx.remember(&account, storage.as_ref(), &package, &resolution);
             let relevant = resolution.relevant == Some(true);
             json!({
                 "status": if relevant { "ok" } else { "no_data" },
@@ -712,7 +747,7 @@ async fn list(ctx: &InstallsContext, recorder: &Recorder, arguments: &Value) -> 
     {
         Ok(page) => page,
         Err(error) => {
-            ctx.evict(&account, storage.as_ref(), &error);
+            ctx.evict(&account, storage.as_ref(), &package, &error);
             return failure(&error);
         }
     };
@@ -773,7 +808,7 @@ async fn get_raw(ctx: &InstallsContext, recorder: &Recorder, arguments: &Value) 
             return source_changed(&object, &generation, None).into()
         }
         Err(error) => {
-            ctx.evict(&account, storage.as_ref(), &error);
+            ctx.evict(&account, storage.as_ref(), &package, &error);
             return failure(&error).into();
         }
     };

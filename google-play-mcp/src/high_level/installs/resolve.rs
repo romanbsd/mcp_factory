@@ -13,6 +13,10 @@ use super::storage::{Storage, StorageError};
 use super::Recorder;
 
 pub const INSTALLS_PREFIX: &str = "stats/installs/installs_";
+// ponytail: one bounded page per candidate; this package's monthly exports sort
+// before longer sibling names (`app_2026...` < `app_beta...`), so only a sibling
+// whose suffix starts with a digit or `.` and has 50+ exports can crowd them out.
+const PROBE_RESULTS: u32 = 50;
 
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct AccountConfig {
@@ -292,12 +296,22 @@ pub async fn probe(
     let verified_at = Utc::now().to_rfc3339();
     for (bucket, provenance) in &candidates {
         let listing = recorder
-            .list(storage, bucket, &prefix, (None, None), None, 10)
+            .list(storage, bucket, &prefix, (None, None), None, PROBE_RESULTS)
             .await;
+        // The prefix also matches packages that extend this name
+        // (`app_beta` for `app`), so count only this package's exports.
+        let own = |page: &super::storage::ListPage| {
+            page.items
+                .iter()
+                .filter(|meta| {
+                    super::install_object(&meta.name).is_some_and(|(owner, _, _)| owner == package)
+                })
+                .count()
+        };
         let (state, detail) = match &listing {
-            Ok(page) if !page.items.is_empty() => {
+            Ok(page) if own(page) > 0 => {
                 relevant.push((bucket, provenance));
-                ("relevant_reports", json!({"objectsSeen": page.items.len()}))
+                ("relevant_reports", json!({"objectsSeen": own(page)}))
             }
             Ok(_) => {
                 accessible.push((bucket, provenance));

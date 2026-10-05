@@ -128,7 +128,7 @@ pub async fn run(ctx: &InstallsContext, recorder: &Recorder, arguments: &Value) 
                 continue;
             }
             Err(error) => {
-                ctx.evict(&account, storage.as_ref(), &error);
+                ctx.evict(&account, storage.as_ref(), &request.package, &error);
                 sources.push(json!({"month": label, "objectName": object, "state": "metadata_failed", "error": error.to_json()}));
                 continue;
             }
