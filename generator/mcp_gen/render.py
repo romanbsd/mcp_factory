@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 import tomllib
 from pathlib import Path
 from typing import Any
@@ -8,6 +9,8 @@ from typing import Any
 from jinja2 import Environment, PackageLoader, select_autoescape
 
 from mcp_gen.models import GenerationResult
+
+_EXTENSIONS_TAKE_CONFIG = re.compile(r"fn\s+build_custom_tools\s*\(\s*[^)\s]")
 
 
 def _rust_string_literal(value: str) -> str:
@@ -89,6 +92,17 @@ def render_crate(
     output_dir.mkdir(parents=True, exist_ok=True)
     (output_dir / "src").mkdir(exist_ok=True)
 
+    # Handwritten extension code is scaffolded once and never generator-owned.
+    extension_path = output_dir / "src" / "extensions.rs"
+    if not extension_path.exists():
+        rendered = env.get_template("extensions.rs.j2").render(**context)
+        extension_path.write_text(f"{rendered.rstrip()}\n", encoding="utf-8")
+    # Older scaffolds declare `build_custom_tools()` without the config
+    # parameter; keep calling them the way they were written.
+    context["extensions_take_config"] = bool(
+        _EXTENSIONS_TAKE_CONFIG.search(extension_path.read_text(encoding="utf-8"))
+    )
+
     templates = {
         "Cargo.toml.j2": output_dir / "Cargo.toml",
         "main.rs.j2": output_dir / "src" / "main.rs",
@@ -105,12 +119,6 @@ def render_crate(
         else:
             rendered = env.get_template(template_name).render(**context)
         target.write_text(f"{rendered.rstrip()}\n", encoding="utf-8")
-
-    # Handwritten extension code is scaffolded once and never generator-owned.
-    extension_path = output_dir / "src" / "extensions.rs"
-    if not extension_path.exists():
-        rendered = env.get_template("extensions.rs.j2").render(**context)
-        extension_path.write_text(f"{rendered.rstrip()}\n", encoding="utf-8")
 
     manifest = {
         "crate_name": crate_name,
