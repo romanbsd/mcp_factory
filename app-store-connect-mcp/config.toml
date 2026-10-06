@@ -1,0 +1,33 @@
+base_url = "https://api.appstoreconnect.apple.com/"
+server_name = "app-store-connect-mcp"
+transport = "stdio"
+# Strip JSON:API links/link-only relationships and minify responses.
+compact_jsonapi = true
+
+# Static bearer token (reads MCP_FACTORY_BEARER_TOKEN by default):
+# [auth]
+# type = "bearer"
+
+# OAuth2 Authorization Code + PKCE (single account, file token store):
+# [auth]
+# type = "oauth2"
+# authorization_endpoint = "https://provider.example.com/oauth/authorize"
+# token_endpoint = "https://provider.example.com/oauth/token"
+# client_id = "your-client-id"
+# scopes = ["read", "write"]
+# client_secret via env: MCP_FACTORY_OAUTH_CLIENT_SECRET
+# redirect_uri = "http://127.0.0.1:9876/callback"  # optional; ephemeral port if omitted
+# token_store = ".mcp-factory/tokens.json"           # optional
+#
+# On a stdio server the browser login flow launches automatically on the first
+# tool call that needs a token (and refreshes silently after that). To log in
+# ahead of time (or for HTTP transport, where auto-login is disabled):
+#   mcp-factory-auth login --config config.toml
+#   cargo run -- --auth-login
+
+# Google service account (renewable in-memory tokens; credential JSON is read
+# from GOOGLE_APPLICATION_CREDENTIALS by default):
+# [auth]
+# type = "google_service_account"
+# scopes = ["https://www.googleapis.com/auth/example"]
+# credentials_path_env = "GOOGLE_APPLICATION_CREDENTIALS"  # optional

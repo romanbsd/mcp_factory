@@ -1,0 +1,16 @@
+[package]
+name = "app-store-connect-mcp"
+version = "0.1.0"
+edition.workspace = true
+
+[dependencies]
+mcp-factory-core.workspace = true
+tokio.workspace = true
+serde_json.workspace = true
+anyhow.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+
+[[bin]]
+name = "app-store-connect-mcp"
+path = "src/main.rs"
