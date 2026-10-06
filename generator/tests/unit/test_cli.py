@@ -143,6 +143,29 @@ def test_generate_rejects_unknown_operation(tmp_path: Path, fixtures_dir: Path) 
     assert not (tmp_path / "out").exists()
 
 
+@pytest.mark.parametrize("value", [",", " ", " , "])
+def test_generate_rejects_empty_operations(
+    tmp_path: Path, fixtures_dir: Path, value: str
+) -> None:
+    result = runner.invoke(
+        app,
+        [
+            "generate",
+            "--input",
+            str(fixtures_dir / "params-openapi.yaml"),
+            "--output",
+            str(tmp_path / "out"),
+            "--base-url",
+            "http://localhost",
+            "--operations",
+            value,
+        ],
+    )
+    assert result.exit_code != 0
+    assert "atleastoneoperationid" in _flatten(result.output)
+    assert not (tmp_path / "out").exists()
+
+
 def test_operations_rejected_for_non_openapi(tmp_path: Path, fixtures_dir: Path) -> None:
     result = runner.invoke(
         app,
@@ -213,7 +236,7 @@ def test_compact_jsonapi_flag(tmp_path: Path, fixtures_dir: Path, enabled: bool)
     config = (output / "config.toml").read_text()
     main_rs = (output / "src" / "main.rs").read_text()
     assert ("\ncompact_jsonapi = true\n" in config) is enabled
-    assert ("        compact_jsonapi: true,\n        ..ProxyConfig::default()" in main_rs) is enabled
+    assert ("    if config.compact_jsonapi.is_none() {\n        config.compact_jsonapi = Some(true);\n    }\n" in main_rs) is enabled
     assert "compact_jsonapi" not in config + main_rs or enabled
 
 
@@ -290,7 +313,7 @@ def test_package_command_threads_llm_flags_to_render(
     assert 'name: "createPet".to_string()' in tools_rs
     assert 'name: "getPet".to_string()' not in tools_rs
     assert "compact_jsonapi = true" in (crate_dir / "config.toml").read_text()
-    assert "compact_jsonapi: true," in (crate_dir / "src" / "main.rs").read_text()
+    assert "config.compact_jsonapi = Some(true);" in (crate_dir / "src" / "main.rs").read_text()
 
 
 def test_package_command_rejects_unknown_operation(
@@ -363,6 +386,34 @@ def test_compose_llm_flags(tmp_path: Path, fixtures_dir: Path, llm_flags: bool) 
     # The Discovery fixture declares response schemas; they vanish with the flag.
     assert ("generated output schema must be valid JSON" in tools_rs) is not llm_flags
     assert ("compact_jsonapi = true" in (output / "config.toml").read_text()) is llm_flags
+
+
+def test_compose_compact_jsonapi_survives_custom_config(
+    tmp_path: Path, fixtures_dir: Path
+) -> None:
+    # A supplied config.toml without the key must not silently disable the
+    # flag: main.rs restores it whenever config/env leave it unset.
+    output = tmp_path / "combined"
+    config = tmp_path / "config.toml"
+    config.write_text('base_url = "https://configured.example"\n', encoding="utf-8")
+    result = runner.invoke(
+        app,
+        [
+            "compose",
+            "--input",
+            str(fixtures_dir / "minimal-openapi.yaml"),
+            "--output",
+            str(output),
+            "--base-url",
+            "https://configured.example",
+            "--config",
+            str(config),
+            "--compact-jsonapi",
+        ],
+    )
+    assert result.exit_code == 0, result.output
+    assert (output / "config.toml").read_text() == config.read_text()
+    assert "    if config.compact_jsonapi.is_none() {\n        config.compact_jsonapi = Some(true);\n    }\n" in (output / "src" / "main.rs").read_text()
 
 
 def test_compose_generates_one_crate_and_preserves_config(

@@ -155,10 +155,11 @@ pub struct ProxyConfig {
     /// tools fail closed when this is not configured.
     #[serde(default)]
     pub media_root: Option<PathBuf>,
-    /// Strip JSON:API `links` and link-only relationships from REST JSON
-    /// responses and minify them, to save LLM context.
+    /// Strip JSON:API `links` and empty relationships from REST JSON
+    /// responses and minify them, to save LLM context. `None` (unset) means
+    /// off; generated servers fill in their generation-time default.
     #[serde(default)]
-    pub compact_jsonapi: bool,
+    pub compact_jsonapi: Option<bool>,
 }
 
 fn default_timeout_secs() -> u64 {
@@ -189,7 +190,7 @@ impl Default for ProxyConfig {
             server_name: String::new(),
             server_version: default_server_version(),
             media_root: None,
-            compact_jsonapi: false,
+            compact_jsonapi: None,
         }
     }
 }
@@ -227,7 +228,7 @@ impl ProxyConfig {
             self.media_root = Some(PathBuf::from(media_root));
         }
         if let Ok(compact) = env::var("MCP_FACTORY_COMPACT_JSONAPI") {
-            self.compact_jsonapi = match compact.trim().to_ascii_lowercase().as_str() {
+            self.compact_jsonapi = Some(match compact.trim().to_ascii_lowercase().as_str() {
                 "1" | "true" | "yes" => true,
                 "0" | "false" | "no" | "" => false,
                 _ => {
@@ -235,7 +236,7 @@ impl ProxyConfig {
                         "invalid MCP_FACTORY_COMPACT_JSONAPI: {compact}"
                     )))
                 }
-            };
+            });
         }
         if matches!(self.auth, AuthConfig::None) {
             if env::var("MCP_FACTORY_BEARER_TOKEN")
@@ -356,14 +357,22 @@ mod tests {
     fn compact_jsonapi_from_toml_and_env() {
         let config: ProxyConfig =
             toml::from_str("base_url = \"http://x\"\ncompact_jsonapi = true").unwrap();
-        assert!(config.compact_jsonapi);
-        assert!(!ProxyConfig::default().compact_jsonapi);
+        assert_eq!(config.compact_jsonapi, Some(true));
+        let omitted: ProxyConfig = toml::from_str("base_url = \"http://x\"").unwrap();
+        assert_eq!(omitted.compact_jsonapi, None);
+        assert_eq!(ProxyConfig::default().compact_jsonapi, None);
 
         temp_env::with_var("MCP_FACTORY_COMPACT_JSONAPI", Some("0"), || {
-            assert!(!config.clone().merge_env().unwrap().compact_jsonapi);
+            assert_eq!(
+                config.clone().merge_env().unwrap().compact_jsonapi,
+                Some(false)
+            );
         });
         temp_env::with_var("MCP_FACTORY_COMPACT_JSONAPI", Some("TRUE"), || {
-            assert!(ProxyConfig::default().merge_env().unwrap().compact_jsonapi);
+            assert_eq!(
+                ProxyConfig::default().merge_env().unwrap().compact_jsonapi,
+                Some(true)
+            );
         });
         temp_env::with_var("MCP_FACTORY_COMPACT_JSONAPI", Some("maybe"), || {
             assert!(ProxyConfig::default().merge_env().is_err());

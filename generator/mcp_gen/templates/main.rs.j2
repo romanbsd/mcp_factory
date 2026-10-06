@@ -11,9 +11,6 @@ async fn main() -> anyhow::Result<()> {
         server_name: "{{ crate_name }}".to_string(),
         server_version: env!("CARGO_PKG_VERSION").to_string(),
         transport: "{{ transport }}".parse().unwrap_or_default(),
-{% if compact_jsonapi %}
-        compact_jsonapi: true,
-{% endif %}
         ..ProxyConfig::default()
     })?;
     // A config.toml may omit identity fields. Restore the generation-time
@@ -30,6 +27,12 @@ async fn main() -> anyhow::Result<()> {
     if config.transport == ProxyConfig::default().transport {
         config.transport = "{{ transport }}".parse().unwrap_or_default();
     }
+{% if compact_jsonapi %}
+    // Generated with --compact-jsonapi: on unless config/env sets it.
+    if config.compact_jsonapi.is_none() {
+        config.compact_jsonapi = Some(true);
+    }
+{% endif %}
 
     if std::env::args().any(|a| a == "--auth-login") {
         return run_oauth_login(&config).await.map_err(Into::into);

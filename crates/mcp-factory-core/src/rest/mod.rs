@@ -185,7 +185,7 @@ impl RestProxyExecutor {
         // charset); non-text is handed back as raw bytes so the server can wrap
         // it in a proper binary/image MCP content block instead of mangling it.
         let body = if is_texty(&content_type) {
-            let text = read_limited_text(response).await?;
+            let mut text = read_limited_text(response).await?;
             // JSON objects also ride along as `structuredContent` so clients can
             // read fields directly. MCP requires structuredContent to be an
             // object, so arrays/scalars stay text-only.
@@ -208,7 +208,6 @@ impl RestProxyExecutor {
                 } else {
                     None
                 };
-                let mut text = text;
                 if let Some(value) = structured.as_mut().filter(|_| self.compact_jsonapi) {
                     compact_jsonapi(value);
                     text = value.to_string();
@@ -235,9 +234,11 @@ impl RestProxyExecutor {
 }
 
 /// Drop JSON:API noise an LLM can't act on: per-resource `links`, and
-/// relationships that carry only links (no `data`, i.e. not `include`d).
-/// Top-level `links`/`meta` (pagination) are kept.
-pub fn compact_jsonapi(document: &mut Value) {
+/// relationships left empty once their links are gone (no `data` because
+/// they were not `include`d, and no `meta`). Only objects shaped like
+/// JSON:API resources (string `type`) are touched; top-level `links`/`meta`
+/// (pagination) are kept.
+pub(crate) fn compact_jsonapi(document: &mut Value) {
     let Some(document) = document.as_object_mut() else {
         return;
     };
@@ -251,7 +252,10 @@ pub fn compact_jsonapi(document: &mut Value) {
 }
 
 fn compact_resource(resource: &mut Value) {
-    let Some(resource) = resource.as_object_mut() else {
+    let Some(resource) = resource
+        .as_object_mut()
+        .filter(|resource| resource.get("type").is_some_and(Value::is_string))
+    else {
         return;
     };
     resource.remove("links");
@@ -261,7 +265,7 @@ fn compact_resource(resource: &mut Value) {
     relationships.retain(|_, relationship| match relationship.as_object_mut() {
         Some(relationship) => {
             relationship.remove("links");
-            relationship.contains_key("data")
+            !relationship.is_empty()
         }
         None => true,
     });
@@ -757,7 +761,7 @@ mod tests {
     use serde_json::json;
 
     #[test]
-    fn compact_jsonapi_strips_links_and_link_only_relationships() {
+    fn compact_jsonapi_strips_links_and_empty_relationships() {
         let mut document = json!({
             "data": [{
                 "type": "apps",
@@ -790,7 +794,8 @@ mod tests {
                     "id": "1",
                     "attributes": {"name": "App", "links": "an attribute, kept"},
                     "relationships": {
-                        "appInfos": {"data": [{"type": "appInfos", "id": "9"}]}
+                        "appInfos": {"data": [{"type": "appInfos", "id": "9"}]},
+                        "betaGroups": {"meta": {"paging": {"total": 2}}}
                     }
                 }],
                 "included": [{"type": "appInfos", "id": "9"}],
@@ -819,7 +824,19 @@ mod tests {
 
         let mut not_jsonapi = json!({"data": null, "errors": [{"links": {"about": "x"}}]});
         compact_jsonapi(&mut not_jsonapi);
-        assert_eq!(not_jsonapi, json!({"data": null, "errors": [{"links": {"about": "x"}}]}));
+        assert_eq!(
+            not_jsonapi,
+            json!({"data": null, "errors": [{"links": {"about": "x"}}]})
+        );
+
+        // Plain REST payloads that merely use a `data` key are not resources.
+        let plain = json!({
+            "data": [{"name": "x", "links": ["a"], "relationships": {"r": {}}}],
+            "included": {"links": {"self": "s"}}
+        });
+        let mut compacted = plain.clone();
+        compact_jsonapi(&mut compacted);
+        assert_eq!(compacted, plain);
     }
 
     #[test]

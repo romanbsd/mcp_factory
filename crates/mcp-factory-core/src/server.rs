@@ -181,7 +181,7 @@ impl McpProxyServerBuilder {
             Arc::clone(&auth),
             self.config.media_root.clone(),
         )
-        .with_compact_jsonapi(self.config.compact_jsonapi);
+        .with_compact_jsonapi(self.config.compact_jsonapi.unwrap_or(false));
         let graphql =
             GraphQLProxyExecutor::new(http, self.config.base_url.clone(), Arc::clone(&auth));
         Ok(McpProxyServer {

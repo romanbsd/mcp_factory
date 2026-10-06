@@ -85,6 +85,8 @@ def _parse_schema(
     operation_set = (
         {op.strip() for op in operations.split(",") if op.strip()} if operations else None
     )
+    if operations is not None and not operation_set:
+        raise typer.BadParameter("--operations needs at least one operationId")
     if operation_set and schema_kind != "openapi":
         raise typer.BadParameter("--operations is only supported for OpenAPI schemas")
 

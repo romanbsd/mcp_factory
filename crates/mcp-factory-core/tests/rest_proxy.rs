@@ -51,7 +51,7 @@ async fn rest_proxy_compacts_jsonapi_responses_when_enabled() {
     tool.hints.read_only = Some(true);
     for (compact, expected_text) in [(true, compacted.to_string()), (false, body.to_string())] {
         let config = mcp_factory_core::ProxyConfig {
-            compact_jsonapi: compact,
+            compact_jsonapi: Some(compact),
             ..common::proxy_config(&mock_server.uri())
         };
         let server = McpProxyServer::builder(config)
@@ -74,7 +74,11 @@ async fn rest_proxy_compacts_jsonapi_responses_when_enabled() {
         if compact {
             assert_eq!(structured, compacted);
         }
-        assert_eq!(result.into_text(), expected_text, "compact_jsonapi = {compact}");
+        assert_eq!(
+            result.into_text(),
+            expected_text,
+            "compact_jsonapi = {compact}"
+        );
     }
 }
 

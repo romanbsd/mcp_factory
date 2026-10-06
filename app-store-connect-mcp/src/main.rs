@@ -11,7 +11,6 @@ async fn main() -> anyhow::Result<()> {
         server_name: "app-store-connect-mcp".to_string(),
         server_version: env!("CARGO_PKG_VERSION").to_string(),
         transport: "stdio".parse().unwrap_or_default(),
-        compact_jsonapi: true,
         ..ProxyConfig::default()
     })?;
     // A config.toml may omit identity fields. Restore the generation-time
@@ -27,6 +26,10 @@ async fn main() -> anyhow::Result<()> {
     }
     if config.transport == ProxyConfig::default().transport {
         config.transport = "stdio".parse().unwrap_or_default();
+    }
+    // Generated with --compact-jsonapi: on unless config/env sets it.
+    if config.compact_jsonapi.is_none() {
+        config.compact_jsonapi = Some(true);
     }
 
     if std::env::args().any(|a| a == "--auth-login") {
