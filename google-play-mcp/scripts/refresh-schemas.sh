@@ -22,4 +22,5 @@ curl -fsS 'https://playdeveloperreporting.googleapis.com/$discovery/rest?version
   --input "$server_root/schemas/playdeveloperreporting-v1beta1.json" \
   --output "$server_root" \
   --name google-play-mcp \
+  --no-output-schema \
   --config "$server_root/config.toml"
