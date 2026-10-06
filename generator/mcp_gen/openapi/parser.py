@@ -47,22 +47,43 @@ def _coerce_description_placeholders(
     return repaired
 
 
+def _drop_empty_enums(node: Any, path: tuple[str, ...] = ()) -> list[str]:
+    """Remove ``enum: []`` (invalid per spec; emitted by App Store Connect)."""
+    repaired: list[str] = []
+    if isinstance(node, dict):
+        if node.get("enum") == []:
+            del node["enum"]
+            repaired.append(".".join((*path, "enum")))
+        for key, value in node.items():
+            repaired.extend(_drop_empty_enums(value, (*path, str(key))))
+    elif isinstance(node, list):
+        for index, value in enumerate(node):
+            repaired.extend(_drop_empty_enums(value, (*path, str(index))))
+    return repaired
+
+
 class _CompatibleResolvingParser(ResolvingParser):
     def _validate(self) -> None:
-        repaired = _coerce_description_placeholders(self.specification)
-        if repaired:
-            locations = ", ".join(repaired)
-            warnings.warn(
-                "Coerced YAML description placeholder mapping(s) to strings before "
-                f"OpenAPI validation: {locations}",
-                OpenAPICompatibilityWarning,
-                stacklevel=4,
-            )
+        for repair, what in (
+            (_coerce_description_placeholders, "Coerced YAML description placeholder mapping(s) to strings"),
+            (_drop_empty_enums, "Dropped empty enum(s)"),
+        ):
+            repaired = repair(self.specification)
+            if repaired:
+                warnings.warn(
+                    f"{what} before OpenAPI validation: {', '.join(repaired)}",
+                    OpenAPICompatibilityWarning,
+                    stacklevel=4,
+                )
         super()._validate()
 
 
 def load_openapi(path: Path) -> dict[str, Any]:
-    parser = _CompatibleResolvingParser(str(path), strict=False)
+    # Recursive schemas (e.g. tree nodes) are cut at the cycle with an
+    # unconstrained `{}` schema instead of failing resolution.
+    parser = _CompatibleResolvingParser(
+        str(path), strict=False, recursion_limit_handler=lambda *_: {}
+    )
     return parser.specification
 
 

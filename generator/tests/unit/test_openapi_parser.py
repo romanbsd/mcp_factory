@@ -259,6 +259,86 @@ def test_does_not_coerce_arbitrary_description_mappings(tmp_path: Path) -> None:
         load_openapi(path)
 
 
+def _list_op(params: list) -> dict:
+    return {
+        "/items": {
+            "get": {
+                "operationId": "listItems",
+                "parameters": params,
+                "responses": {"200": {"description": "OK"}},
+            }
+        }
+    }
+
+
+def test_drops_empty_enum_before_validation(tmp_path: Path) -> None:
+    path = _write_spec(
+        tmp_path / "empty-enum.yaml",
+        _list_op(
+            [
+                {
+                    "name": "fields",
+                    "in": "query",
+                    "schema": {"type": "array", "items": {"type": "string", "enum": []}},
+                },
+                {
+                    "name": "sort",
+                    "in": "query",
+                    "schema": {"type": "string", "enum": ["name", "-name"]},
+                },
+            ]
+        ),
+    )
+
+    with pytest.warns(
+        OpenAPICompatibilityWarning,
+        match=r"Dropped empty enum\(s\).*paths\./items\.get\.parameters\.0\.schema\.items\.enum$",
+    ):
+        result = parse_openapi(path)
+
+    props = result.tools[0].input_schema["properties"]
+    assert props["fields"]["items"] == {"type": "string"}
+    assert props["sort"]["enum"] == ["name", "-name"]
+
+
+def test_cuts_recursive_schema_at_cycle(tmp_path: Path) -> None:
+    node_ref = {"$ref": "#/components/schemas/Node"}
+    path = _write_spec(
+        tmp_path / "recursive.yaml",
+        {
+            "/nodes": {
+                "post": {
+                    "operationId": "createNode",
+                    "requestBody": {
+                        "required": True,
+                        "content": {"application/json": {"schema": node_ref}},
+                    },
+                    "responses": {"200": {"description": "OK"}},
+                }
+            }
+        },
+        components={
+            "schemas": {
+                "Node": {
+                    "type": "object",
+                    "properties": {
+                        "name": {"type": "string"},
+                        "children": {"type": "array", "items": node_ref},
+                    },
+                }
+            }
+        },
+    )
+
+    result = parse_openapi(path)
+
+    assert [tool.name for tool in result.tools] == ["createNode"]
+    children = result.tools[0].input_schema["properties"]["children"]
+    assert children["type"] == "array"
+    # The self-reference is replaced by an unconstrained schema.
+    assert children["items"] == {}
+
+
 def test_detects_base_url_from_servers(tmp_path: Path) -> None:
     path = _write_spec(
         tmp_path / "servers.yaml",
