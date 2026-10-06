@@ -155,6 +155,10 @@ pub struct ProxyConfig {
     /// tools fail closed when this is not configured.
     #[serde(default)]
     pub media_root: Option<PathBuf>,
+    /// Strip JSON:API `links` and link-only relationships from REST JSON
+    /// responses and minify them, to save LLM context.
+    #[serde(default)]
+    pub compact_jsonapi: bool,
 }
 
 fn default_timeout_secs() -> u64 {
@@ -185,6 +189,7 @@ impl Default for ProxyConfig {
             server_name: String::new(),
             server_version: default_server_version(),
             media_root: None,
+            compact_jsonapi: false,
         }
     }
 }
@@ -220,6 +225,17 @@ impl ProxyConfig {
             env::var_os("MCP_FACTORY_MEDIA_ROOT").filter(|value| !value.is_empty())
         {
             self.media_root = Some(PathBuf::from(media_root));
+        }
+        if let Ok(compact) = env::var("MCP_FACTORY_COMPACT_JSONAPI") {
+            self.compact_jsonapi = match compact.trim().to_ascii_lowercase().as_str() {
+                "1" | "true" | "yes" => true,
+                "0" | "false" | "no" | "" => false,
+                _ => {
+                    return Err(ProxyError::Config(format!(
+                        "invalid MCP_FACTORY_COMPACT_JSONAPI: {compact}"
+                    )))
+                }
+            };
         }
         if matches!(self.auth, AuthConfig::None) {
             if env::var("MCP_FACTORY_BEARER_TOKEN")
@@ -333,6 +349,24 @@ mod tests {
         temp_env::with_var("MCP_FACTORY_MEDIA_ROOT", Some("/tmp/mcp-media"), || {
             let config = ProxyConfig::default().merge_env().unwrap();
             assert_eq!(config.media_root, Some(PathBuf::from("/tmp/mcp-media")));
+        });
+    }
+
+    #[test]
+    fn compact_jsonapi_from_toml_and_env() {
+        let config: ProxyConfig =
+            toml::from_str("base_url = \"http://x\"\ncompact_jsonapi = true").unwrap();
+        assert!(config.compact_jsonapi);
+        assert!(!ProxyConfig::default().compact_jsonapi);
+
+        temp_env::with_var("MCP_FACTORY_COMPACT_JSONAPI", Some("0"), || {
+            assert!(!config.clone().merge_env().unwrap().compact_jsonapi);
+        });
+        temp_env::with_var("MCP_FACTORY_COMPACT_JSONAPI", Some("TRUE"), || {
+            assert!(ProxyConfig::default().merge_env().unwrap().compact_jsonapi);
+        });
+        temp_env::with_var("MCP_FACTORY_COMPACT_JSONAPI", Some("maybe"), || {
+            assert!(ProxyConfig::default().merge_env().is_err());
         });
     }
 

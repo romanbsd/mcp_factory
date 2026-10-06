@@ -23,6 +23,10 @@ class OpenAPICompatibilityWarning(UserWarning):
     """An invalid but unambiguous OpenAPI construct was repaired."""
 
 
+class UnknownOperationError(ValueError):
+    """A requested operationId is absent from the schema or filtered out."""
+
+
 def _coerce_description_placeholders(
     node: Any,
     path: tuple[str, ...] = (),
@@ -315,9 +319,11 @@ def parse_openapi(
     *,
     include_deprecated: bool = False,
     tags: set[str] | None = None,
+    operations: set[str] | None = None,
     read_only: bool = False,
 ) -> GenerationResult:
     spec = load_openapi(path)
+    matched_operations: set[str] = set()
     tools: list[ToolSpec] = []
     seen_names: set[str] = set()
 
@@ -332,6 +338,10 @@ def parse_openapi(
                 continue
             if read_only and method not in _READ_ONLY_METHODS:
                 continue
+            if operations is not None:
+                if operation.get("operationId") not in operations:
+                    continue
+                matched_operations.add(operation["operationId"])
             tools.append(
                 _build_tool_spec(
                     method=method,
@@ -341,6 +351,10 @@ def parse_openapi(
                     seen_names=seen_names,
                 )
             )
+
+    if operations is not None and operations - matched_operations:
+        missing = ", ".join(sorted(operations - matched_operations))
+        raise UnknownOperationError(f"operationId(s) not found or filtered out: {missing}")
 
     schema_text = path.read_text(encoding="utf-8")
     mime_type = (

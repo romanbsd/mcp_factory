@@ -73,6 +73,7 @@ def render_crate(
     core_path: str,
     transport: str,
     config_text: str | None = None,
+    compact_jsonapi: bool = False,
 ) -> None:
     env = _env()
     context = {
@@ -80,6 +81,7 @@ def render_crate(
         "base_url": base_url,
         "core_path": core_path,
         "transport": transport,
+        "compact_jsonapi": compact_jsonapi,
         "tools": result.tools,
         "resources": result.resources,
     }

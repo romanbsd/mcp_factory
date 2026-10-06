@@ -5,6 +5,7 @@ from prance import ValidationError
 
 from mcp_gen.openapi.parser import (
     OpenAPICompatibilityWarning,
+    UnknownOperationError,
     load_openapi,
     parse_openapi,
 )
@@ -146,6 +147,30 @@ def test_filters_by_tags(fixtures_dir: Path) -> None:
     path.write_text(yaml.dump(spec), encoding="utf-8")
     result = parse_openapi(path, tags={"alpha"})
     assert [tool.name for tool in result.tools] == ["a"]
+
+
+def test_filters_by_operation_ids(fixtures_dir: Path) -> None:
+    result = parse_openapi(fixtures_dir / "params-openapi.yaml", operations={"createPet"})
+    assert [tool.name for tool in result.tools] == ["createPet"]
+
+
+def test_unknown_operation_id_is_an_error(fixtures_dir: Path) -> None:
+    with pytest.raises(UnknownOperationError, match="deletePet, getPets"):
+        parse_openapi(
+            fixtures_dir / "params-openapi.yaml",
+            operations={"getPet", "getPets", "deletePet"},
+        )
+
+
+def test_operation_filtered_out_by_other_filter_is_an_error(
+    fixtures_dir: Path,
+) -> None:
+    with pytest.raises(UnknownOperationError, match="createPet"):
+        parse_openapi(
+            fixtures_dir / "params-openapi.yaml",
+            operations={"createPet"},
+            read_only=True,
+        )
 
 
 def test_read_only_keeps_only_non_mutating_methods(tmp_path: Path) -> None:

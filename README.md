@@ -376,6 +376,7 @@ Environment variables:
 | `MCP_FACTORY_HTTP_PATH` | HTTP mount path (default `/mcp`) |
 | `MCP_FACTORY_TIMEOUT` | Upstream request timeout, seconds |
 | `MCP_FACTORY_MEDIA_ROOT` | Directory media-upload tools may read files from (unset disables them) |
+| `MCP_FACTORY_COMPACT_JSONAPI` | `1`/`0`: strip JSON:API `links` and link-only relationships, minify JSON responses (config: `compact_jsonapi`) |
 
 Generated crates also ship a `config.toml` template. At runtime, configuration
 is loaded in this order: `MCP_FACTORY_CONFIG`, `config.toml` in the current

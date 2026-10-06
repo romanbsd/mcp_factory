@@ -1,6 +1,10 @@
 base_url = "{{ base_url }}"
 server_name = "{{ crate_name }}"
 transport = "{{ transport }}"
+{% if compact_jsonapi %}
+# Strip JSON:API links/link-only relationships and minify responses.
+compact_jsonapi = true
+{% endif %}
 
 # Static bearer token (reads MCP_FACTORY_BEARER_TOKEN by default):
 # [auth]

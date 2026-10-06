@@ -10,7 +10,7 @@ import yaml
 from mcp_gen.composition import CompositionError, compose_generation_results
 from mcp_gen.graphql.parser import parse_graphql
 from mcp_gen.google_discovery.parser import parse_google_discovery
-from mcp_gen.openapi.parser import parse_openapi
+from mcp_gen.openapi.parser import UnknownOperationError, parse_openapi
 from mcp_gen.packaging import package_with_temp_crate
 from mcp_gen.paths import resolve_core_path
 from mcp_gen.render import render_crate
@@ -77,22 +77,39 @@ def _parse_schema(
     include_deprecated: bool,
     tags: str | None,
     read_only: bool,
+    operations: str | None = None,
+    output_schema: bool = True,
 ):
     schema_kind = kind or detect_kind(input)
     tag_set = {tag.strip() for tag in tags.split(",") if tag.strip()} if tags else None
+    operation_set = (
+        {op.strip() for op in operations.split(",") if op.strip()} if operations else None
+    )
+    if operation_set and schema_kind != "openapi":
+        raise typer.BadParameter("--operations is only supported for OpenAPI schemas")
 
     if schema_kind == "openapi":
-        return parse_openapi(
-            input,
-            include_deprecated=include_deprecated,
-            tags=tag_set,
-            read_only=read_only,
-        )
-    if schema_kind == "graphql":
-        return parse_graphql(input, read_only=read_only)
-    if schema_kind in {"google_discovery", "google-discovery"}:
-        return parse_google_discovery(input, tags=tag_set, read_only=read_only)
-    raise typer.BadParameter(f"unsupported kind: {schema_kind}")
+        try:
+            result = parse_openapi(
+                input,
+                include_deprecated=include_deprecated,
+                tags=tag_set,
+                operations=operation_set,
+                read_only=read_only,
+            )
+        except UnknownOperationError as error:
+            raise typer.BadParameter(str(error)) from error
+    elif schema_kind == "graphql":
+        result = parse_graphql(input, read_only=read_only)
+    elif schema_kind in {"google_discovery", "google-discovery"}:
+        result = parse_google_discovery(input, tags=tag_set, read_only=read_only)
+    else:
+        raise typer.BadParameter(f"unsupported kind: {schema_kind}")
+
+    if not output_schema:
+        for tool in result.tools:
+            tool.output_schema = None
+    return result
 
 
 @app.command("generate")
@@ -112,8 +129,21 @@ def generate(
     ),
     include_deprecated: bool = typer.Option(False, "--include-deprecated"),
     tags: str | None = typer.Option(None, "--tags", help="Comma-separated OpenAPI tags filter"),
+    operations: str | None = typer.Option(
+        None, "--operations", help="Comma-separated OpenAPI operationId allowlist"
+    ),
     read_only: bool = typer.Option(
         False, "--read-only", help="Only generate non-mutating tools"
+    ),
+    output_schema: bool = typer.Option(
+        True,
+        "--output-schema/--no-output-schema",
+        help="Emit response schemas as MCP outputSchema (can be very large)",
+    ),
+    compact_jsonapi: bool = typer.Option(
+        False,
+        "--compact-jsonapi",
+        help="Strip JSON:API links and minify JSON responses at runtime",
     ),
 ) -> None:
     """Generate a Rust MCP proxy crate from an OpenAPI, Google Discovery, or GraphQL schema."""
@@ -124,6 +154,8 @@ def generate(
         include_deprecated=include_deprecated,
         tags=tags,
         read_only=read_only,
+        operations=operations,
+        output_schema=output_schema,
     )
 
     render_crate(
@@ -133,6 +165,7 @@ def generate(
         base_url=_resolve_base_url(base_url, result.base_url),
         core_path=resolve_core_path(core_path, relative_to=output),
         transport=transport,
+        compact_jsonapi=compact_jsonapi,
     )
     typer.echo(f"Generated {len(result.tools)} tools into {output}")
 
@@ -168,6 +201,16 @@ def compose(
     read_only: bool = typer.Option(
         False, "--read-only", help="Only generate non-mutating tools"
     ),
+    output_schema: bool = typer.Option(
+        True,
+        "--output-schema/--no-output-schema",
+        help="Emit response schemas as MCP outputSchema (can be very large)",
+    ),
+    compact_jsonapi: bool = typer.Option(
+        False,
+        "--compact-jsonapi",
+        help="Strip JSON:API links and minify JSON responses at runtime",
+    ),
 ) -> None:
     """Compose multiple schemas into one generated Rust MCP proxy crate."""
     _validate_transport(transport)
@@ -178,6 +221,7 @@ def compose(
             include_deprecated=include_deprecated,
             tags=tags,
             read_only=read_only,
+            output_schema=output_schema,
         )
         for input in inputs
     ]
@@ -194,6 +238,7 @@ def compose(
         base_url=resolved_base_url,
         core_path=resolve_core_path(core_path, relative_to=output),
         transport=transport,
+        compact_jsonapi=compact_jsonapi,
         config_text=config_text,
     )
     typer.echo(f"Composed {len(inputs)} schemas and {len(result.tools)} tools into {output}")
@@ -216,8 +261,21 @@ def package(
     ),
     include_deprecated: bool = typer.Option(False, "--include-deprecated"),
     tags: str | None = typer.Option(None, "--tags", help="Comma-separated OpenAPI tags filter"),
+    operations: str | None = typer.Option(
+        None, "--operations", help="Comma-separated OpenAPI operationId allowlist"
+    ),
     read_only: bool = typer.Option(
         False, "--read-only", help="Only generate non-mutating tools"
+    ),
+    output_schema: bool = typer.Option(
+        True,
+        "--output-schema/--no-output-schema",
+        help="Emit response schemas as MCP outputSchema (can be very large)",
+    ),
+    compact_jsonapi: bool = typer.Option(
+        False,
+        "--compact-jsonapi",
+        help="Strip JSON:API links and minify JSON responses at runtime",
     ),
     target: str | None = typer.Option(
         None,
@@ -235,6 +293,8 @@ def package(
         include_deprecated=include_deprecated,
         tags=tags,
         read_only=read_only,
+        operations=operations,
+        output_schema=output_schema,
     )
     resolved_base_url = _resolve_base_url(base_url, result.base_url)
 
@@ -246,6 +306,7 @@ def package(
             base_url=resolved_base_url,
             core_path=resolve_core_path(core_path, relative_to=crate_dir),
             transport=transport,
+            compact_jsonapi=compact_jsonapi,
         )
 
     dist_dir, archive_path, source_dir = package_with_temp_crate(

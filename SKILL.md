@@ -48,6 +48,9 @@ Same flags for `mcp-gen package --output ./dist/my-mcp`. Cross-compile with
 | `--tags a,b` | OpenAPI: only these tags |
 | `--include-deprecated` | Include deprecated ops |
 | `--read-only` | GET/HEAD/OPTIONS + GraphQL queries only |
+| `--operations id1,id2` | OpenAPI: only these operationIds (unknown ID = error) |
+| `--no-output-schema` | Omit response schemas from `tools/list` (big specs) |
+| `--compact-jsonapi` | Default `compact_jsonapi = true` (JSON:API APIs) |
 | `--core-path <dir>` | Override core crate path |
 
 ## Client wiring
@@ -77,6 +80,7 @@ Env vars override `config.toml`.
 | `MCP_FACTORY_OAUTH_CLIENT_SECRET` | OAuth2 confidential client |
 | `MCP_TRANSPORT` | `stdio`, `http`, or `both` |
 | `MCP_FACTORY_BIND_ADDR` | HTTP bind (default `127.0.0.1:8080`) |
+| `MCP_FACTORY_COMPACT_JSONAPI` | `1` = strip JSON:API links, minify responses |
 
 OAuth2 (Auth Code + PKCE): `<generated-server> --auth-login` (or
 `mcp-factory-auth login --config config.toml`) → tokens in `.mcp-factory/tokens.json`.

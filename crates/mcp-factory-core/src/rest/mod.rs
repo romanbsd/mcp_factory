@@ -69,6 +69,7 @@ pub struct RestProxyExecutor {
     base_url: String,
     auth: Arc<dyn AuthProvider>,
     media_root: Option<PathBuf>,
+    compact_jsonapi: bool,
 }
 
 impl RestProxyExecutor {
@@ -83,7 +84,15 @@ impl RestProxyExecutor {
             base_url,
             auth,
             media_root,
+            compact_jsonapi: false,
         }
+    }
+
+    /// Strip JSON:API link/relationship boilerplate from JSON responses and
+    /// minify them (see [`compact_jsonapi`]).
+    pub fn with_compact_jsonapi(mut self, enabled: bool) -> Self {
+        self.compact_jsonapi = enabled;
+        self
     }
 
     pub async fn execute(&self, tool: &ToolSpec, args: Value) -> Result<ToolResult, ProxyError> {
@@ -192,13 +201,18 @@ impl RestProxyExecutor {
                     ..ToolResult::text("{}".to_string())
                 }
             } else {
-                let structured = if is_json {
+                let mut structured = if is_json {
                     serde_json::from_str::<Value>(&text)
                         .ok()
                         .filter(Value::is_object)
                 } else {
                     None
                 };
+                let mut text = text;
+                if let Some(value) = structured.as_mut().filter(|_| self.compact_jsonapi) {
+                    compact_jsonapi(value);
+                    text = value.to_string();
+                }
                 ToolResult {
                     structured,
                     meta,
@@ -217,6 +231,42 @@ impl RestProxyExecutor {
             }
         };
         Ok(body)
+    }
+}
+
+/// Drop JSON:API noise an LLM can't act on: per-resource `links`, and
+/// relationships that carry only links (no `data`, i.e. not `include`d).
+/// Top-level `links`/`meta` (pagination) are kept.
+pub fn compact_jsonapi(document: &mut Value) {
+    let Some(document) = document.as_object_mut() else {
+        return;
+    };
+    for key in ["data", "included"] {
+        match document.get_mut(key) {
+            Some(Value::Array(resources)) => resources.iter_mut().for_each(compact_resource),
+            Some(resource) => compact_resource(resource),
+            None => {}
+        }
+    }
+}
+
+fn compact_resource(resource: &mut Value) {
+    let Some(resource) = resource.as_object_mut() else {
+        return;
+    };
+    resource.remove("links");
+    let Some(Value::Object(relationships)) = resource.get_mut("relationships") else {
+        return;
+    };
+    relationships.retain(|_, relationship| match relationship.as_object_mut() {
+        Some(relationship) => {
+            relationship.remove("links");
+            relationship.contains_key("data")
+        }
+        None => true,
+    });
+    if relationships.is_empty() {
+        resource.remove("relationships");
     }
 }
 
@@ -705,6 +755,72 @@ mod tests {
     use crate::auth::auth_provider_from_config;
     use crate::config::AuthConfig;
     use serde_json::json;
+
+    #[test]
+    fn compact_jsonapi_strips_links_and_link_only_relationships() {
+        let mut document = json!({
+            "data": [{
+                "type": "apps",
+                "id": "1",
+                "attributes": {"name": "App", "links": "an attribute, kept"},
+                "relationships": {
+                    "builds": {"links": {"self": "s", "related": "r"}},
+                    "appInfos": {"links": {"self": "s"}, "data": [{"type": "appInfos", "id": "9"}]},
+                    "betaGroups": {"meta": {"paging": {"total": 2}}}
+                },
+                "links": {"self": "https://api.example.com/v1/apps/1"}
+            }],
+            "included": [{
+                "type": "appInfos",
+                "id": "9",
+                "relationships": {"app": {"links": {"related": "r"}}},
+                "links": {"self": "s"}
+            }],
+            "links": {"self": "s", "next": "https://api.example.com/v1/apps?cursor=x"},
+            "meta": {"paging": {"total": 1, "limit": 1}}
+        });
+
+        compact_jsonapi(&mut document);
+
+        assert_eq!(
+            document,
+            json!({
+                "data": [{
+                    "type": "apps",
+                    "id": "1",
+                    "attributes": {"name": "App", "links": "an attribute, kept"},
+                    "relationships": {
+                        "appInfos": {"data": [{"type": "appInfos", "id": "9"}]}
+                    }
+                }],
+                "included": [{"type": "appInfos", "id": "9"}],
+                "links": {"self": "s", "next": "https://api.example.com/v1/apps?cursor=x"},
+                "meta": {"paging": {"total": 1, "limit": 1}}
+            })
+        );
+    }
+
+    #[test]
+    fn compact_jsonapi_handles_single_resource_and_null_data() {
+        let mut single = json!({
+            "data": {
+                "type": "builds",
+                "id": "b",
+                "relationships": {"app": {"data": null, "links": {"related": "r"}}},
+                "links": {"self": "s"}
+            }
+        });
+        compact_jsonapi(&mut single);
+        // A null to-one is information ("no build attached"), so it stays.
+        assert_eq!(
+            single,
+            json!({"data": {"type": "builds", "id": "b", "relationships": {"app": {"data": null}}}})
+        );
+
+        let mut not_jsonapi = json!({"data": null, "errors": [{"links": {"about": "x"}}]});
+        compact_jsonapi(&mut not_jsonapi);
+        assert_eq!(not_jsonapi, json!({"data": null, "errors": [{"links": {"about": "x"}}]}));
+    }
 
     #[test]
     fn substitutes_path_params() {

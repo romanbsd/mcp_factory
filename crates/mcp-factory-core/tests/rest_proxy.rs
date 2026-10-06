@@ -5,7 +5,8 @@ use std::io::Write;
 use flate2::write::GzEncoder;
 use flate2::Compression;
 use mcp_factory_core::{
-    ExecutionKind, McpProxyServer, MediaUploadOperation, RestOperation, ToolSpec,
+    ExecutionKind, McpProxyServer, MediaUploadOperation, ReadOnlyToolInvoker, RestOperation,
+    ToolSpec,
 };
 use serde_json::json;
 use wiremock::matchers::{body_string_contains, header, headers, method, path};
@@ -33,6 +34,48 @@ async fn rest_proxy_gets_pet_by_id() {
         .unwrap();
 
     assert!(result.contains("fluffy"));
+}
+
+#[tokio::test]
+async fn rest_proxy_compacts_jsonapi_responses_when_enabled() {
+    let mock_server = MockServer::start().await;
+    let body = "{\n\t\"data\" : {\n\t\t\"type\" : \"pets\",\n\t\t\"id\" : \"42\",\n\t\t\"attributes\" : { \"name\" : \"fluffy\" },\n\t\t\"relationships\" : { \"owner\" : { \"links\" : { \"related\" : \"r\" } } },\n\t\t\"links\" : { \"self\" : \"s\" }\n\t}\n}";
+    Mock::given(method("GET"))
+        .and(path("/pets/42"))
+        .respond_with(ResponseTemplate::new(200).set_body_raw(body, "application/json"))
+        .mount(&mock_server)
+        .await;
+
+    let compacted = json!({"data": {"type": "pets", "id": "42", "attributes": {"name": "fluffy"}}});
+    let mut tool = common::rest_get_pet_tool();
+    tool.hints.read_only = Some(true);
+    for (compact, expected_text) in [(true, compacted.to_string()), (false, body.to_string())] {
+        let config = mcp_factory_core::ProxyConfig {
+            compact_jsonapi: compact,
+            ..common::proxy_config(&mock_server.uri())
+        };
+        let server = McpProxyServer::builder(config)
+            .tools(std::slice::from_ref(&tool))
+            .unwrap()
+            .build()
+            .unwrap();
+
+        let result = server
+            .invoke_read_only("get_pet", json!({"petId": 42}))
+            .await
+            .unwrap();
+
+        let structured = result.structured.clone().expect("JSON object response");
+        assert_eq!(
+            structured.pointer("/data/links").is_none(),
+            compact,
+            "compact_jsonapi = {compact}"
+        );
+        if compact {
+            assert_eq!(structured, compacted);
+        }
+        assert_eq!(result.into_text(), expected_text, "compact_jsonapi = {compact}");
+    }
 }
 
 #[tokio::test]
