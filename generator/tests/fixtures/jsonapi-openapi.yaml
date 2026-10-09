@@ -1,0 +1,71 @@
+openapi: 3.0.3
+info:
+  title: JSON:API style API without summaries
+  version: 1.0.0
+servers:
+  - url: https://api.example.com/
+paths:
+  /v1/apps:
+    get:
+      operationId: apps_getCollection
+      parameters:
+        - name: filter[bundleId]
+          in: query
+          schema: {type: array, items: {type: string}}
+        - name: fields[apps]
+          in: query
+          schema: {type: array, items: {type: string, enum: [name, bundleId, sku]}}
+        - name: limit
+          in: query
+          schema: {type: integer, maximum: 200}
+      responses:
+        "200": {description: OK}
+  /v1/apps/{id}:
+    get:
+      operationId: apps_getInstance
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+      responses:
+        "200": {description: OK}
+    delete:
+      operationId: apps_deleteInstance
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+      responses:
+        "204": {description: No Content}
+  /v1/apps/{id}/builds:
+    get:
+      operationId: apps_builds_getToManyRelated
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+        - {name: limit, in: query, schema: {type: integer}}
+        - {name: cursor, in: query, schema: {type: string}}
+      responses:
+        "200": {description: OK}
+  /v1/betaGroups/{id}/relationships/betaTesters:
+    post:
+      operationId: betaGroups_betaTesters_createToManyRelationship
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                data:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      type: {type: string, enum: [betaTesters]}
+                      id: {type: string}
+      responses:
+        "204": {description: No Content}
+  /v1/certificates:
+    get:
+      operationId: certificates_getCollection
+      summary: List signing certificates
+      responses:
+        "200": {description: OK}

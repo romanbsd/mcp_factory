@@ -13,6 +13,13 @@ def sanitize_tool_name(name: str) -> str:
     return cleaned or "tool"
 
 
+def glob_match(name: str, pattern: str) -> bool:
+    """Case-sensitive glob where only `*` and `?` are wildcards, so names with
+    brackets such as `fields[apps]` can be matched literally."""
+    regex = re.escape(pattern).replace(r"\*", ".*").replace(r"\?", ".")
+    return re.fullmatch(regex, name) is not None
+
+
 def unique_name(name: str, seen: set[str]) -> str:
     """Return a collision-free variant of ``name``, recording it in ``seen``."""
     candidate = name
@@ -68,6 +75,9 @@ class ToolSpec:
     destructive: bool | None = None
     idempotent: bool | None = None
     open_world: bool | None = None
+    # Source operation identifier (OpenAPI operationId) for config matching;
+    # not emitted into the generated crate.
+    operation_id: str | None = None
 
 
 @dataclass
@@ -87,3 +97,7 @@ class GenerationResult:
     # Upstream base URL detected from the schema (OpenAPI servers[0]), used as
     # the default when --base-url is omitted.
     base_url: str | None = None
+    # Runtime tool profiles (see --tool-config): tool name -> profile names,
+    # and the profiles enabled when config/env do not choose.
+    tool_profiles: dict[str, list[str]] = field(default_factory=dict)
+    default_profiles: list[str] | None = None

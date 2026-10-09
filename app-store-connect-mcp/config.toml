@@ -3,6 +3,11 @@ server_name = "app-store-connect-mcp"
 transport = "stdio"
 # Strip JSON:API links/link-only relationships and minify responses.
 compact_jsonapi = true
+# Tool profiles to expose (or set MCP_FACTORY_PROFILES=a,b). "all" exposes
+# every tool.
+# Unset uses the generated default: core, metadata, assets, testflight.
+# Available: assets, core, metadata, monetization, pricing, reports, reviews, signing, testflight
+# profiles = ["core", "metadata", "assets", "testflight"]
 
 # Static bearer token (reads MCP_FACTORY_BEARER_TOKEN by default):
 # [auth]

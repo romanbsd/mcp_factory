@@ -83,6 +83,68 @@ async fn rest_proxy_compacts_jsonapi_responses_when_enabled() {
 }
 
 #[tokio::test]
+async fn rest_proxy_returns_gzip_reports_as_text() {
+    let mock_server = MockServer::start().await;
+    let report = "Provider\tSKU\tUnits\nAPPLE\tcom.example.app\t42\n";
+    let mut encoder = GzEncoder::new(Vec::new(), Compression::default());
+    encoder.write_all(report.as_bytes()).unwrap();
+    Mock::given(method("GET"))
+        .and(path("/pets/42"))
+        .respond_with(
+            ResponseTemplate::new(200)
+                .set_body_raw(encoder.finish().unwrap(), "application/a-gzip"),
+        )
+        .mount(&mock_server)
+        .await;
+    let server = McpProxyServer::builder(common::proxy_config(&mock_server.uri()))
+        .tools(&[common::rest_get_pet_tool()])
+        .unwrap()
+        .build()
+        .unwrap();
+
+    let result = server
+        .invoke_tool("get_pet", json!({"petId": 42}))
+        .await
+        .unwrap();
+
+    assert_eq!(result, report);
+}
+
+#[tokio::test]
+async fn rest_proxy_returns_corrupt_gzip_as_binary() {
+    let mock_server = MockServer::start().await;
+    let corrupt = vec![0x1f, 0x8b, 0x08, 0x00, 0xde, 0xad];
+    Mock::given(method("GET"))
+        .and(path("/pets/42"))
+        .respond_with(
+            ResponseTemplate::new(200).set_body_raw(corrupt.clone(), "application/a-gzip"),
+        )
+        .mount(&mock_server)
+        .await;
+    let mut tool = common::rest_get_pet_tool();
+    tool.hints.read_only = Some(true);
+    let server = McpProxyServer::builder(common::proxy_config(&mock_server.uri()))
+        .tools(std::slice::from_ref(&tool))
+        .unwrap()
+        .build()
+        .unwrap();
+
+    let result = server
+        .invoke_read_only("get_pet", json!({"petId": 42}))
+        .await
+        .unwrap();
+
+    assert!(!result.is_error);
+    assert_eq!(
+        result.body,
+        mcp_factory_core::ToolBody::Binary {
+            data: corrupt,
+            mime: "application/a-gzip".to_string()
+        }
+    );
+}
+
+#[tokio::test]
 async fn rest_proxy_treats_empty_json_success_body_as_empty_object() {
     let mock_server = MockServer::start().await;
     Mock::given(method("GET"))

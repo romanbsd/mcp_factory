@@ -11,6 +11,7 @@ from mcp_gen.composition import CompositionError, compose_generation_results
 from mcp_gen.graphql.parser import parse_graphql
 from mcp_gen.google_discovery.parser import parse_google_discovery
 from mcp_gen.openapi.parser import UnknownOperationError, parse_openapi
+from mcp_gen.tool_config import ToolConfigError, apply_tool_config, load_tool_config
 from mcp_gen.packaging import package_with_temp_crate
 from mcp_gen.paths import resolve_core_path
 from mcp_gen.render import render_crate
@@ -79,6 +80,7 @@ def _parse_schema(
     read_only: bool,
     operations: str | None = None,
     output_schema: bool = True,
+    tool_config: Path | None = None,
 ):
     schema_kind = kind or detect_kind(input)
     tag_set = {tag.strip() for tag in tags.split(",") if tag.strip()} if tags else None
@@ -89,6 +91,17 @@ def _parse_schema(
         raise typer.BadParameter("--operations needs at least one operationId")
     if operation_set and schema_kind != "openapi":
         raise typer.BadParameter("--operations is only supported for OpenAPI schemas")
+    curation = None
+    if tool_config is not None:
+        if schema_kind != "openapi":
+            raise typer.BadParameter("--tool-config is only supported for OpenAPI schemas")
+        if operation_set:
+            raise typer.BadParameter("use either --operations or --tool-config, not both")
+        try:
+            curation = load_tool_config(tool_config)
+        except ToolConfigError as error:
+            raise typer.BadParameter(str(error)) from error
+        operation_set = curation.operation_patterns
 
     if schema_kind == "openapi":
         try:
@@ -108,6 +121,11 @@ def _parse_schema(
     else:
         raise typer.BadParameter(f"unsupported kind: {schema_kind}")
 
+    if curation is not None:
+        try:
+            apply_tool_config(result, curation)
+        except ToolConfigError as error:
+            raise typer.BadParameter(str(error)) from error
     if not output_schema:
         for tool in result.tools:
             tool.output_schema = None
@@ -132,7 +150,17 @@ def generate(
     include_deprecated: bool = typer.Option(False, "--include-deprecated"),
     tags: str | None = typer.Option(None, "--tags", help="Comma-separated OpenAPI tags filter"),
     operations: str | None = typer.Option(
-        None, "--operations", help="Comma-separated OpenAPI operationId allowlist"
+        None,
+        "--operations",
+        help="Comma-separated OpenAPI operationId allowlist (* and ? wildcards allowed)",
+    ),
+    tool_config: Path | None = typer.Option(
+        None,
+        "--tool-config",
+        exists=True,
+        dir_okay=False,
+        readable=True,
+        help="TOML with tool profiles, description overrides and pagination cursor",
     ),
     read_only: bool = typer.Option(
         False, "--read-only", help="Only generate non-mutating tools"
@@ -158,6 +186,7 @@ def generate(
         read_only=read_only,
         operations=operations,
         output_schema=output_schema,
+        tool_config=tool_config,
     )
 
     render_crate(
@@ -264,7 +293,17 @@ def package(
     include_deprecated: bool = typer.Option(False, "--include-deprecated"),
     tags: str | None = typer.Option(None, "--tags", help="Comma-separated OpenAPI tags filter"),
     operations: str | None = typer.Option(
-        None, "--operations", help="Comma-separated OpenAPI operationId allowlist"
+        None,
+        "--operations",
+        help="Comma-separated OpenAPI operationId allowlist (* and ? wildcards allowed)",
+    ),
+    tool_config: Path | None = typer.Option(
+        None,
+        "--tool-config",
+        exists=True,
+        dir_okay=False,
+        readable=True,
+        help="TOML with tool profiles, description overrides and pagination cursor",
     ),
     read_only: bool = typer.Option(
         False, "--read-only", help="Only generate non-mutating tools"
@@ -297,6 +336,7 @@ def package(
         read_only=read_only,
         operations=operations,
         output_schema=output_schema,
+        tool_config=tool_config,
     )
     resolved_base_url = _resolve_base_url(base_url, result.base_url)
 

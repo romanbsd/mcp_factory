@@ -10,6 +10,7 @@ from prance import ResolvingParser
 
 from mcp_gen.models import (
     GenerationResult,
+    glob_match,
     ParamBinding,
     RestOperation,
     ToolSpec,
@@ -152,12 +153,80 @@ def _request_body_schema(operation: dict[str, Any]) -> dict[str, Any] | None:
     return first.get("schema") if first else None
 
 
-def _operation_description(operation: dict[str, Any]) -> str:
+def _operation_description(operation: dict[str, Any], method: str, path_name: str) -> str:
     parts = [operation.get("summary"), operation.get("description")]
-    text = "\n\n".join(part for part in parts if part) or "Generated from OpenAPI operation"
+    text = "\n\n".join(part for part in parts if part) or derive_description(method, path_name)
     if operation.get("deprecated"):
         text = f"[DEPRECATED] {text}"
     return text
+
+
+def derive_description(method: str, path_name: str) -> str:
+    """Describe an operation from its REST shape when the spec gives no
+    summary/description, e.g. ``GET /v1/apps/{id}/builds`` -> "List the
+    `builds` related to one `apps` resource.". Resource names are kept
+    verbatim (they are usually the JSON:API `type`)."""
+    method = method.upper()
+    segments = [segment for segment in path_name.strip("/").split("/") if segment]
+    # Drop a leading version segment such as "v1".
+    if segments and re.fullmatch(r"v\d+", segments[0]):
+        segments = segments[1:]
+    fallback = f"{method} {path_name}."
+    if not segments:
+        return fallback
+
+    def is_param(segment: str) -> bool:
+        return segment.startswith("{") and segment.endswith("}")
+
+    def owner_of(index: int) -> str:
+        """Nearest non-parameter segment before `index`."""
+        name = next((s for s in reversed(segments[:index]) if not is_param(s)), "resource")
+        return f"`{name}`"
+
+    if "relationships" in segments:
+        index = segments.index("relationships")
+        owner = owner_of(index)
+        related = f"`{segments[index + 1]}`" if index + 1 < len(segments) else "relationship"
+        actions = {
+            "GET": f"Get the IDs of the {related} linked to one {owner} resource",
+            "POST": f"Link additional {related} to one {owner} resource",
+            "PATCH": f"Replace the {related} linkage of one {owner} resource",
+            "DELETE": f"Unlink {related} from one {owner} resource",
+        }
+        return f"{actions[method]} (linkage only)." if method in actions else fallback
+
+    if "metrics" in segments and method == "GET":
+        index = segments.index("metrics")
+        owner = owner_of(index)
+        if index + 1 < len(segments):
+            return f"Get `{segments[index + 1]}` metrics for one {owner} resource."
+        return f"Get metrics for one {owner} resource."
+
+    last = segments[-1]
+    if is_param(last):
+        resource = owner_of(len(segments) - 1)
+        actions = {
+            "GET": f"Get one {resource} resource by {last[1:-1]}.",
+            "PATCH": f"Update attributes or relationships of one {resource} resource.",
+            "PUT": f"Replace one {resource} resource.",
+            "DELETE": f"Delete one {resource} resource. This cannot be undone.",
+        }
+        return actions.get(method, fallback)
+
+    resource = f"`{last}`"
+    if len(segments) >= 3 and is_param(segments[-2]):
+        owner = owner_of(len(segments) - 2)
+        if method == "GET":
+            return f"List the {resource} related to one {owner} resource."
+        return fallback
+    actions = {
+        "GET": f"List {resource} resources; supports the filters and pagination parameters below.",
+        "POST": f"Create one {resource} resource.",
+        "PUT": f"Replace {resource}.",
+        "PATCH": f"Update {resource}.",
+        "DELETE": f"Delete {resource}. This cannot be undone.",
+    }
+    return actions.get(method, fallback)
 
 
 def _detect_base_url(spec: dict[str, Any]) -> str | None:
@@ -294,7 +363,7 @@ def _build_tool_spec(
     annotations = _verb_annotations(method)
     return ToolSpec(
         name=tool_name,
-        description=_operation_description(operation),
+        description=_operation_description(operation, method, path_name),
         input_schema=_merge_schemas(schema_parts),
         execution_kind="rest",
         rest=RestOperation(
@@ -311,6 +380,7 @@ def _build_tool_spec(
         idempotent=annotations["idempotent"],
         destructive=annotations["destructive"],
         open_world=annotations["open_world"],
+        operation_id=operation.get("operationId"),
     )
 
 
@@ -323,7 +393,9 @@ def parse_openapi(
     read_only: bool = False,
 ) -> GenerationResult:
     spec = load_openapi(path)
-    matched_operations: set[str] = set()
+    # Entries are exact operationIds or globs (e.g. "betaGroups_*");
+    # each must select at least one operation.
+    matched_patterns: set[str] = set()
     tools: list[ToolSpec] = []
     seen_names: set[str] = set()
 
@@ -339,9 +411,11 @@ def parse_openapi(
             if read_only and method not in _READ_ONLY_METHODS:
                 continue
             if operations is not None:
-                if operation.get("operationId") not in operations:
+                operation_id = operation.get("operationId") or ""
+                hits = {p for p in operations if glob_match(operation_id, p)}
+                if not hits:
                     continue
-                matched_operations.add(operation["operationId"])
+                matched_patterns |= hits
             tools.append(
                 _build_tool_spec(
                     method=method,
@@ -352,8 +426,8 @@ def parse_openapi(
                 )
             )
 
-    if operations is not None and operations - matched_operations:
-        missing = ", ".join(sorted(operations - matched_operations))
+    if operations is not None and operations - matched_patterns:
+        missing = ", ".join(sorted(operations - matched_patterns))
         raise UnknownOperationError(f"operationId(s) not found or filtered out: {missing}")
 
     schema_text = path.read_text(encoding="utf-8")

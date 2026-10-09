@@ -71,3 +71,23 @@ pub fn build_tools() -> Vec<ToolSpec> {
 {% endfor %}
     ]
 }
+{% if default_profiles is not none %}
+
+/// Profiles exposed when neither config.toml nor MCP_FACTORY_PROFILES choose.
+#[rustfmt::skip]
+pub fn default_profiles() -> Vec<String> {
+    vec![{% for profile in default_profiles %}{{ profile | rust_string }}.to_string(){% if not loop.last %}, {% endif %}{% endfor %}]
+}
+{% endif %}
+{% if tool_profiles %}
+
+/// Tool name -> runtime profiles (see `--tool-config`).
+#[rustfmt::skip]
+pub fn build_tool_profiles() -> Vec<(&'static str, &'static [&'static str])> {
+    vec![
+{% for name, profiles in tool_profiles | dictsort %}
+        ({{ name | rust_string }}, &[{% for profile in profiles %}{{ profile | rust_string }}{% if not loop.last %}, {% endif %}{% endfor %}]),
+{% endfor %}
+    ]
+}
+{% endif %}

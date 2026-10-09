@@ -219,14 +219,35 @@ impl RestProxyExecutor {
                 }
             }
         } else {
-            ToolResult {
-                body: ToolBody::Binary {
-                    data: read_limited_bytes(response).await?,
-                    mime: content_type,
+            let data = read_limited_bytes(response).await?;
+            // Decompression is CPU-bound (up to MAX_RESPONSE_BYTES): keep it off
+            // the async workers.
+            let gzip_type = content_type.clone();
+            let (data, decoded) = tokio::task::spawn_blocking(move || {
+                let decoded = gunzip_text(&gzip_type, &data);
+                (data, decoded)
+            })
+            .await
+            .map_err(|error| ProxyError::Other(format!("gzip decoding failed: {error}")))?;
+            match decoded? {
+                Some(text) => {
+                    let mut meta = meta;
+                    meta.insert("decoded".to_string(), Value::from("gzip"));
+                    meta.insert("http.content-type".to_string(), Value::from(content_type));
+                    ToolResult {
+                        meta,
+                        ..ToolResult::text(text)
+                    }
+                }
+                None => ToolResult {
+                    body: ToolBody::Binary {
+                        data,
+                        mime: content_type,
+                    },
+                    structured: None,
+                    meta,
+                    is_error: false,
                 },
-                structured: None,
-                meta,
-                is_error: false,
             }
         };
         Ok(body)
@@ -318,6 +339,8 @@ const HINT_HEADERS: &[&str] = &[
     "x-ratelimit-limit",
     "x-ratelimit-reset",
     "content-range",
+    "x-request-id",
+    "x-rate-limit",
 ];
 
 fn collect_header_hints(headers: &reqwest::header::HeaderMap) -> Map<String, Value> {
@@ -332,7 +355,8 @@ fn collect_header_hints(headers: &reqwest::header::HeaderMap) -> Map<String, Val
 
 /// Build a tool-level error result from a non-2xx response, with machine-usable
 /// hints: whether it's worth retrying, any `Retry-After`, an auth cue, and the
-/// parsed body when it's `application/problem+json` (RFC 7807).
+/// parsed body: `problem` for `application/problem+json` (RFC 7807), `body`
+/// for any other JSON (e.g. JSON:API `errors[]` with code/detail/source).
 fn error_result(
     status: reqwest::StatusCode,
     content_type: &str,
@@ -343,22 +367,32 @@ fn error_result(
     let mut structured = Map::new();
     structured.insert("status".to_string(), Value::from(status.as_u16()));
     structured.insert("retryable".to_string(), Value::Bool(retryable));
-    if matches!(
-        status,
-        reqwest::StatusCode::UNAUTHORIZED | reqwest::StatusCode::FORBIDDEN
-    ) {
-        structured.insert(
-            "hint".to_string(),
-            Value::String("authentication or authorization failed; re-authenticate".to_string()),
-        );
+    let hint = match status {
+        reqwest::StatusCode::UNAUTHORIZED => {
+            Some("authentication failed: credentials are missing, invalid or expired; re-authenticate")
+        }
+        reqwest::StatusCode::FORBIDDEN => Some(
+            "authorization failed: credentials are valid but lack permission for this resource or action",
+        ),
+        _ => None,
+    };
+    if let Some(hint) = hint {
+        structured.insert("hint".to_string(), Value::String(hint.to_string()));
     }
     if let Some(retry_after) = meta.get("http.retry-after") {
         structured.insert("retry_after".to_string(), retry_after.clone());
     }
-    // Prefer a structured problem+json body; otherwise keep the raw text.
-    if content_type.to_ascii_lowercase().contains("problem+json") {
-        if let Ok(problem) = serde_json::from_str::<Value>(&body) {
-            structured.insert("problem".to_string(), problem);
+    // Parse JSON bodies so codes, details and source pointers stay
+    // machine-readable; the raw text is kept in the content block either way.
+    let content_type = content_type.to_ascii_lowercase();
+    if content_type.contains("json") {
+        if let Ok(parsed) = serde_json::from_str::<Value>(&body) {
+            let key = if content_type.contains("problem+json") {
+                "problem"
+            } else {
+                "body"
+            };
+            structured.insert(key.to_string(), parsed);
         }
     }
     ToolResult {
@@ -407,6 +441,40 @@ fn apply_empty_body(request: reqwest::RequestBuilder, method: &str) -> reqwest::
 /// True for content types safe to hand back as a UTF-8 string. Anything else
 /// (images, PDFs, octet-stream, ...) would be corrupted by lossy UTF-8 decoding,
 /// so it is base64-encoded instead.
+/// Gzip-typed bodies (e.g. App Store Connect sales/finance reports served as
+/// `application/a-gzip`) that decompress to UTF-8 are returned as text; any
+/// other payload, including corrupt gzip, stays binary. Only expansion past
+/// the response cap is an error.
+fn gunzip_text(content_type: &str, data: &[u8]) -> Result<Option<String>, ProxyError> {
+    use std::io::Read;
+
+    let ct = content_type.to_ascii_lowercase();
+    let gzip_typed = [
+        "application/gzip",
+        "application/x-gzip",
+        "application/a-gzip",
+    ]
+    .iter()
+    .any(|kind| ct.starts_with(kind));
+    if !gzip_typed || !data.starts_with(&[0x1f, 0x8b]) {
+        return Ok(None);
+    }
+    let mut decoded = Vec::new();
+    if flate2::read::MultiGzDecoder::new(data)
+        .take(MAX_RESPONSE_BYTES + 1)
+        .read_to_end(&mut decoded)
+        .is_err()
+    {
+        return Ok(None);
+    }
+    if decoded.len() as u64 > MAX_RESPONSE_BYTES {
+        return Err(ProxyError::Other(format!(
+            "decompressed response too large: more than {MAX_RESPONSE_BYTES} bytes"
+        )));
+    }
+    Ok(String::from_utf8(decoded).ok())
+}
+
 fn is_texty(content_type: &str) -> bool {
     let ct = content_type.to_ascii_lowercase();
     ct.is_empty()
@@ -597,22 +665,16 @@ fn apply_headers(
     Ok(request)
 }
 
-async fn attach_media_body(
-    request: reqwest::RequestBuilder,
-    media: &MediaUploadOperation,
-    args: &Value,
+/// Resolve `relative` (a caller-supplied path) to a regular file inside the
+/// configured media root. Rejects absolute paths, `..`/`.` components and
+/// symlinks that escape the root; error messages never echo the path.
+pub async fn resolve_media_file(
     configured_root: Option<&Path>,
-) -> Result<reqwest::RequestBuilder, ProxyError> {
+    relative: &str,
+) -> Result<(PathBuf, std::fs::Metadata), ProxyError> {
     let root = configured_root.ok_or_else(|| {
         ProxyError::Config("media upload is disabled; configure MCP_FACTORY_MEDIA_ROOT".to_string())
     })?;
-    let object = args
-        .as_object()
-        .ok_or_else(|| ProxyError::Validation("media arguments must be an object".to_string()))?;
-    let relative = object
-        .get("mediaFile")
-        .and_then(Value::as_str)
-        .ok_or_else(|| ProxyError::Validation("mediaFile is required".to_string()))?;
     let relative = PathBuf::from(relative);
     if relative.as_os_str().is_empty()
         || relative
@@ -643,6 +705,26 @@ async fn attach_media_body(
             "media path does not identify a regular file".to_string(),
         ));
     }
+    Ok((canonical_file, metadata))
+}
+
+async fn attach_media_body(
+    request: reqwest::RequestBuilder,
+    media: &MediaUploadOperation,
+    args: &Value,
+    configured_root: Option<&Path>,
+) -> Result<reqwest::RequestBuilder, ProxyError> {
+    let root = configured_root.ok_or_else(|| {
+        ProxyError::Config("media upload is disabled; configure MCP_FACTORY_MEDIA_ROOT".to_string())
+    })?;
+    let object = args
+        .as_object()
+        .ok_or_else(|| ProxyError::Validation("media arguments must be an object".to_string()))?;
+    let relative = object
+        .get("mediaFile")
+        .and_then(Value::as_str)
+        .ok_or_else(|| ProxyError::Validation("mediaFile is required".to_string()))?;
+    let (canonical_file, metadata) = resolve_media_file(Some(root), relative).await?;
     if let Some(max_size) = media.max_size {
         if metadata.len() > max_size {
             return Err(ProxyError::Validation(format!(
@@ -955,6 +1037,39 @@ mod tests {
         assert_eq!(url, "https://reports.example.com/v1/apps/org.example.app");
     }
 
+    fn gzip(bytes: &[u8]) -> Vec<u8> {
+        use std::io::Write;
+        let mut encoder = flate2::write::GzEncoder::new(Vec::new(), flate2::Compression::default());
+        encoder.write_all(bytes).unwrap();
+        encoder.finish().unwrap()
+    }
+
+    #[test]
+    fn gunzip_text_decodes_gzip_typed_utf8_only() {
+        let report = "Provider\tSKU\tUnits\nAPPLE\tcom.example\t3\n";
+        assert_eq!(
+            gunzip_text("application/a-gzip", &gzip(report.as_bytes())).unwrap(),
+            Some(report.to_string())
+        );
+        // Binary content inside gzip stays binary.
+        assert_eq!(
+            gunzip_text("application/gzip", &gzip(&[0xff, 0xfe, 0x00])).unwrap(),
+            None
+        );
+        // Only gzip-typed responses are touched.
+        assert_eq!(
+            gunzip_text("application/octet-stream", &gzip(b"x")).unwrap(),
+            None
+        );
+        // A gzip type without the gzip magic is left as-is.
+        assert_eq!(gunzip_text("application/a-gzip", b"plain").unwrap(), None);
+        // Corrupt gzip falls back to the raw bytes instead of failing.
+        assert_eq!(
+            gunzip_text("application/a-gzip", &[0x1f, 0x8b, 0x00]).unwrap(),
+            None
+        );
+    }
+
     #[test]
     fn is_texty_classifies_content_types() {
         assert!(is_texty("application/json"));
@@ -1007,7 +1122,42 @@ mod tests {
         );
         let s = unauth.structured.unwrap();
         assert_eq!(s["retryable"], false);
-        assert!(s["hint"].as_str().unwrap().contains("re-authenticate"));
+        assert!(s["hint"]
+            .as_str()
+            .unwrap()
+            .starts_with("authentication failed"));
+
+        let forbidden = error_result(
+            reqwest::StatusCode::FORBIDDEN,
+            "text/plain",
+            "no".to_string(),
+            Map::new(),
+        );
+        let hint = forbidden.structured.unwrap()["hint"].clone();
+        assert!(hint.as_str().unwrap().starts_with("authorization failed"));
+    }
+
+    #[test]
+    fn error_result_parses_json_api_errors() {
+        let body = r#"{"errors":[{"id":"8d5b-req","status":"409","code":"ENTITY_ERROR.ATTRIBUTE.INVALID","title":"An attribute value is invalid.","detail":"versionString already used","source":{"pointer":"/data/attributes/versionString"}}]}"#;
+        let result = error_result(
+            reqwest::StatusCode::CONFLICT,
+            "application/json; charset=utf-8",
+            body.to_string(),
+            Map::new(),
+        );
+        assert!(result
+            .body
+            .clone()
+            .into_text()
+            .contains("versionString already used"));
+        let s = result.structured.unwrap();
+        assert_eq!(s["status"], 409);
+        let error = &s["body"]["errors"][0];
+        assert_eq!(error["code"], "ENTITY_ERROR.ATTRIBUTE.INVALID");
+        assert_eq!(error["id"], "8d5b-req");
+        assert_eq!(error["source"]["pointer"], "/data/attributes/versionString");
+        assert!(s.get("problem").is_none());
     }
 
     #[test]

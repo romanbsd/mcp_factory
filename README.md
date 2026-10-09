@@ -377,6 +377,8 @@ Environment variables:
 | `MCP_FACTORY_TIMEOUT` | Upstream request timeout, seconds |
 | `MCP_FACTORY_MEDIA_ROOT` | Directory media-upload tools may read files from (unset disables them) |
 | `MCP_FACTORY_COMPACT_JSONAPI` | `1`/`0`: strip JSON:API `links` and link-only relationships, minify JSON responses (config: `compact_jsonapi`) |
+| `MCP_FACTORY_PROFILES` | Comma-separated tool profiles to expose for servers generated with `--tool-config`; `all` exposes every profile, unknown names are a startup error (config: `profiles`) |
+| `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_PRIVATE_KEY_PATH` | App Store Connect API key; when all three are set and no `[auth]` is configured, requests carry an ES256 JWT renewed before its 20-minute limit (config: `[auth] type = "app_store_connect"`) |
 
 Generated crates also ship a `config.toml` template. At runtime, configuration
 is loaded in this order: `MCP_FACTORY_CONFIG`, `config.toml` in the current

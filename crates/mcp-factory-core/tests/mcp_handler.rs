@@ -232,3 +232,164 @@ mod temp_env {
         out
     }
 }
+
+const PET_PROFILES: &[(&str, &[&str])] = &[
+    ("get_pet", &["read"]),
+    ("create_pet", &["write"]),
+    ("report_pet", &["read", "reports"]),
+];
+
+fn profiled_server(
+    profiles: Option<&[&str]>,
+    profiles_first: bool,
+) -> Result<Vec<String>, ProxyError> {
+    let config = ProxyConfig {
+        profiles: profiles.map(|names| names.iter().map(|name| name.to_string()).collect()),
+        ..ProxyConfig::default()
+    };
+    let tools = [
+        common::rest_get_pet_tool(),
+        common::rest_create_pet_tool(),
+        common::graphql_user_tool(),
+    ];
+    let custom = [custom_pet_summary("get_pet")];
+    let builder = McpProxyServer::builder(config);
+    let builder = if profiles_first {
+        builder
+            .tool_profiles(PET_PROFILES)?
+            .tools(&tools)?
+            .custom_tools(&custom)?
+    } else {
+        builder
+            .tools(&tools)?
+            .custom_tools(&custom)?
+            .tool_profiles(PET_PROFILES)?
+    };
+    let mut names = builder.build()?.tool_names();
+    names.sort();
+    Ok(names)
+}
+
+#[test]
+fn tool_profiles_filter_generated_and_custom_tools_in_either_order() {
+    for profiles_first in [true, false] {
+        // Unassigned tools (get_user) are always exposed.
+        assert_eq!(
+            profiled_server(None, profiles_first).unwrap(),
+            vec!["create_pet", "get_pet", "get_user", "report_pet"]
+        );
+        assert_eq!(
+            profiled_server(Some(&["read"]), profiles_first).unwrap(),
+            vec!["get_pet", "get_user", "report_pet"]
+        );
+        assert_eq!(
+            profiled_server(Some(&["write"]), profiles_first).unwrap(),
+            vec!["create_pet", "get_user"]
+        );
+        assert_eq!(
+            profiled_server(Some(&["all"]), profiles_first).unwrap(),
+            vec!["create_pet", "get_pet", "get_user", "report_pet"]
+        );
+        assert_eq!(
+            profiled_server(Some(&[]), profiles_first).unwrap(),
+            vec!["get_user"]
+        );
+    }
+}
+
+#[test]
+fn unknown_tool_profile_is_a_config_error() {
+    let error = profiled_server(Some(&["read", "raed"]), true).unwrap_err();
+    let message = error.to_string();
+    assert!(message.contains("\"raed\""), "{message}");
+    assert!(message.contains("all, read, reports, write"), "{message}");
+}
+
+struct CreateViaInvoker;
+
+#[async_trait]
+impl CustomToolHandler for CreateViaInvoker {
+    async fn call(
+        &self,
+        invoker: &dyn ReadOnlyToolInvoker,
+        arguments: serde_json::Value,
+    ) -> Result<ToolResult, ProxyError> {
+        invoker.invoke_mutating("create_pet", arguments).await
+    }
+}
+
+fn create_via_invoker(read_only: bool) -> CustomToolSpec {
+    CustomToolSpec {
+        name: "create_via_invoker".to_string(),
+        description: "Create a pet through the invoker".to_string(),
+        input_schema: json!({"type": "object"}),
+        hints: ToolHints {
+            read_only: Some(read_only),
+            ..Default::default()
+        },
+        handler: Arc::new(CreateViaInvoker),
+    }
+}
+
+#[tokio::test]
+async fn only_non_read_only_custom_tools_may_invoke_mutating_tools() {
+    let mock_server = MockServer::start().await;
+    Mock::given(method("POST"))
+        .and(path("/pets"))
+        .respond_with(ResponseTemplate::new(201).set_body_json(json!({"id": 1, "name": "Mochi"})))
+        .expect(1)
+        .mount(&mock_server)
+        .await;
+
+    for read_only in [false, true] {
+        let server = McpProxyServer::builder(common::proxy_config(&mock_server.uri()))
+            .tools(&[common::rest_create_pet_tool()])
+            .unwrap()
+            .custom_tools(&[create_via_invoker(read_only)])
+            .unwrap()
+            .build()
+            .unwrap();
+        let result = server
+            .invoke_tool("create_via_invoker", json!({"name": "Mochi"}))
+            .await;
+        if read_only {
+            let message = result.unwrap_err().to_string();
+            assert!(
+                message.contains("may not invoke mutating tools"),
+                "{message}"
+            );
+        } else {
+            assert!(result.unwrap().contains("Mochi"));
+        }
+    }
+}
+
+#[test]
+fn misspelled_tool_in_profile_assignment_is_a_config_error() {
+    let assignments: &[(&str, &[&str])] = &[("get_pet", &["read"]), ("creat_pet", &["write"])];
+    let error = McpProxyServer::builder(ProxyConfig::default())
+        .tool_profiles(assignments)
+        .unwrap()
+        .tools(&[common::rest_get_pet_tool(), common::rest_create_pet_tool()])
+        .unwrap()
+        .build()
+        .err()
+        .unwrap()
+        .to_string();
+    assert!(error.contains("unknown tool(s): creat_pet"), "{error}");
+
+    // A disabled-but-offered tool is known, not unknown.
+    let config = ProxyConfig {
+        profiles: Some(vec!["read".to_string()]),
+        ..ProxyConfig::default()
+    };
+    let assignments: &[(&str, &[&str])] = &[("get_pet", &["read"]), ("create_pet", &["write"])];
+    let server = McpProxyServer::builder(config)
+        .tool_profiles(assignments)
+        .unwrap()
+        .tools(&[common::rest_get_pet_tool(), common::rest_create_pet_tool()])
+        .unwrap()
+        .build()
+        .unwrap();
+    assert_eq!(server.tool_names(), vec!["get_pet"]);
+}

@@ -31,6 +31,10 @@ async fn main() -> anyhow::Result<()> {
     if config.compact_jsonapi.is_none() {
         config.compact_jsonapi = Some(true);
     }
+    // Default tool profiles unless config.toml or MCP_FACTORY_PROFILES choose.
+    if config.profiles.is_none() {
+        config.profiles = Some(tools::default_profiles());
+    }
 
     if std::env::args().any(|a| a == "--auth-login") {
         return run_oauth_login(&config).await.map_err(Into::into);
@@ -40,6 +44,7 @@ async fn main() -> anyhow::Result<()> {
     let custom_tools = extensions::build_custom_tools(&config);
     let resources = resources::build_resources();
     let server = McpProxyServer::builder(config)
+        .tool_profiles(&tools::build_tool_profiles())?
         .tools(&tools)?
         .custom_tools(&custom_tools)?
         .resources(&resources)?

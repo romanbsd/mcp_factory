@@ -4,7 +4,7 @@ use async_trait::async_trait;
 use reqwest::RequestBuilder;
 
 use crate::auth::oauth2::OAuth2Provider;
-use crate::auth::GoogleServiceAccountAuthProvider;
+use crate::auth::{AppStoreConnectAuthProvider, GoogleServiceAccountAuthProvider};
 use crate::config::AuthConfig;
 use crate::error::ProxyError;
 
@@ -102,6 +102,15 @@ pub fn auth_provider_from_config(
         } => Ok(Arc::new(GoogleServiceAccountAuthProvider::from_env(
             credentials_path_env,
             scopes,
+        )?)),
+        AuthConfig::AppStoreConnect {
+            key_id_env,
+            issuer_id_env,
+            private_key_path_env,
+        } => Ok(Arc::new(AppStoreConnectAuthProvider::from_env(
+            key_id_env,
+            issuer_id_env,
+            private_key_path_env,
         )?)),
         _ => Ok(Arc::new(StaticAuthProvider::new(auth.clone()))),
     }

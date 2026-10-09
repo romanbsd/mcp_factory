@@ -31,6 +31,8 @@ clap.workspace = true
 open.workspace = true
 async-trait.workspace = true
 gcp_auth.workspace = true
+ring.workspace = true
+flate2.workspace = true
 
 [[bin]]
 name = "mcp-factory-auth"

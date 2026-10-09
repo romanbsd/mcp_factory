@@ -82,6 +82,27 @@ pub enum AuthConfig {
         credentials_path_env: String,
         scopes: Vec<String>,
     },
+    /// App Store Connect API key: ES256 JWTs minted from a `.p8` key.
+    AppStoreConnect {
+        #[serde(default = "default_asc_key_id_env")]
+        key_id_env: String,
+        #[serde(default = "default_asc_issuer_id_env")]
+        issuer_id_env: String,
+        #[serde(default = "default_asc_private_key_path_env")]
+        private_key_path_env: String,
+    },
+}
+
+fn default_asc_key_id_env() -> String {
+    "ASC_KEY_ID".to_string()
+}
+
+fn default_asc_issuer_id_env() -> String {
+    "ASC_ISSUER_ID".to_string()
+}
+
+fn default_asc_private_key_path_env() -> String {
+    "ASC_PRIVATE_KEY_PATH".to_string()
 }
 
 fn default_bearer_env() -> String {
@@ -115,7 +136,10 @@ impl AuthConfig {
 
     pub fn resolve_secret(&self) -> Option<String> {
         let env_var = match self {
-            Self::None | Self::OAuth2 { .. } | Self::GoogleServiceAccount { .. } => return None,
+            Self::None
+            | Self::OAuth2 { .. }
+            | Self::GoogleServiceAccount { .. }
+            | Self::AppStoreConnect { .. } => return None,
             Self::Bearer { env_var } => env_var,
             Self::ApiKeyHeader { env_var, .. } => env_var,
             Self::ApiKeyQuery { env_var, .. } => env_var,
@@ -160,6 +184,10 @@ pub struct ProxyConfig {
     /// off; generated servers fill in their generation-time default.
     #[serde(default)]
     pub compact_jsonapi: Option<bool>,
+    /// Tool profiles to expose (see `McpProxyServerBuilder::tool_profiles`).
+    /// `None` exposes every tool; `"all"` matches every profile.
+    #[serde(default)]
+    pub profiles: Option<Vec<String>>,
 }
 
 fn default_timeout_secs() -> u64 {
@@ -191,6 +219,7 @@ impl Default for ProxyConfig {
             server_version: default_server_version(),
             media_root: None,
             compact_jsonapi: None,
+            profiles: None,
         }
     }
 }
@@ -198,6 +227,13 @@ impl Default for ProxyConfig {
 impl ProxyConfig {
     pub fn timeout(&self) -> Duration {
         Duration::from_secs(self.timeout_secs)
+    }
+
+    /// Whether tools in `profile` should be exposed under this configuration.
+    pub fn profile_enabled(&self, profile: &str) -> bool {
+        self.profiles
+            .as_ref()
+            .is_none_or(|enabled| enabled.iter().any(|name| name == profile || name == "all"))
     }
 
     pub fn from_env() -> Result<Self, ProxyError> {
@@ -238,6 +274,19 @@ impl ProxyConfig {
                 }
             });
         }
+        if let Ok(profiles) = env::var("MCP_FACTORY_PROFILES") {
+            let profiles: Vec<String> = profiles
+                .split(',')
+                .map(str::trim)
+                .filter(|profile| !profile.is_empty())
+                .map(str::to_string)
+                .collect();
+            // A blank variable means "not configured", like the other knobs;
+            // an empty list would silently hide every profiled tool.
+            if !profiles.is_empty() {
+                self.profiles = Some(profiles);
+            }
+        }
         if matches!(self.auth, AuthConfig::None) {
             if env::var("MCP_FACTORY_BEARER_TOKEN")
                 .ok()
@@ -251,6 +300,19 @@ impl ProxyConfig {
                 .is_some()
             {
                 self.auth = AuthConfig::api_key_header("X-API-Key");
+            } else if [
+                default_asc_key_id_env(),
+                default_asc_issuer_id_env(),
+                default_asc_private_key_path_env(),
+            ]
+            .iter()
+            .all(|name| env::var(name).is_ok_and(|value| !value.trim().is_empty()))
+            {
+                self.auth = AuthConfig::AppStoreConnect {
+                    key_id_env: default_asc_key_id_env(),
+                    issuer_id_env: default_asc_issuer_id_env(),
+                    private_key_path_env: default_asc_private_key_path_env(),
+                };
             }
         }
         Ok(self)
@@ -380,6 +442,70 @@ mod tests {
     }
 
     #[test]
+    fn app_store_connect_auth_from_env() {
+        // Pin every variable the auth fallbacks read (empty = unset) so an
+        // ambient bearer token, API key or ASC key cannot change the outcome.
+        let incomplete = [
+            ("MCP_FACTORY_BEARER_TOKEN", ""),
+            ("MCP_FACTORY_API_KEY", ""),
+            ("ASC_KEY_ID", "KEY"),
+            ("ASC_ISSUER_ID", ""),
+            ("ASC_PRIVATE_KEY_PATH", ""),
+        ];
+        temp_env::with_vars(&incomplete, || {
+            // Incomplete ASC variables never switch auth on.
+            assert_eq!(
+                ProxyConfig::default().merge_env().unwrap().auth,
+                AuthConfig::None
+            );
+        });
+        let vars = [
+            ("MCP_FACTORY_BEARER_TOKEN", ""),
+            ("MCP_FACTORY_API_KEY", ""),
+            ("ASC_KEY_ID", "KEY"),
+            ("ASC_ISSUER_ID", "issuer"),
+            ("ASC_PRIVATE_KEY_PATH", "/keys/AuthKey.p8"),
+        ];
+        temp_env::with_vars(&vars, || {
+            assert!(matches!(
+                ProxyConfig::default().merge_env().unwrap().auth,
+                AuthConfig::AppStoreConnect { .. }
+            ));
+            // An explicit auth section wins over the environment.
+            let explicit = ProxyConfig {
+                auth: AuthConfig::bearer(),
+                ..ProxyConfig::default()
+            };
+            assert_eq!(explicit.merge_env().unwrap().auth, AuthConfig::bearer());
+        });
+    }
+
+    #[test]
+    fn profiles_from_env_and_profile_enabled() {
+        let all = ProxyConfig::default();
+        assert!(all.profile_enabled("anything"));
+
+        temp_env::with_var("MCP_FACTORY_PROFILES", Some(" core, assets ,,"), || {
+            let config = ProxyConfig::default().merge_env().unwrap();
+            assert_eq!(
+                config.profiles,
+                Some(vec!["core".to_string(), "assets".to_string()])
+            );
+            assert!(config.profile_enabled("assets"));
+            assert!(!config.profile_enabled("signing"));
+        });
+        temp_env::with_var("MCP_FACTORY_PROFILES", Some(" , "), || {
+            assert_eq!(ProxyConfig::default().merge_env().unwrap().profiles, None);
+        });
+
+        let everything = ProxyConfig {
+            profiles: Some(vec!["all".to_string()]),
+            ..ProxyConfig::default()
+        };
+        assert!(everything.profile_enabled("signing"));
+    }
+
+    #[test]
     fn runtime_config_path_precedence() {
         let dir = tempfile::tempdir().unwrap();
         let cwd = dir.path().join("cwd");
@@ -449,6 +575,25 @@ mod temp_env {
     // Env is process-global and tests run in parallel; serialize every mutation
     // so one test's override never leaks into another's `merge_env`.
     static ENV_LOCK: Mutex<()> = Mutex::new(());
+
+    /// Set several variables at once (one lock acquisition, so no nesting).
+    pub fn with_vars<F: FnOnce()>(vars: &[(&str, &str)], f: F) {
+        let _guard = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+        let previous: Vec<_> = vars
+            .iter()
+            .map(|(key, _)| (*key, env::var(key).ok()))
+            .collect();
+        for (key, value) in vars {
+            env::set_var(key, value);
+        }
+        f();
+        for (key, value) in previous {
+            match value {
+                Some(v) => env::set_var(key, v),
+                None => env::remove_var(key),
+            }
+        }
+    }
 
     pub fn with_var<F: FnOnce()>(key: &str, value: Option<&str>, f: F) {
         let _guard = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());

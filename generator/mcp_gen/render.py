@@ -86,6 +86,8 @@ def render_crate(
         "transport": transport,
         "compact_jsonapi": compact_jsonapi,
         "tools": result.tools,
+        "tool_profiles": result.tool_profiles,
+        "default_profiles": result.default_profiles,
         "resources": result.resources,
     }
 

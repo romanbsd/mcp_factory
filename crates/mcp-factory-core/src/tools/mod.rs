@@ -157,6 +157,12 @@ impl ToolRegistry {
     pub fn is_empty(&self) -> bool {
         self.tools.is_empty()
     }
+
+    pub(crate) fn retain(&mut self, mut keep: impl FnMut(&str) -> bool) {
+        self.tools.retain(|name, _| keep(name));
+        let tools = &self.tools;
+        self.validators.retain(|name, _| tools.contains_key(name));
+    }
 }
 
 #[cfg(test)]

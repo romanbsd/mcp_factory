@@ -5,6 +5,19 @@ transport = "{{ transport }}"
 # Strip JSON:API links/link-only relationships and minify responses.
 compact_jsonapi = true
 {% endif %}
+{% if tool_profiles %}
+# Tool profiles to expose (or set MCP_FACTORY_PROFILES=a,b). "all" exposes
+# every tool.
+{% if default_profiles is not none %}
+# Unset uses the generated default: {{ default_profiles | join(", ") }}.
+{% else %}
+# Unset exposes every tool.
+{% endif %}
+# Available: {{ tool_profiles.values() | sum(start=[]) | unique | sort | join(", ") }}
+{% if default_profiles is not none %}
+# profiles = [{% for profile in default_profiles %}"{{ profile }}"{% if not loop.last %}, {% endif %}{% endfor %}]
+{% endif %}
+{% endif %}
 
 # Static bearer token (reads MCP_FACTORY_BEARER_TOKEN by default):
 # [auth]

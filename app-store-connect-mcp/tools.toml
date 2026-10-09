@@ -1,0 +1,340 @@
+# App Store Connect tool curation for `mcp-gen --tool-config` (see
+# scripts/regenerate.sh). Profiles are selected at runtime with `profiles` in
+# config.toml or MCP_FACTORY_PROFILES; "all" exposes every profile below.
+#
+# Patterns are Apple operationIds (`*` and `?` wildcards); each must match at
+# least one non-deprecated operation in openapi.oas.json. Related reads use
+# `*_getToManyRelated` (full resources) rather than `*_getToManyRelationship`
+# (IDs only) unless the IDs alone are what a workflow needs.
+
+default_profiles = ["core", "metadata", "assets", "testflight"]
+
+# Apple paginates with an opaque `cursor` carried in `links.next`.
+cursor_param = "cursor"
+
+# Sparse fieldsets (`fields[type]`) list every attribute name of every
+# includable type: almost half of tools/list. Keep the parameters, drop the
+# enum lists; attribute names are visible in any response.
+strip_enums = ["fields[*]"]
+
+[profiles]
+core = [
+    # Find the app, its versions and builds.
+    "apps_getCollection",
+    "apps_getInstance",
+    "apps_appStoreVersions_getToManyRelated",
+    "apps_builds_getToManyRelated",
+    "builds_getCollection",
+    "builds_getInstance",
+    "builds_updateInstance",
+    # Create/update the App Store version and attach a build.
+    "appStoreVersions_createInstance",
+    "appStoreVersions_getInstance",
+    "appStoreVersions_updateInstance",
+    "appStoreVersions_deleteInstance",
+    "appStoreVersions_build_getToOneRelated",
+    "appStoreVersions_build_updateToOneRelationship",
+    # App Review details (contact, demo account, notes).
+    "appStoreVersions_appStoreReviewDetail_getToOneRelated",
+    "appStoreReviewDetails_createInstance",
+    "appStoreReviewDetails_getInstance",
+    "appStoreReviewDetails_updateInstance",
+    # Submit for review and inspect the submission.
+    "reviewSubmissions_*",
+    "reviewSubmissionItems_*",
+    # Release.
+    "appStoreVersions_appStoreVersionPhasedRelease_getToOneRelated",
+    "appStoreVersionPhasedReleases_*",
+    "appStoreVersionReleaseRequests_createInstance",
+]
+
+metadata = [
+    "apps_updateInstance",
+    # App Info: name, subtitle, privacy URLs, categories, age rating.
+    "apps_appInfos_getToManyRelated",
+    "appInfos_getInstance",
+    "appInfos_updateInstance",
+    "appInfos_appInfoLocalizations_getToManyRelated",
+    "appInfoLocalizations_*",
+    "appInfos_ageRatingDeclaration_getToOneRelated",
+    "ageRatingDeclarations_updateInstance",
+    "appCategories_getCollection",
+    "appCategories_getInstance",
+    "appCategories_subcategories_getToManyRelated",
+    # Version localizations: description, keywords, What's New, URLs.
+    "appStoreVersions_appStoreVersionLocalizations_getToManyRelated",
+    "appStoreVersionLocalizations_createInstance",
+    "appStoreVersionLocalizations_getInstance",
+    "appStoreVersionLocalizations_updateInstance",
+    "appStoreVersionLocalizations_deleteInstance",
+    # Export compliance (declarations are inspected/created, never decided).
+    "apps_appEncryptionDeclarations_getToManyRelated",
+    "appEncryptionDeclarations_createInstance",
+    "appEncryptionDeclarations_getCollection",
+    "appEncryptionDeclarations_getInstance",
+    "builds_appEncryptionDeclaration_updateToOneRelationship",
+    "builds_appEncryptionDeclaration_getToOneRelated",
+    "appEncryptionDeclarationDocuments_getInstance",
+]
+
+assets = [
+    "appStoreVersionLocalizations_appScreenshotSets_getToManyRelated",
+    "appStoreVersionLocalizations_appPreviewSets_getToManyRelated",
+    "appScreenshotSets_createInstance",
+    "appScreenshotSets_getInstance",
+    "appScreenshotSets_deleteInstance",
+    "appScreenshotSets_appScreenshots_getToManyRelated",
+    "appScreenshotSets_appScreenshots_replaceToManyRelationship",
+    "appScreenshots_*",
+    "appPreviewSets_createInstance",
+    "appPreviewSets_getInstance",
+    "appPreviewSets_deleteInstance",
+    "appPreviewSets_appPreviews_getToManyRelated",
+    "appPreviewSets_appPreviews_replaceToManyRelationship",
+    "appPreviews_*",
+    "appStoreReviewDetails_appStoreReviewAttachments_getToManyRelated",
+    "appStoreReviewAttachments_*",
+    # Export-compliance documents use the same upload protocol (asset_upload
+    # polls getInstance, so it must be present wherever assets is enabled).
+    "appEncryptionDeclarationDocuments_createInstance",
+    "appEncryptionDeclarationDocuments_updateInstance",
+    "appEncryptionDeclarationDocuments_getInstance",
+]
+
+testflight = [
+    # Groups and their builds/testers.
+    "apps_betaGroups_getToManyRelated",
+    "betaGroups_getCollection",
+    "betaGroups_getInstance",
+    "betaGroups_createInstance",
+    "betaGroups_updateInstance",
+    "betaGroups_deleteInstance",
+    "betaGroups_builds_getToManyRelated",
+    "betaGroups_builds_createToManyRelationship",
+    "betaGroups_builds_deleteToManyRelationship",
+    "betaGroups_betaTesters_getToManyRelated",
+    "betaGroups_betaTesters_createToManyRelationship",
+    "betaGroups_betaTesters_deleteToManyRelationship",
+    "builds_betaGroups_createToManyRelationship",
+    "builds_betaGroups_deleteToManyRelationship",
+    # Testers.
+    "betaTesters_getCollection",
+    "betaTesters_getInstance",
+    "betaTesters_createInstance",
+    "betaTesters_deleteInstance",
+    "betaTesters_betaGroups_getToManyRelated",
+    "betaTesters_apps_deleteToManyRelationship",
+    "builds_individualTesters_getToManyRelated",
+    "builds_individualTesters_createToManyRelationship",
+    "builds_individualTesters_deleteToManyRelationship",
+    # Pre-release versions (TestFlight version trains).
+    "apps_preReleaseVersions_getToManyRelated",
+    "preReleaseVersions_getCollection",
+    "preReleaseVersions_builds_getToManyRelated",
+    # Beta metadata: What to Test, app description, review details, license.
+    "builds_betaBuildLocalizations_getToManyRelated",
+    "betaBuildLocalizations_createInstance",
+    "betaBuildLocalizations_getCollection",
+    "betaBuildLocalizations_getInstance",
+    "betaBuildLocalizations_updateInstance",
+    "betaBuildLocalizations_deleteInstance",
+    "apps_betaAppLocalizations_getToManyRelated",
+    "betaAppLocalizations_createInstance",
+    "betaAppLocalizations_getCollection",
+    "betaAppLocalizations_getInstance",
+    "betaAppLocalizations_updateInstance",
+    "betaAppLocalizations_deleteInstance",
+    "apps_betaAppReviewDetail_getToOneRelated",
+    "betaAppReviewDetails_getCollection",
+    "betaAppReviewDetails_getInstance",
+    "betaAppReviewDetails_updateInstance",
+    "apps_betaLicenseAgreement_getToOneRelated",
+    "betaLicenseAgreements_getCollection",
+    "betaLicenseAgreements_getInstance",
+    "betaLicenseAgreements_updateInstance",
+    "buildBetaDetails_getCollection",
+    "buildBetaDetails_getInstance",
+    "buildBetaDetails_updateInstance",
+    # Beta App Review.
+    "betaAppReviewSubmissions_createInstance",
+    "betaAppReviewSubmissions_getCollection",
+    "betaAppReviewSubmissions_getInstance",
+]
+
+monetization = [
+    # Subscriptions.
+    "apps_subscriptionGroups_getToManyRelated",
+    "subscriptionGroups_createInstance",
+    "subscriptionGroups_getInstance",
+    "subscriptionGroups_updateInstance",
+    "subscriptionGroups_deleteInstance",
+    "subscriptionGroups_subscriptions_getToManyRelated",
+    "subscriptionGroups_subscriptionGroupLocalizations_getToManyRelated",
+    "subscriptionGroupLocalizations_*",
+    "subscriptions_createInstance",
+    "subscriptions_getInstance",
+    "subscriptions_updateInstance",
+    "subscriptions_deleteInstance",
+    "subscriptions_subscriptionLocalizations_getToManyRelated",
+    "subscriptions_planAvailabilities_getToManyRelated",
+    "subscriptions_appStoreReviewScreenshot_getToOneRelated",
+    "subscriptions_introductoryOffers_getToManyRelated",
+    "subscriptions_promotionalOffers_getToManyRelated",
+    "subscriptionLocalizations_*",
+    "subscriptionPlanAvailabilities_*",
+    "subscriptionIntroductoryOffers_*",
+    "subscriptionPromotionalOffers_createInstance",
+    "subscriptionPromotionalOffers_getInstance",
+    "subscriptionPromotionalOffers_updateInstance",
+    "subscriptionPromotionalOffers_deleteInstance",
+    "subscriptionSubmissions_createInstance",
+    "subscriptionAppStoreReviewScreenshots_*",
+    # In-app purchases (v2).
+    "apps_inAppPurchasesV2_getToManyRelated",
+    "inAppPurchasesV2_createInstance",
+    "inAppPurchasesV2_getInstance",
+    "inAppPurchasesV2_updateInstance",
+    "inAppPurchasesV2_deleteInstance",
+    "inAppPurchasesV2_inAppPurchaseLocalizations_getToManyRelated",
+    "inAppPurchasesV2_inAppPurchaseAvailability_getToOneRelated",
+    "inAppPurchasesV2_appStoreReviewScreenshot_getToOneRelated",
+    "inAppPurchaseLocalizations_*",
+    "inAppPurchaseAvailabilities_*",
+    "inAppPurchaseSubmissions_createInstance",
+    "inAppPurchaseAppStoreReviewScreenshots_*",
+]
+
+pricing = [
+    # Territories and app availability.
+    "territories_getCollection",
+    "apps_appAvailabilityV2_getToOneRelated",
+    "appAvailabilitiesV2_*",
+    "territoryAvailabilities_updateInstance",
+    # App price schedule and price points.
+    "apps_appPriceSchedule_getToOneRelated",
+    "apps_appPricePoints_getToManyRelated",
+    "appPriceSchedules_createInstance",
+    "appPriceSchedules_getInstance",
+    "appPriceSchedules_baseTerritory_getToOneRelated",
+    "appPriceSchedules_manualPrices_getToManyRelated",
+    "appPriceSchedules_automaticPrices_getToManyRelated",
+    "appPricePointsV3_getInstance",
+    "appPricePointsV3_equalizations_getToManyRelated",
+    # Subscription prices.
+    "subscriptions_prices_getToManyRelated",
+    "subscriptions_prices_deleteToManyRelationship",
+    "subscriptions_pricePoints_getToManyRelated",
+    "subscriptionPrices_*",
+    "subscriptionPricePoints_getInstance",
+    "subscriptionPricePoints_equalizations_getToManyRelated",
+    # In-app purchase prices.
+    "inAppPurchasesV2_iapPriceSchedule_getToOneRelated",
+    "inAppPurchasesV2_pricePoints_getToManyRelated",
+    "inAppPurchasePriceSchedules_createInstance",
+    "inAppPurchasePriceSchedules_getInstance",
+    "inAppPurchasePriceSchedules_baseTerritory_getToOneRelated",
+    "inAppPurchasePriceSchedules_manualPrices_getToManyRelated",
+    "inAppPurchasePriceSchedules_automaticPrices_getToManyRelated",
+    "inAppPurchasePricePoints_equalizations_getToManyRelated",
+]
+
+signing = [
+    "bundleIds_getCollection",
+    "bundleIds_getInstance",
+    "bundleIds_createInstance",
+    "bundleIds_updateInstance",
+    "bundleIds_deleteInstance",
+    "bundleIds_bundleIdCapabilities_getToManyRelated",
+    "bundleIds_profiles_getToManyRelated",
+    "bundleIdCapabilities_*",
+    "certificates_getCollection",
+    "certificates_getInstance",
+    "certificates_createInstance",
+    "certificates_updateInstance",
+    "certificates_deleteInstance",
+    "profiles_getCollection",
+    "profiles_getInstance",
+    "profiles_createInstance",
+    "profiles_deleteInstance",
+    "profiles_bundleId_getToOneRelated",
+    "profiles_certificates_getToManyRelated",
+    "profiles_devices_getToManyRelated",
+    "devices_*",
+]
+
+reviews = [
+    "apps_customerReviews_getToManyRelated",
+    "appStoreVersions_customerReviews_getToManyRelated",
+    "customerReviews_getInstance",
+    "customerReviews_response_getToOneRelated",
+    "customerReviewResponses_*",
+]
+
+reports = [
+    "salesReports_getCollection",
+    "financeReports_getCollection",
+    "apps_analyticsReportRequests_getToManyRelated",
+    "analyticsReportRequests_createInstance",
+    "analyticsReportRequests_getInstance",
+    "analyticsReportRequests_deleteInstance",
+    "analyticsReportRequests_reports_getToManyRelated",
+    "analyticsReports_getInstance",
+    "analyticsReports_instances_getToManyRelated",
+    "analyticsReportInstances_getInstance",
+    "analyticsReportInstances_segments_getToManyRelated",
+    "analyticsReportSegments_getInstance",
+]
+
+[custom_tools]
+asset_upload = ["assets", "monetization"]
+analytics_segment_download = ["reports"]
+
+[descriptions]
+apps_getCollection = "Find apps. Filter by `filter[bundleId]` or `filter[name]` to resolve an app ID; never guess IDs."
+builds_getCollection = "Find builds. Filter by `filter[app]`, `filter[version]` (build number), `filter[preReleaseVersion.version]` (marketing version) and `filter[processingState]=VALID` to find a build ready to attach."
+builds_updateInstance = "Update a build: `usesNonExemptEncryption` (export compliance answer supplied by the user), `expired=true` to expire it from TestFlight."
+appStoreVersions_createInstance = "Create a new App Store version (`versionString`, `platform`) for an app. Localizations are copied from the previous version."
+appStoreVersions_updateInstance = "Update an App Store version: `versionString`, `releaseType` (MANUAL, AFTER_APPROVAL, SCHEDULED), `earliestReleaseDate`, `copyright`."
+appStoreVersions_build_updateToOneRelationship = "Attach a processed build to an App Store version (body: `data: {type: builds, id}`). Use a build with `processingState=VALID`."
+appStoreReviewDetails_createInstance = "Create App Review details (contact, demo account, notes) for a version that has none; check `appStoreVersions_appStoreReviewDetail_getToOneRelated` first."
+reviewSubmissions_createInstance = "Start a review submission for an app and platform. Then add items with `reviewSubmissionItems_createInstance` and submit with `reviewSubmissions_updateInstance`."
+reviewSubmissionItems_createInstance = "Add an item (e.g. an `appStoreVersion`) to a review submission that has not been submitted yet."
+reviewSubmissions_updateInstance = "Submit a review submission to App Review (`submitted: true`) or cancel it (`canceled: true`)."
+reviewSubmissions_getCollection = "List review submissions. Filter by `filter[app]` and `filter[state]` (READY_FOR_REVIEW, WAITING_FOR_REVIEW, IN_REVIEW, UNRESOLVED_ISSUES, COMPLETING, COMPLETE, CANCELING) to inspect review status."
+appStoreVersionPhasedReleases_createInstance = "Enable a 7-day phased release for an App Store version."
+appStoreVersionPhasedReleases_updateInstance = "Control a phased release: `phasedReleaseState` ACTIVE (resume), PAUSED, or COMPLETE (release to everyone now)."
+appStoreVersionPhasedReleases_deleteInstance = "Remove a phased release from a version that has not started releasing, so it releases to everyone at once."
+appStoreVersionReleaseRequests_createInstance = "Release an approved App Store version that uses manual release (state PENDING_DEVELOPER_RELEASE). This publishes the app."
+appStoreVersionLocalizations_updateInstance = "Update store text for one locale of a version: `description`, `keywords`, `whatsNew`, `promotionalText`, `marketingUrl`, `supportUrl`. Read it first with `appStoreVersionLocalizations_getInstance`."
+appInfoLocalizations_updateInstance = "Update app-level text for one locale: `name`, `subtitle`, `privacyPolicyUrl`, `privacyChoicesUrl`, `privacyPolicyText`."
+appInfos_updateInstance = "Update App Info relationships such as `primaryCategory`/`secondaryCategory` (IDs from `appCategories_getCollection`)."
+ageRatingDeclarations_updateInstance = "Update age-rating questionnaire answers. The values must come from the user; the resulting rating is shown on the App Info."
+appEncryptionDeclarations_createInstance = "Create an export-compliance declaration from answers supplied by the user. This tool never decides compliance."
+appScreenshotSets_createInstance = "Create a screenshot set for one `screenshotDisplayType` (e.g. APP_IPHONE_67) under a version localization. List existing sets first."
+appScreenshotSets_appScreenshots_replaceToManyRelationship = "Reorder the screenshots in a set: send every screenshot ID in the desired order."
+appScreenshots_createInstance = "Low-level step 1 of an upload (reserve). Prefer `asset_upload`, which performs reserve, upload, commit and processing checks."
+appScreenshots_updateInstance = "Low-level step 3 of an upload (commit with `uploaded: true` and `sourceFileChecksum`). Prefer `asset_upload`."
+appScreenshots_deleteInstance = "Delete a screenshot from its set. This cannot be undone."
+appPreviewSets_appPreviews_replaceToManyRelationship = "Reorder the previews in a set: send every preview ID in the desired order."
+appPreviews_createInstance = "Low-level step 1 of an upload (reserve). Prefer `asset_upload`."
+appPreviews_updateInstance = "Low-level commit step or `previewFrameTimeCode` update. Prefer `asset_upload` for uploads."
+betaGroups_createInstance = "Create a TestFlight group for an app. `isInternalGroup` true for App Store Connect users; external groups need Beta App Review before testers can install."
+betaGroups_builds_createToManyRelationship = "Add builds to a TestFlight group (body: `data: [{type: builds, id}]`)."
+betaGroups_betaTesters_createToManyRelationship = "Add existing testers to a TestFlight group."
+betaTesters_getCollection = "Find TestFlight testers. Filter by `filter[email]`, `filter[apps]` or `filter[betaGroups]`."
+betaTesters_createInstance = "Invite a tester by email into one or more beta groups (relationship `betaGroups`) or builds. Sends an invitation email."
+betaTesters_deleteInstance = "Remove a tester from all apps and groups. This cannot be undone."
+betaBuildLocalizations_updateInstance = "Update TestFlight 'What to Test' (`whatsNew`) for one locale of a build."
+betaAppReviewSubmissions_createInstance = "Submit a build to Beta App Review so external TestFlight groups can test it."
+betaAppReviewDetails_updateInstance = "Update Beta App Review contact, demo account (`demoAccountRequired`, `demoAccountName`, `demoAccountPassword`) and notes. Apple creates this resource with the app; there is no create."
+customerReviewResponses_createInstance = "Publish a developer response to a customer review. If a response exists it is replaced."
+customerReviewResponses_deleteInstance = "Delete the developer response to a customer review. This cannot be undone."
+certificates_createInstance = "Create a signing certificate from a certificate signing request (`csrContent`, `certificateType`)."
+certificates_deleteInstance = "Revoke a signing certificate. Apps and profiles that use it stop working. This cannot be undone."
+profiles_createInstance = "Create a provisioning profile for a bundle ID, certificates and (for development/ad hoc) devices. The response includes `profileContent` (base64)."
+profiles_deleteInstance = "Delete a provisioning profile. This cannot be undone."
+devices_createInstance = "Register a device UDID for development/ad hoc provisioning. Registrations count against the yearly device limit."
+territories_getCollection = "List App Store territories and their currencies; use these IDs instead of guessing territory codes."
+salesReports_getCollection = "Download a sales report (gzip TSV, returned as text). Requires `filter[vendorNumber]`, `filter[reportType]`, `filter[reportSubType]`, `filter[frequency]`."
+financeReports_getCollection = "Download a finance report (gzip TSV, returned as text). Requires `filter[vendorNumber]`, `filter[reportType]`, `filter[regionCode]`, `filter[reportDate]`."
+analyticsReportSegments_getInstance = "Get an analytics report segment, including its download `url`. Use `analytics_segment_download` to fetch and decompress it."

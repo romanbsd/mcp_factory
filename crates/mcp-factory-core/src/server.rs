@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::sync::Arc;
 
 use rmcp::handler::server::ServerHandler;
@@ -38,6 +39,13 @@ pub struct McpProxyServerBuilder {
     tools: ToolRegistry,
     custom_tools: CustomToolRegistry,
     resources: ResourceRegistry,
+    /// Tools excluded by `tool_profiles`; never registered.
+    disabled_tools: HashSet<String>,
+    /// Tool names named by `tool_profiles`, and every tool name offered to
+    /// `tools`/`custom_tools` (registered or not); `build` checks the former
+    /// against the latter so a misspelled assignment cannot fail open.
+    assigned_tools: HashSet<String>,
+    offered_tools: HashSet<String>,
 }
 
 impl McpProxyServer {
@@ -90,7 +98,11 @@ impl McpProxyServer {
         }
         if let Some(tool) = self.inner.custom_tools.get(name) {
             self.inner.custom_tools.validate(name, &args)?;
-            return tool.handler.call(self, args).await;
+            let invoker = ScopedInvoker {
+                server: self,
+                allow_mutation: tool.hints.read_only != Some(true),
+            };
+            return tool.handler.call(&invoker, args).await;
         }
         Err(ProxyError::ToolNotFound(name.to_string()))
     }
@@ -127,6 +139,44 @@ impl ReadOnlyToolInvoker for McpProxyServer {
     }
 }
 
+/// Invoker handed to one custom-tool call: mutation is allowed only when that
+/// custom tool is not declared read-only.
+struct ScopedInvoker<'a> {
+    server: &'a McpProxyServer,
+    allow_mutation: bool,
+}
+
+#[async_trait::async_trait]
+impl ReadOnlyToolInvoker for ScopedInvoker<'_> {
+    async fn invoke_read_only(
+        &self,
+        name: &str,
+        arguments: Value,
+    ) -> Result<ToolResult, ProxyError> {
+        self.server.invoke_read_only(name, arguments).await
+    }
+
+    async fn invoke_mutating(
+        &self,
+        name: &str,
+        arguments: Value,
+    ) -> Result<ToolResult, ProxyError> {
+        if !self.allow_mutation {
+            return Err(ProxyError::Validation(format!(
+                "read-only custom tools may not invoke mutating tools: {name}"
+            )));
+        }
+        let tool = self
+            .server
+            .inner
+            .tools
+            .get(name)
+            .ok_or_else(|| ProxyError::ToolNotFound(name.to_string()))?;
+        self.server.inner.tools.validate(name, &arguments)?;
+        self.server.dispatch(tool, arguments).await
+    }
+}
+
 impl McpProxyServerBuilder {
     pub fn new(config: ProxyConfig) -> Self {
         Self {
@@ -134,28 +184,81 @@ impl McpProxyServerBuilder {
             tools: ToolRegistry::new(),
             custom_tools: CustomToolRegistry::default(),
             resources: ResourceRegistry::new(),
+            disabled_tools: HashSet::new(),
+            assigned_tools: HashSet::new(),
+            offered_tools: HashSet::new(),
         }
     }
 
+    /// Assign tools (generated or custom) to named profiles and drop those
+    /// whose profiles are not enabled by `ProxyConfig::profiles`. Tools absent
+    /// from `assignments` are always exposed. Enabling a profile that no tool
+    /// declares is a configuration error, so typos cannot silently hide tools.
+    pub fn tool_profiles(mut self, assignments: &[(&str, &[&str])]) -> Result<Self, ProxyError> {
+        if let Some(enabled) = &self.config.profiles {
+            let known: HashSet<&str> = assignments
+                .iter()
+                .flat_map(|(_, profiles)| profiles.iter().copied())
+                .collect();
+            if let Some(unknown) = enabled
+                .iter()
+                .find(|name| *name != "all" && !known.contains(name.as_str()))
+            {
+                let mut known: Vec<_> = known.into_iter().collect();
+                known.sort_unstable();
+                return Err(ProxyError::Config(format!(
+                    "unknown tool profile {unknown:?}; known profiles: all, {}",
+                    known.join(", ")
+                )));
+            }
+        }
+        for (tool, profiles) in assignments {
+            self.assigned_tools.insert((*tool).to_string());
+            if !profiles
+                .iter()
+                .any(|profile| self.config.profile_enabled(profile))
+            {
+                self.disabled_tools.insert((*tool).to_string());
+            }
+        }
+        let disabled = &self.disabled_tools;
+        self.tools.retain(|name| !disabled.contains(name));
+        self.custom_tools.retain(|name| !disabled.contains(name));
+        Ok(self)
+    }
+
     pub fn tools(mut self, tools: &[ToolSpec]) -> Result<Self, ProxyError> {
+        self.offered_tools
+            .extend(tools.iter().map(|tool| tool.name.clone()));
+        let tools: Vec<_> = tools
+            .iter()
+            .filter(|tool| !self.disabled_tools.contains(&tool.name))
+            .collect();
         if let Some(duplicate) = tools
             .iter()
             .find(|tool| self.custom_tools.contains(&tool.name))
         {
             return Err(ProxyError::DuplicateTool(duplicate.name.clone()));
         }
-        self.tools.register_many(tools.iter().cloned())?;
+        self.tools.register_many(tools.into_iter().cloned())?;
         Ok(self)
     }
 
     pub fn custom_tools(mut self, tools: &[CustomToolSpec]) -> Result<Self, ProxyError> {
+        self.offered_tools
+            .extend(tools.iter().map(|tool| tool.name.clone()));
+        let tools: Vec<_> = tools
+            .iter()
+            .filter(|tool| !self.disabled_tools.contains(&tool.name))
+            .collect();
         if let Some(duplicate) = tools
             .iter()
             .find(|tool| self.tools.get(&tool.name).is_some())
         {
             return Err(ProxyError::DuplicateTool(duplicate.name.clone()));
         }
-        self.custom_tools.register_many(tools.iter().cloned())?;
+        self.custom_tools
+            .register_many(tools.into_iter().cloned())?;
         Ok(self)
     }
 
@@ -165,6 +268,18 @@ impl McpProxyServerBuilder {
     }
 
     pub fn build(self) -> Result<McpProxyServer, ProxyError> {
+        let mut unknown: Vec<_> = self
+            .assigned_tools
+            .difference(&self.offered_tools)
+            .map(String::as_str)
+            .collect();
+        if !unknown.is_empty() {
+            unknown.sort_unstable();
+            return Err(ProxyError::Config(format!(
+                "tool profiles name unknown tool(s): {}",
+                unknown.join(", ")
+            )));
+        }
         // One shared client so the connection pool / TLS setup is reused across
         // auth, REST, and GraphQL calls (reqwest::Client is Arc-backed).
         let http = reqwest::Client::builder()

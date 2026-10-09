@@ -17,6 +17,19 @@ pub trait ReadOnlyToolInvoker: Send + Sync {
         name: &str,
         arguments: Value,
     ) -> Result<ToolResult, ProxyError>;
+
+    /// Invoke any generated tool, including ones that change upstream state.
+    /// The server grants this only to custom tools that are not themselves
+    /// declared read-only; every other invoker refuses.
+    async fn invoke_mutating(
+        &self,
+        name: &str,
+        _arguments: Value,
+    ) -> Result<ToolResult, ProxyError> {
+        Err(ProxyError::Validation(format!(
+            "read-only custom tools may not invoke mutating tools: {name}"
+        )))
+    }
 }
 
 /// Async implementation for a handwritten MCP tool.
@@ -108,6 +121,12 @@ impl CustomToolRegistry {
 
     pub(crate) fn contains(&self, name: &str) -> bool {
         self.tools.contains_key(name)
+    }
+
+    pub(crate) fn retain(&mut self, mut keep: impl FnMut(&str) -> bool) {
+        self.tools.retain(|name, _| keep(name));
+        let tools = &self.tools;
+        self.validators.retain(|name, _| tools.contains_key(name));
     }
 }
 
