@@ -846,7 +846,10 @@ async fn get_raw(ctx: &InstallsContext, recorder: &Recorder, arguments: &Value) 
                 "contentType": "text/csv",
                 "encoding": encoding.unwrap_or("undetected"),
                 "byteSize": bytes.len(),
-                "sha256": format!("{:x}", Sha256::digest(bytes.as_slice())),
+                "sha256": Sha256::digest(bytes.as_slice())
+                    .iter()
+                    .map(|byte| format!("{byte:02x}"))
+                    .collect::<String>(),
                 "checksumScope": if meta.content_encoding.as_deref() == Some("gzip") {
                     "Google stores this export gzip-compressed: source size, md5Hash, and crc32c describe the stored gzip bytes. The attached bytes are the decompressed CSV and sha256 covers exactly them."
                 } else {

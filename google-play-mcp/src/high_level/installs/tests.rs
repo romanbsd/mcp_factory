@@ -841,7 +841,10 @@ async fn original_csv_is_byte_exact_with_sha256() {
     let structured = result.structured.unwrap();
     assert_eq!(
         structured["sha256"],
-        format!("{:x}", Sha256::digest(october()))
+        Sha256::digest(october())
+            .iter()
+            .map(|byte| format!("{byte:02x}"))
+            .collect::<String>()
     );
     assert_eq!(structured["encoding"], "UTF-16LE (BOM)");
     assert_eq!(structured["byteSize"], october().len());
