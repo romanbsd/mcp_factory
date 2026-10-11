@@ -112,3 +112,60 @@ def test_render_preserves_workspace_member_manifest(tmp_path: Path) -> None:
     manifest.write_text("[workspace]\n", encoding="utf-8")
     render_crate(result, **kwargs)
     assert "[workspace.dependencies]" in manifest.read_text(encoding="utf-8")
+
+
+def test_nullable_schema_translation_preserves_enum_constraints() -> None:
+    from mcp_gen.render import _json_schema
+    schema = {"type": "object", "properties": {
+        "url": {"type": "string", "nullable": True},
+        "state": {"type": "string", "enum": ["A", "B"], "nullable": True},
+        "enabled": {"type": "boolean"},
+    }}
+    translated = _json_schema(schema)
+    assert translated["properties"]["url"] == {"type": ["string", "null"]}
+    assert translated["properties"]["state"] == {"type": ["string", "null"], "enum": ["A", "B", None]}
+    assert translated["properties"]["enabled"] == {"type": "boolean"}
+    assert schema["properties"]["url"]["nullable"] is True
+
+
+def test_render_emits_lazy_catalog_and_preserves_resource_extension(tmp_path: Path, fixtures_dir: Path) -> None:
+    from mcp_gen.openapi.parser import parse_openapi
+    result = parse_openapi(fixtures_dir / "minimal-openapi.yaml")
+    output = tmp_path / "server"
+    output.joinpath("src").mkdir(parents=True)
+    output.joinpath("src/extensions.rs").write_text("pub fn build_custom_tools() {}\npub fn build_resources() {}\n")
+    render_crate(result, output_dir=output, crate_name="demo-mcp", base_url="https://example.test", core_path="../core", transport="stdio")
+    tools = (output / "src/tools.rs").read_text()
+    main = (output / "src/main.rs").read_text()
+    catalog = tools.split("pub fn operation_catalog()", 1)[1].split("fn build_operation_", 1)[0]
+    assert "OperationDescriptor" in catalog and "serde_json::from_str" not in catalog
+    assert "serde_json::from_str" in tools.split("fn build_operation_", 1)[1]
+    assert ".operation_catalog(tools::operation_catalog())?" in main
+    assert "resources.extend(extensions::build_resources());" in main
+
+
+def test_openapi_explode_false_arrays_keep_serialization_contract(tmp_path: Path) -> None:
+    from mcp_gen.openapi.parser import parse_openapi
+    source = tmp_path / "query.yaml"
+    source.write_text("""openapi: 3.0.3
+info: {title: Query encoding, version: '1'}
+paths:
+  /apps:
+    get:
+      operationId: apps
+      parameters:
+        - name: fields[apps]
+          in: query
+          style: form
+          explode: false
+          schema: {type: array, items: {type: string}}
+        - name: tags
+          in: query
+          schema: {type: array, items: {type: string}}
+      responses:
+        '200': {description: OK}
+""")
+    props = parse_openapi(source).tools[0].input_schema["properties"]
+    assert props["fields[apps]"]["type"] == "array"
+    assert props["fields[apps]"]["x-mcp-query-explode"] is False
+    assert "x-mcp-query-explode" not in props["tags"]

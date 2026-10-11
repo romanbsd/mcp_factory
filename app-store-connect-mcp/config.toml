@@ -5,9 +5,9 @@ transport = "stdio"
 compact_jsonapi = true
 # Tool profiles to expose (or set MCP_FACTORY_PROFILES=a,b). "all" exposes
 # every tool.
-# Unset uses the generated default: core, metadata, assets, testflight.
-# Available: assets, core, metadata, monetization, pricing, reports, reviews, signing, testflight
-# profiles = ["core", "metadata", "assets", "testflight"]
+# Unset uses the generated default: workflow.
+# Available: assets, core, metadata, monetization, monetization_raw, pricing, release_raw, reports, reports_raw, reviews, signing, signing_raw, testflight, testflight_raw, workflow
+# profiles = ["workflow"]
 
 # Static bearer token (reads MCP_FACTORY_BEARER_TOKEN by default):
 # [auth]

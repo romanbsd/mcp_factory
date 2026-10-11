@@ -95,7 +95,12 @@ impl RestProxyExecutor {
         self
     }
 
-    pub async fn execute(&self, tool: &ToolSpec, args: Value) -> Result<ToolResult, ProxyError> {
+    /// Open an upstream stream using the same routing/authentication as raw execution.
+    pub async fn open_response(
+        &self,
+        tool: &ToolSpec,
+        args: &Value,
+    ) -> Result<reqwest::Response, ProxyError> {
         let ExecutionKindRest(operation) = &tool.execution else {
             return Err(ProxyError::Other("expected REST execution".to_string()));
         };
@@ -105,10 +110,26 @@ impl RestProxyExecutor {
             operation
         });
         let request_operation = request_operation.as_ref().unwrap_or(operation);
+        let mut url_args = args.clone();
+        for param in &request_operation.params {
+            if matches!(param.location, ParamLocation::Query)
+                && tool.input_schema["properties"][&param.name]["x-mcp-query-explode"] == false
+            {
+                if let Some(Value::Array(items)) = args.get(&param.name) {
+                    url_args[&param.name] = Value::String(
+                        items
+                            .iter()
+                            .map(value_to_string)
+                            .collect::<Result<Vec<_>, _>>()?
+                            .join(","),
+                    );
+                }
+            }
+        }
         let mut url = reqwest::Url::parse(&build_url(
             &self.base_url,
             request_operation,
-            &args,
+            &url_args,
             self.auth.as_ref(),
         )?)
         .map_err(|error| ProxyError::Config(format!("invalid media URL: {error}")))?;
@@ -123,27 +144,31 @@ impl RestProxyExecutor {
             .header(reqwest::header::ACCEPT, "application/json, */*");
 
         request = self.auth.apply_request_auth(request).await?;
-        request = apply_headers(request, operation, &args)?;
+        request = apply_headers(request, operation, args)?;
 
         let content_type = operation
             .content_type
             .as_deref()
             .unwrap_or("application/json");
         if let Some(media) = &operation.media {
-            request = attach_media_body(request, media, &args, self.media_root.as_deref()).await?;
+            request = attach_media_body(request, media, args, self.media_root.as_deref()).await?;
         } else if operation.raw_body {
             if let Some(body) = args.as_object().and_then(|obj| obj.get("body")) {
                 request = apply_body(request, content_type, body);
             } else {
                 request = apply_empty_body(request, &operation.method);
             }
-        } else if let Some(body) = build_body(operation, &args)? {
+        } else if let Some(body) = build_body(operation, args)? {
             request = apply_body(request, content_type, &body);
         } else {
             request = apply_empty_body(request, &operation.method);
         }
 
-        let response = request.send().await?;
+        Ok(request.send().await?)
+    }
+
+    pub async fn execute(&self, tool: &ToolSpec, args: Value) -> Result<ToolResult, ProxyError> {
+        let response = self.open_response(tool, &args).await?;
         let status = response.status();
         let content_type = response
             .headers()
@@ -153,6 +178,19 @@ impl RestProxyExecutor {
             .to_string();
         // Surface navigation/quota headers the model can't otherwise see.
         let meta = collect_header_hints(response.headers());
+        // Raw binary/report responses share the workflow transfer budget.
+        // JSON control-plane requests stay outside it: uploads hold a permit
+        // while reserving/committing/reconciling through those operations.
+        let transfer_permit = if !is_texty(&content_type) {
+            Some(
+                crate::shared_transfer_budget()
+                    .acquire_owned()
+                    .await
+                    .map_err(|_| ProxyError::Other("transfer service is closed".into()))?,
+            )
+        } else {
+            None
+        };
         if let Some(len) = response.content_length() {
             if len > MAX_RESPONSE_BYTES {
                 return Err(ProxyError::Other(format!(
@@ -224,6 +262,8 @@ impl RestProxyExecutor {
             // the async workers.
             let gzip_type = content_type.clone();
             let (data, decoded) = tokio::task::spawn_blocking(move || {
+                // Retain the permit even if the waiting async call is canceled.
+                let _permit = transfer_permit;
                 let decoded = gunzip_text(&gzip_type, &data);
                 (data, decoded)
             })

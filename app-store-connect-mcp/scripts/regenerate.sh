@@ -22,3 +22,6 @@ fi
   --no-output-schema \
   --compact-jsonapi \
   --tool-config "$server_root/tools.toml"
+
+# Keep checked-in Rust reproducible and compliant with workspace formatting.
+cargo fmt --manifest-path "$factory_root/Cargo.toml" -p app-store-connect-mcp

@@ -47,6 +47,23 @@ def _rust_json_literal(value: Any) -> str:
     return f'r{hashes}"{serialized}"{hashes}'
 
 
+def _json_schema(value: Any) -> Any:
+    """Translate OpenAPI 3.0 nullable into JSON Schema null unions."""
+    if isinstance(value, list):
+        return [_json_schema(item) for item in value]
+    if not isinstance(value, dict):
+        return value
+    result = {key: _json_schema(item) for key, item in value.items() if key != "nullable"}
+    if value.get("nullable") is True:
+        if "type" in result:
+            types = result["type"] if isinstance(result["type"], list) else [result["type"]]
+            result["type"] = list(dict.fromkeys([*types, "null"]))
+            if "enum" in result and None not in result["enum"]:
+                result["enum"] = [*result["enum"], None]
+        else:
+            result = {"anyOf": [result, {"type": "null"}]}
+    return result
+
 def _env() -> Environment:
     env = Environment(
         loader=PackageLoader("mcp_gen", "templates"),
@@ -56,6 +73,7 @@ def _env() -> Environment:
     )
     env.filters["rust_string"] = _rust_string_literal
     env.filters["rust_json"] = _rust_json_literal
+    env.filters["json_schema"] = _json_schema
     return env
 
 
@@ -104,6 +122,8 @@ def render_crate(
     context["extensions_take_config"] = bool(
         _EXTENSIONS_TAKE_CONFIG.search(extension_path.read_text(encoding="utf-8"))
     )
+
+    context["extensions_have_resources"] = bool(re.search(r"pub\s+fn\s+build_resources\s*\(", extension_path.read_text(encoding="utf-8")))
 
     templates = {
         "Cargo.toml.j2": output_dir / "Cargo.toml",

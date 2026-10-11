@@ -13,9 +13,10 @@ use rmcp::ErrorData as McpError;
 use serde_json::Value;
 
 use crate::config::ProxyConfig;
-use crate::custom::{CustomToolRegistry, CustomToolSpec, ReadOnlyToolInvoker};
+use crate::custom::{CustomToolRegistry, CustomToolSpec, OperationInvoker};
 use crate::error::ProxyError;
 use crate::graphql::GraphQLProxyExecutor;
+use crate::operations::{OperationDescriptor, OperationRegistry};
 use crate::resources::{ResourceRegistry, ResourceSpec};
 use crate::rest::RestProxyExecutor;
 use crate::tools::{ExecutionKind, ToolBody, ToolRegistry, ToolResult, ToolSpec};
@@ -28,15 +29,19 @@ pub struct McpProxyServer {
 struct McpProxyServerInner {
     config: ProxyConfig,
     tools: ToolRegistry,
+    operations: OperationRegistry,
     custom_tools: CustomToolRegistry,
     resources: ResourceRegistry,
     rest: RestProxyExecutor,
     graphql: GraphQLProxyExecutor,
+    exposed_operations: HashSet<String>,
+    tool_metadata: Vec<Tool>,
 }
 
 pub struct McpProxyServerBuilder {
     config: ProxyConfig,
     tools: ToolRegistry,
+    operations: OperationRegistry,
     custom_tools: CustomToolRegistry,
     resources: ResourceRegistry,
     /// Tools excluded by `tool_profiles`; never registered.
@@ -62,16 +67,20 @@ impl McpProxyServer {
     }
 
     pub fn tool_count(&self) -> usize {
-        self.inner.tools.len() + self.inner.custom_tools.len()
+        self.inner.tools.len() + self.inner.exposed_operations.len() + self.inner.custom_tools.len()
     }
 
     pub fn tool_names(&self) -> Vec<String> {
         self.inner
-            .tools
+            .tool_metadata
             .iter()
-            .map(|tool| tool.name.clone())
-            .chain(self.inner.custom_tools.iter().map(|tool| tool.name.clone()))
+            .map(|tool| tool.name.to_string())
             .collect()
+    }
+
+    /// Immutable sorted public metadata, also used by the protocol handler.
+    pub fn tool_metadata(&self) -> &[Tool] {
+        &self.inner.tool_metadata
     }
 
     pub async fn invoke_tool(&self, name: &str, args: Value) -> Result<String, ProxyError> {
@@ -91,9 +100,32 @@ impl McpProxyServer {
         }
     }
 
+    /// Resolve an internal capability and validate through its owning registry.
+    /// Public exposure and caller permissions are checked by the entry points.
+    fn resolve_and_validate(
+        &self,
+        name: &str,
+        args: &Value,
+        check_permission: impl FnOnce(&ToolSpec) -> Result<(), ProxyError>,
+    ) -> Result<&ToolSpec, ProxyError> {
+        let tool = self
+            .inner
+            .tools
+            .get(name)
+            .or_else(|| self.inner.operations.get(name))
+            .ok_or_else(|| ProxyError::ToolNotFound(name.into()))?;
+        check_permission(tool)?;
+        if self.inner.tools.get(name).is_some() {
+            self.inner.tools.validate(name, args)?;
+        } else {
+            self.inner.operations.validate(name, args)?;
+        }
+        Ok(tool)
+    }
+
     async fn dispatch_by_name(&self, name: &str, args: Value) -> Result<ToolResult, ProxyError> {
-        if let Some(tool) = self.inner.tools.get(name) {
-            self.inner.tools.validate(name, &args)?;
+        if self.inner.tools.get(name).is_some() || self.inner.exposed_operations.contains(name) {
+            let tool = self.resolve_and_validate(name, &args, |_| Ok(()))?;
             return self.dispatch(tool, args).await;
         }
         if let Some(tool) = self.inner.custom_tools.get(name) {
@@ -108,6 +140,15 @@ impl McpProxyServer {
     }
 
     pub fn read_resource_content(&self, uri: &str) -> Result<String, ProxyError> {
+        if let Some(name) = uri.strip_prefix("schema://operation/") {
+            let operation = self
+                .inner
+                .operations
+                .get(name)
+                .or_else(|| self.inner.tools.get(name))
+                .ok_or_else(|| ProxyError::ResourceNotFound(uri.into()))?;
+            return Ok(serde_json::json!({"name":operation.name,"description":operation.description,"inputSchema":operation.input_schema,"execution":operation.execution}).to_string());
+        }
         let resource = self
             .inner
             .resources
@@ -118,24 +159,38 @@ impl McpProxyServer {
 }
 
 #[async_trait::async_trait]
-impl ReadOnlyToolInvoker for McpProxyServer {
+impl OperationInvoker for McpProxyServer {
     async fn invoke_read_only(
         &self,
         name: &str,
         arguments: Value,
     ) -> Result<ToolResult, ProxyError> {
-        let tool = self
-            .inner
-            .tools
-            .get(name)
-            .ok_or_else(|| ProxyError::ToolNotFound(name.to_string()))?;
-        if tool.hints.read_only != Some(true) {
-            return Err(ProxyError::Validation(format!(
-                "custom tools may invoke only generated read-only tools: {name}"
-            )));
-        }
-        self.inner.tools.validate(name, &arguments)?;
+        let tool = self.resolve_and_validate(name, &arguments, |tool| {
+            if tool.hints.read_only != Some(true) {
+                return Err(ProxyError::Validation(format!(
+                    "custom tools may invoke only generated read-only tools: {name}"
+                )));
+            }
+            Ok(())
+        })?;
         self.dispatch(tool, arguments).await
+    }
+    async fn stream_read_only(
+        &self,
+        name: &str,
+        arguments: Value,
+    ) -> Result<reqwest::Response, ProxyError> {
+        let tool = self.resolve_and_validate(name, &arguments, |tool| {
+            if tool.hints.read_only != Some(true)
+                || !matches!(tool.execution, ExecutionKind::Rest(_))
+            {
+                return Err(ProxyError::Validation(format!(
+                    "only generated read-only REST operations may stream: {name}"
+                )));
+            }
+            Ok(())
+        })?;
+        self.inner.rest.open_response(tool, &arguments).await
     }
 }
 
@@ -147,13 +202,21 @@ struct ScopedInvoker<'a> {
 }
 
 #[async_trait::async_trait]
-impl ReadOnlyToolInvoker for ScopedInvoker<'_> {
+impl OperationInvoker for ScopedInvoker<'_> {
     async fn invoke_read_only(
         &self,
         name: &str,
         arguments: Value,
     ) -> Result<ToolResult, ProxyError> {
         self.server.invoke_read_only(name, arguments).await
+    }
+
+    async fn stream_read_only(
+        &self,
+        name: &str,
+        arguments: Value,
+    ) -> Result<reqwest::Response, ProxyError> {
+        self.server.stream_read_only(name, arguments).await
     }
 
     async fn invoke_mutating(
@@ -168,11 +231,7 @@ impl ReadOnlyToolInvoker for ScopedInvoker<'_> {
         }
         let tool = self
             .server
-            .inner
-            .tools
-            .get(name)
-            .ok_or_else(|| ProxyError::ToolNotFound(name.to_string()))?;
-        self.server.inner.tools.validate(name, &arguments)?;
+            .resolve_and_validate(name, &arguments, |_| Ok(()))?;
         self.server.dispatch(tool, arguments).await
     }
 }
@@ -182,6 +241,7 @@ impl McpProxyServerBuilder {
         Self {
             config,
             tools: ToolRegistry::new(),
+            operations: OperationRegistry::default(),
             custom_tools: CustomToolRegistry::default(),
             resources: ResourceRegistry::new(),
             disabled_tools: HashSet::new(),
@@ -224,6 +284,35 @@ impl McpProxyServerBuilder {
         let disabled = &self.disabled_tools;
         self.tools.retain(|name| !disabled.contains(name));
         self.custom_tools.retain(|name| !disabled.contains(name));
+        Ok(self)
+    }
+
+    /// Register the complete generated capability catalog without exposing it.
+    /// Public profile selection is evaluated during build; internal calls bypass
+    /// exposure filtering but retain schema validation and mutation capability checks.
+    pub fn operation_catalog(
+        mut self,
+        descriptors: &[OperationDescriptor],
+    ) -> Result<Self, ProxyError> {
+        self.offered_tools
+            .extend(descriptors.iter().map(|d| d.name.to_string()));
+        self.operations.register(descriptors)?;
+        Ok(self)
+    }
+
+    pub fn tools_owned(
+        mut self,
+        tools: impl IntoIterator<Item = ToolSpec>,
+    ) -> Result<Self, ProxyError> {
+        for tool in tools {
+            self.offered_tools.insert(tool.name.clone());
+            if !self.disabled_tools.contains(&tool.name) {
+                if self.custom_tools.contains(&tool.name) {
+                    return Err(ProxyError::DuplicateTool(tool.name));
+                }
+                self.tools.register(tool)?;
+            }
+        }
         Ok(self)
     }
 
@@ -280,6 +369,29 @@ impl McpProxyServerBuilder {
                 unknown.join(", ")
             )));
         }
+        let exposed_operations: HashSet<String> = self
+            .operations
+            .names()
+            .filter(|name| !self.disabled_tools.contains(**name))
+            .map(|name| name.to_string())
+            .collect();
+        let mut tool_metadata = self
+            .tools
+            .iter()
+            .map(tool_spec_to_rmcp)
+            .chain(exposed_operations.iter().map(|name| {
+                if self.tools.get(name).is_some() || self.custom_tools.contains(name) {
+                    return Err(ProxyError::DuplicateTool(name.clone()));
+                }
+                let spec = self.operations.get(name).expect("registered descriptor");
+                // Validate schemas at startup for public tools. Internal schemas
+                // are compiled lazily on first invocation.
+                self.operations.ensure_schema(name)?;
+                tool_spec_to_rmcp(spec)
+            }))
+            .chain(self.custom_tools.iter().map(custom_tool_spec_to_rmcp))
+            .collect::<Result<Vec<_>, _>>()?;
+        tool_metadata.sort_by(|a, b| a.name.cmp(&b.name));
         // One shared client so the connection pool / TLS setup is reused across
         // auth, REST, and GraphQL calls (reqwest::Client is Arc-backed).
         let http = reqwest::Client::builder()
@@ -303,6 +415,9 @@ impl McpProxyServerBuilder {
             inner: Arc::new(McpProxyServerInner {
                 config: self.config,
                 tools: self.tools,
+                operations: self.operations,
+                exposed_operations,
+                tool_metadata,
                 custom_tools: self.custom_tools,
                 resources: self.resources,
                 rest,
@@ -334,13 +449,7 @@ impl ServerHandler for McpProxyServer {
         _request: Option<PaginatedRequestParams>,
         _context: RequestContext<RoleServer>,
     ) -> Result<ListToolsResult, McpError> {
-        let tools = self
-            .inner
-            .tools
-            .iter()
-            .map(tool_spec_to_rmcp)
-            .chain(self.inner.custom_tools.iter().map(custom_tool_spec_to_rmcp))
-            .collect::<Result<Vec<_>, _>>()?;
+        let tools = self.inner.tool_metadata.clone();
         Ok(ListToolsResult {
             tools,
             ..Default::default()
@@ -389,16 +498,17 @@ impl ServerHandler for McpProxyServer {
         request: ReadResourceRequestParams,
         _context: RequestContext<RoleServer>,
     ) -> Result<ReadResourceResponse, McpError> {
-        let resource = self
+        let content = self.read_resource_content(&request.uri)?;
+        let mime = self
             .inner
             .resources
             .get(&request.uri)
-            .ok_or_else(|| ProxyError::ResourceNotFound(request.uri.clone()))?;
-        Ok(
-            ReadResourceResult::new(vec![ResourceContents::text(resource.content, &request.uri)
-                .with_mime_type(&resource.mime_type)])
-            .into(),
-        )
+            .map(|r| r.mime_type.as_str())
+            .unwrap_or("application/json");
+        Ok(ReadResourceResult::new(vec![
+            ResourceContents::text(content, &request.uri).with_mime_type(mime)
+        ])
+        .into())
     }
 
     async fn on_initialized(&self, _context: NotificationContext<RoleServer>) {

@@ -5,19 +5,22 @@ pub mod config;
 pub mod custom;
 pub mod error;
 pub mod graphql;
+pub mod operations;
 pub mod resources;
 pub mod rest;
 pub mod server;
 pub mod tools;
+pub mod transfers;
 pub mod transport;
 
 pub use async_trait::async_trait;
 pub use auth::{oauth_logout, oauth_status, run_oauth_login, AuthProvider};
 pub use chrono;
 pub use config::{AuthConfig, ProxyConfig, TransportMode};
-pub use custom::{CustomToolHandler, CustomToolSpec, ReadOnlyToolInvoker};
+pub use custom::{CustomToolHandler, CustomToolSpec, OperationInvoker, ReadOnlyToolInvoker};
 pub use error::ProxyError;
 pub use graphql::{GraphQLOperation, GraphQLProxyExecutor};
+pub use operations::OperationDescriptor;
 pub use resources::ResourceSpec;
 pub use rest::{
     resolve_media_file, MediaUploadOperation, ParamBinding, ParamLocation, RestOperation,
@@ -25,3 +28,6 @@ pub use rest::{
 };
 pub use server::McpProxyServer;
 pub use tools::{ExecutionKind, ToolBody, ToolHints, ToolRegistry, ToolResult, ToolSpec};
+pub use transfers::{
+    decoded_reader, read_error_prefix, shared_transfer_budget, ErrorPrefix, TransferLimits,
+};

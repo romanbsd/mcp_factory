@@ -1,11 +1,12 @@
 import json
+import re
 from pathlib import Path
 
 import pytest
 from typer.testing import CliRunner
 
 from mcp_gen.cli import app
-from mcp_gen.models import glob_match
+from mcp_gen.models import GenerationResult, ToolSpec, glob_match
 from mcp_gen.openapi.parser import UnknownOperationError, derive_description, parse_openapi
 from mcp_gen.tool_config import ToolConfigError, apply_tool_config, load_tool_config
 
@@ -196,7 +197,7 @@ def test_cli_tool_config_renders_profiles(tmp_path: Path, fixtures_dir: Path) ->
     assert '("apps_getCollection", &["core", "testflight"]),' in tools_rs
     assert '("asset_upload", &["core", "testflight"]),' in tools_rs
     assert 'vec!["core".to_string()]' in tools_rs
-    assert ".tool_profiles(&tools::build_tool_profiles())?\n        .tools(&tools)?" in main_rs
+    assert ".tool_profiles(&tools::build_tool_profiles())?\n        .operation_catalog(tools::operation_catalog())?" in main_rs
     assert "config.profiles = Some(tools::default_profiles());" in main_rs
     assert "# Available: core, testflight" in config_toml
     assert "# Unset uses the generated default: core." in config_toml
@@ -260,3 +261,140 @@ def test_cli_reports_config_errors(tmp_path: Path, fixtures_dir: Path) -> None:
     )
     assert result.exit_code != 0
     assert "missing_*" in result.output
+
+
+def test_profile_inheritance_is_additive_transitive_and_deduplicated(tmp_path: Path) -> None:
+    config = load_tool_config(_write(tmp_path, """
+[profiles]
+combined = ["own_*", "apps_*"]
+left = ["left_*", "apps_*"]
+right = ["right_*"]
+base = ["apps_*", "builds_*"]
+[profile_extends]
+combined = ["left", "right", "left"]
+left = ["base"]
+right = ["base"]
+[custom_tools]
+upload = ["base"]
+explicit = ["combined", "left"]
+"""))
+    assert list(config.profiles) == ["combined", "left", "right", "base"]
+    assert config.profiles["combined"] == ["own_*", "apps_*", "left_*", "builds_*", "right_*"]
+    assert config.profiles["left"] == ["left_*", "apps_*", "builds_*"]
+    assert config.profiles["right"] == ["right_*", "apps_*", "builds_*"]
+    assert config.operation_patterns == {"own_*", "apps_*", "left_*", "right_*", "builds_*"}
+    assert config.custom_tools["upload"] == ["base", "combined", "left", "right"]
+    assert config.custom_tools["explicit"] == ["combined", "left"]
+
+
+def test_profile_inheritance_custom_tools_reach_apply_and_cli(
+    fixtures_dir: Path, tmp_path: Path
+) -> None:
+    text = """
+default_profiles = ["combined"]
+[profiles]
+combined = []
+core = ["apps_*"]
+beta = ["betaGroups_*"]
+[profile_extends]
+combined = ["core", "beta"]
+[custom_tools]
+upload = ["core"]
+"""
+    result = _parse(fixtures_dir, tmp_path, text)
+    assert result.tool_profiles["apps_getCollection"] == ["combined", "core"]
+    assert result.tool_profiles["betaGroups_betaTesters_createToManyRelationship"] == ["combined", "beta"]
+    assert result.tool_profiles["upload"] == ["core", "combined"]
+    assert result.default_profiles == ["combined"]
+    generated, output = _generate(tmp_path, fixtures_dir, "--tool-config", str(_write(tmp_path, text)))
+    assert generated.exit_code == 0, generated.output
+    tools_rs = (output / "src/tools.rs").read_text()
+    assert '("apps_getCollection", &["combined", "core"]),' in tools_rs
+    assert '("upload", &["core", "combined"]),' in tools_rs
+
+
+@pytest.mark.parametrize(
+    ("text", "message"),
+    [
+        ("profile_extends = []\n[profiles]\na = []", "profile_extends.*must be a table"),
+        ("[profiles]\na = []\n[profile_extends]\na = 'a'", "profile_extends.a must be a list"),
+        ("[profiles]\na = []\n[profile_extends]\nb = ['a']", "undefined child profile: b"),
+        ("[profiles]\na = []\n[profile_extends]\na = ['missing']", "undefined parent profile.*missing"),
+        ("[profiles]\na = []\n[profile_extends]\nall = ['a']", "all.*reserved"),
+        ("[profiles]\na = []\n[profile_extends]\na = ['all']", "all.*reserved"),
+        ("[profiles]\na = []\n[profile_extends]\na = ['a']", "cycle: a -> a"),
+        ("[profiles]\na = []\nb = []\nc = []\n[profile_extends]\na = ['b']\nb = ['c']\nc = ['a']", "cycle: a -> b -> c -> a"),
+    ],
+)
+def test_invalid_profile_inheritance(tmp_path: Path, text: str, message: str) -> None:
+    with pytest.raises(ToolConfigError, match=message):
+        load_tool_config(_write(tmp_path, text))
+
+
+def test_deep_profile_inheritance_does_not_depend_on_python_recursion_limit(tmp_path: Path) -> None:
+    profiles = "[profiles]\n" + "\n".join(f"p{i} = []" for i in range(1100)) + '\nbase = ["apps_*"]\n'
+    extends = "[profile_extends]\n" + "\n".join(f'p{i} = ["p{i+1}"]' for i in range(1099)) + '\np1099 = ["base"]\n'
+    config = load_tool_config(_write(tmp_path, profiles + extends))
+    assert config.profiles["p0"] == ["apps_*"]
+
+
+def test_inherited_patterns_still_must_match(fixtures_dir: Path, tmp_path: Path) -> None:
+    with pytest.raises(UnknownOperationError, match="missing_\\*"):
+        _parse(fixtures_dir, tmp_path, """
+[profiles]
+combined = []
+base = ["apps_*", "missing_*"]
+[profile_extends]
+combined = ["base"]
+""")
+
+
+def test_no_inheritance_preserves_standalone_config_exactly(tmp_path: Path) -> None:
+    config = load_tool_config(_write(tmp_path, """
+default_profiles = ["all"]
+cursor_param = "cursor"
+strip_enums = ["fields[*]"]
+[profiles]
+core = ["apps_*", "apps_*"]
+assets = []
+[custom_tools]
+upload = ["core", "core", "all"]
+[descriptions]
+apps_getCollection = "Find apps."
+"""))
+    assert config.profiles == {"core": ["apps_*", "apps_*"], "assets": []}
+    assert config.custom_tools == {"upload": ["core", "core", "all"]}
+    assert config.default_profiles == ["all"]
+    assert config.cursor_param == "cursor"
+    assert config.strip_enums == ["fields[*]"]
+    assert config.descriptions == {"apps_getCollection": "Find apps."}
+
+
+# Profile expectations were frozen independently before introducing inheritance.
+def test_asc_composed_profiles_match_all_frozen_memberships(fixtures_dir: Path) -> None:
+    root = Path(__file__).resolve().parents[3]
+    config = load_tool_config(root / "app-store-connect-mcp/tools.toml")
+    # The checked-in generated catalog supplies only the operation inventory.
+    # Expected memberships below remain frozen from the independent before snapshot.
+    source = (root / "app-store-connect-mcp/src/tools.rs").read_text(encoding="utf-8")
+    names = re.findall(r'OperationDescriptor\s*\{\s*name:\s*"([^"]+)"', source)
+    assert len(names) == len(set(names)) == 277
+    result = GenerationResult(
+        tools=[ToolSpec(name, "", {}, "rest", operation_id=name) for name in names],
+        resources=[],
+        schema_kind="openapi",
+    )
+    apply_tool_config(result, config)
+    expected = {
+        name: group["profiles"]
+        for group in json.loads((fixtures_dir / "asc-profile-memberships.json").read_text())
+        for name in group["tools"]
+    }
+    actual = {name: sorted(profiles) for name, profiles in result.tool_profiles.items()}
+    assert len(result.tools) == 277
+    assert len(config.custom_tools) == 16
+    assert len(expected) == 293
+    assert actual == expected
+    assert config.default_profiles == ["workflow"]
+    assert config.cursor_param == "cursor"
+    assert config.strip_enums == ["fields[*]"]

@@ -7,6 +7,12 @@ strip_enums = ["fields[*]"]                # parameter-name globs; drop enum lis
 
 [profiles]                                 # operationId globs (* and ?)
 core = ["apps_getCollection", "builds_*"]
+metadata = ["appInfo*"]
+assets = ["appScreenshot*"]
+release_raw = []
+
+[profile_extends]                          # children also inherit custom tools
+release_raw = ["core", "metadata"]
 
 [custom_tools]                             # handwritten tools -> profiles
 asset_upload = ["assets"]
@@ -30,6 +36,7 @@ _KEYS = {
     "cursor_param",
     "strip_enums",
     "profiles",
+    "profile_extends",
     "custom_tools",
     "descriptions",
 }
@@ -59,6 +66,64 @@ def _string_list(value: object, where: str) -> list[str]:
     return list(value)
 
 
+def _expand_profiles(
+    profiles: dict[str, list[str]], raw_extends: object
+) -> tuple[dict[str, list[str]], dict[str, set[str]]]:
+    """Resolve additive inheritance in declaration order; keep standalone lists intact."""
+    if not isinstance(raw_extends, dict):
+        raise ToolConfigError("[profile_extends] must be a table of profile = [parents]")
+    parents: dict[str, list[str]] = {}
+    for child, value in raw_extends.items():
+        if child == "all":
+            raise ToolConfigError('"all" is reserved and cannot inherit profiles')
+        if child not in profiles:
+            raise ToolConfigError(f"profile_extends names undefined child profile: {child}")
+        names = _string_list(value, f"profile_extends.{child}")
+        if "all" in names:
+            raise ToolConfigError(f'profile_extends.{child}: "all" is reserved and cannot be inherited')
+        unknown = [name for name in names if name not in profiles]
+        if unknown:
+            raise ToolConfigError(
+                f"profile_extends.{child} names undefined parent profile(s): {', '.join(unknown)}"
+            )
+        parents[child] = list(dict.fromkeys(names))
+
+    expanded: dict[str, list[str]] = {}
+    ancestors: dict[str, set[str]] = {}
+    # Iterative DFS avoids recursion limits for deep, otherwise valid profile chains.
+    for root in profiles:
+        if root in expanded:
+            continue
+        path = [root]
+        active = {root}
+        stack = [(root, iter(parents.get(root, [])))]
+        while stack:
+            name, pending = stack[-1]
+            parent = next(pending, None)
+            if parent is not None:
+                if parent in active:
+                    cycle = path[path.index(parent):] + [parent]
+                    raise ToolConfigError(f"profile_extends cycle: {' -> '.join(cycle)}")
+                if parent not in expanded:
+                    path.append(parent)
+                    active.add(parent)
+                    stack.append((parent, iter(parents.get(parent, []))))
+                continue
+            inherited = parents.get(name, [])
+            patterns = list(profiles[name])
+            lineage: set[str] = set()
+            for parent in inherited:
+                patterns.extend(expanded[parent])
+                lineage.add(parent)
+                lineage.update(ancestors[parent])
+            expanded[name] = list(dict.fromkeys(patterns)) if inherited else patterns
+            ancestors[name] = lineage
+            stack.pop()
+            active.remove(name)
+            path.pop()
+    return {name: expanded[name] for name in profiles}, ancestors
+
+
 def load_tool_config(path: Path) -> ToolConfig:
     try:
         data = tomllib.loads(path.read_text(encoding="utf-8"))
@@ -76,6 +141,8 @@ def load_tool_config(path: Path) -> ToolConfig:
     profiles = {
         name: _string_list(patterns, f"profiles.{name}") for name, patterns in raw_profiles.items()
     }
+
+    profiles, ancestors = _expand_profiles(profiles, data.get("profile_extends", {}))
 
     def known_profiles(names: list[str], where: str) -> list[str]:
         unknown = [name for name in names if name != "all" and name not in profiles]
@@ -98,9 +165,15 @@ def load_tool_config(path: Path) -> ToolConfig:
         raise ToolConfigError("[custom_tools] must be a table of tool = [profiles]")
     custom_tools = {}
     for name, names in raw_custom.items():
-        custom_tools[name] = known_profiles(
+        memberships = known_profiles(
             _string_list(names, f"custom_tools.{name}"), f"custom_tools.{name}"
         )
+        # Append children deterministically, retaining standalone membership order.
+        inherited = [
+            profile for profile in profiles
+            if profile not in memberships and ancestors[profile].intersection(memberships)
+        ]
+        custom_tools[name] = memberships + inherited
 
     descriptions = data.get("descriptions", {})
     if not isinstance(descriptions, dict):

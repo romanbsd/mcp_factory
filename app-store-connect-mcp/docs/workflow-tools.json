@@ -1,0 +1,1036 @@
+{
+  "tools": [
+    {
+      "name": "app_get",
+      "description": "Resolve an app by bundle ID; return compact identity.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "bundleId": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "platform": {
+            "default": "IOS",
+            "enum": [
+              "IOS",
+              "MAC_OS",
+              "TV_OS",
+              "VISION_OS"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "bundleId"
+        ],
+        "type": "object"
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "asset_upload",
+      "title": "Upload App Store Connect asset",
+      "description": "Upload a file to App Store Connect using Apple's asset protocol: reserve, upload byte ranges, commit with an MD5 checksum, then wait for processing. Kinds: app screenshots/previews (parent = screenshot/preview set ID), App Review attachments (parent = appStoreReviewDetail ID), export-compliance documents (parent = appEncryptionDeclaration ID), and subscription/in-app purchase review screenshots (parent = subscription/inAppPurchase ID). `file` is relative to MCP_FACTORY_MEDIA_ROOT. Failures name the stage (validate, reserve, upload, commit, processing); a failed upload leaves the reservation in AWAITING_UPLOAD for you to resume using the returned checkpoint. `resume` retries the existing reservation without creating another asset.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "file": {
+            "description": "Path relative to MCP_FACTORY_MEDIA_ROOT.",
+            "minLength": 1,
+            "type": "string"
+          },
+          "fileName": {
+            "description": "Name shown in App Store Connect (default: the file's name).",
+            "minLength": 1,
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "appScreenshot",
+              "appPreview",
+              "appStoreReviewAttachment",
+              "appEncryptionDeclarationDocument",
+              "subscriptionAppStoreReviewScreenshot",
+              "inAppPurchaseAppStoreReviewScreenshot"
+            ],
+            "type": "string"
+          },
+          "mimeType": {
+            "description": "appPreview only, e.g. video/mp4.",
+            "type": "string"
+          },
+          "parentId": {
+            "description": "ID of the set/detail/subscription/IAP/declaration that owns the asset.",
+            "minLength": 1,
+            "type": "string"
+          },
+          "previewFrameTimeCode": {
+            "description": "appPreview only: poster frame, e.g. 00:00:05:00.",
+            "type": "string"
+          },
+          "resume": {
+            "additionalProperties": false,
+            "properties": {
+              "assetId": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "committed": {
+                "type": "boolean"
+              },
+              "completedRanges": {
+                "items": {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                "type": "array",
+                "uniqueItems": true
+              },
+              "file": {
+                "type": "string"
+              },
+              "fileName": {
+                "type": "string"
+              },
+              "fileSize": {
+                "maximum": 2147483648,
+                "minimum": 0,
+                "type": "integer"
+              },
+              "kind": {
+                "type": "string"
+              },
+              "parentId": {
+                "type": "string"
+              },
+              "pendingRanges": {
+                "items": {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                "type": "array"
+              },
+              "ranges": {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "length": {
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "offset": {
+                      "minimum": 0,
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "offset",
+                    "length"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "sourceFileChecksum": {
+                "pattern": "^[a-fA-F0-9]{32}$",
+                "type": "string"
+              },
+              "state": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "assetId",
+              "fileSize",
+              "sourceFileChecksum",
+              "completedRanges"
+            ],
+            "type": "object"
+          },
+          "waitSeconds": {
+            "description": "How long to wait for processing (default 120; 0 returns right after commit).",
+            "maximum": 600,
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "kind",
+          "parentId",
+          "file"
+        ],
+        "type": "object"
+      },
+      "annotations": {
+        "title": "Upload App Store Connect asset",
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "metadata_apply",
+      "description": "Reconcile desired locale-to-fields metadata: create missing localizations, update changed fields, leave others untouched.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "bundleId": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "dryRun": {
+            "default": false,
+            "description": "Discover and compare, without any mutation.",
+            "type": "boolean"
+          },
+          "localizations": {
+            "additionalProperties": {
+              "additionalProperties": false,
+              "properties": {
+                "description": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "keywords": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "marketingUrl": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "promotionalText": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "supportUrl": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "whatsNew": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "type": "object"
+            },
+            "maxProperties": 100,
+            "minProperties": 1,
+            "type": "object"
+          },
+          "platform": {
+            "default": "IOS",
+            "enum": [
+              "IOS",
+              "MAC_OS",
+              "TV_OS",
+              "VISION_OS"
+            ],
+            "type": "string"
+          },
+          "version": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "bundleId",
+          "version",
+          "localizations"
+        ],
+        "type": "object"
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "metadata_get",
+      "description": "Read normalized version metadata; defaults to primary locale. Select locales/fields for larger listings.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "bundleId": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "fields": {
+            "items": {
+              "enum": [
+                "description",
+                "keywords",
+                "whatsNew",
+                "promotionalText",
+                "marketingUrl",
+                "supportUrl"
+              ],
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "locales": {
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "type": "array",
+            "uniqueItems": true
+          },
+          "platform": {
+            "default": "IOS",
+            "enum": [
+              "IOS",
+              "MAC_OS",
+              "TV_OS",
+              "VISION_OS"
+            ],
+            "type": "string"
+          },
+          "version": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "bundleId",
+          "version"
+        ],
+        "type": "object"
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "release",
+      "description": "Request manual release of an approved version in PENDING_DEVELOPER_RELEASE. Separate from review submission.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "bundleId": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "dryRun": {
+            "default": false,
+            "description": "Discover and compare, without any mutation.",
+            "type": "boolean"
+          },
+          "platform": {
+            "default": "IOS",
+            "enum": [
+              "IOS",
+              "MAC_OS",
+              "TV_OS",
+              "VISION_OS"
+            ],
+            "type": "string"
+          },
+          "version": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "bundleId",
+          "version"
+        ],
+        "type": "object"
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "release_prepare",
+      "description": "Check submission readiness: known blockers, warnings and unknown Apple-evaluated conditions. Read-only.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "bundleId": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "platform": {
+            "default": "IOS",
+            "enum": [
+              "IOS",
+              "MAC_OS",
+              "TV_OS",
+              "VISION_OS"
+            ],
+            "type": "string"
+          },
+          "requiredDisplayTypes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "uniqueItems": true
+          },
+          "version": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "bundleId",
+          "version"
+        ],
+        "type": "object"
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "release_status",
+      "description": "Inspect version, attached build, review submission and phased release in one call.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "bundleId": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "platform": {
+            "default": "IOS",
+            "enum": [
+              "IOS",
+              "MAC_OS",
+              "TV_OS",
+              "VISION_OS"
+            ],
+            "type": "string"
+          },
+          "version": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "bundleId",
+          "version"
+        ],
+        "type": "object"
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "report_query",
+      "title": "Query analytics report",
+      "description": "Query analytics segments or sales/finance report-period CSV/TSV with exact filters, projected rows, finite numeric sums and optional grouping. At most 20 segments, 100 groups, 200 rows and 20KB output. Artifact exports all matching projected rows locally; last 8 retained until eviction/server exit. dateRange selects analytics instance processingDate; sales/finance use reportDate. Numeric sums are finite f64 without financial rounding or semantic inference.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "oneOf": [
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "reportId"
+                  ]
+                },
+                {
+                  "required": [
+                    "report"
+                  ]
+                }
+              ]
+            },
+            "required": [
+              "segmentId"
+            ]
+          },
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "segmentId"
+                  ]
+                },
+                {
+                  "required": [
+                    "report"
+                  ]
+                }
+              ]
+            },
+            "required": [
+              "reportId"
+            ]
+          },
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "segmentId"
+                  ]
+                },
+                {
+                  "required": [
+                    "reportId"
+                  ]
+                }
+              ]
+            },
+            "required": [
+              "report",
+              "vendorNumber",
+              "reportDate"
+            ]
+          }
+        ],
+        "properties": {
+          "columns": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 100,
+            "type": "array",
+            "uniqueItems": true
+          },
+          "dateRange": {
+            "additionalProperties": false,
+            "properties": {
+              "from": {
+                "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+                "type": "string"
+              },
+              "to": {
+                "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+                "type": "string"
+              }
+            },
+            "required": [
+              "from",
+              "to"
+            ],
+            "type": "object"
+          },
+          "filters": {
+            "additionalProperties": {
+              "type": [
+                "string",
+                "number",
+                "boolean",
+                "null"
+              ]
+            },
+            "maxProperties": 100,
+            "type": "object"
+          },
+          "frequency": {
+            "type": "string"
+          },
+          "groupBy": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 10,
+            "type": "array",
+            "uniqueItems": true
+          },
+          "limit": {
+            "maximum": 200,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "metrics": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 100,
+            "type": "array",
+            "uniqueItems": true
+          },
+          "output": {
+            "enum": [
+              "summary",
+              "rows",
+              "artifact"
+            ]
+          },
+          "regionCode": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "report": {
+            "enum": [
+              "sales",
+              "finance"
+            ]
+          },
+          "reportDate": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "reportId": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "reportSubType": {
+            "type": "string"
+          },
+          "reportType": {
+            "type": "string"
+          },
+          "reportVersion": {
+            "type": "string"
+          },
+          "segmentId": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "vendorNumber": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "annotations": {
+        "title": "Query analytics report",
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "review_submit",
+      "description": "Reconcile draft/submitted review items, run preflight and submit once. Dry run returns a plan.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "bundleId": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "dryRun": {
+            "default": false,
+            "description": "Discover and compare, without any mutation.",
+            "type": "boolean"
+          },
+          "platform": {
+            "default": "IOS",
+            "enum": [
+              "IOS",
+              "MAC_OS",
+              "TV_OS",
+              "VISION_OS"
+            ],
+            "type": "string"
+          },
+          "requiredDisplayTypes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "uniqueItems": true
+          },
+          "version": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "bundleId",
+          "version"
+        ],
+        "type": "object"
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "screenshots_get",
+      "description": "Read normalized screenshots by locale/display type with ordering, states and bounded continuation.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "bundleId": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "displayType": {
+            "type": "string"
+          },
+          "locales": {
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "type": "array",
+            "uniqueItems": true
+          },
+          "offset": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "platform": {
+            "default": "IOS",
+            "enum": [
+              "IOS",
+              "MAC_OS",
+              "TV_OS",
+              "VISION_OS"
+            ],
+            "type": "string"
+          },
+          "version": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "bundleId",
+          "version"
+        ],
+        "type": "object"
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "screenshots_sync",
+      "description": "Reconcile screenshot files/checksums, resume uploads and establish ordering. Retain obsolete assets unless removeObsolete=true.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "bundleId": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "displayType": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "dryRun": {
+            "default": false,
+            "description": "Discover and compare, without any mutation.",
+            "type": "boolean"
+          },
+          "files": {
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 10,
+            "type": "array",
+            "uniqueItems": true
+          },
+          "locale": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "platform": {
+            "default": "IOS",
+            "enum": [
+              "IOS",
+              "MAC_OS",
+              "TV_OS",
+              "VISION_OS"
+            ],
+            "type": "string"
+          },
+          "removeObsolete": {
+            "default": false,
+            "type": "boolean"
+          },
+          "resumes": {
+            "description": "Relative file path -> checkpoint returned by an earlier upload.",
+            "type": "object"
+          },
+          "version": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "waitSeconds": {
+            "default": 120,
+            "description": "Processing wait per asset; 0 returns checkpoints immediately.",
+            "maximum": 600,
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "bundleId",
+          "version",
+          "locale",
+          "displayType",
+          "files"
+        ],
+        "type": "object"
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "testflight_distribute",
+      "description": "Assign a build to named groups after resolving app/build/groups; already assigned groups are unchanged.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "buildNumber": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "bundleId": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "dryRun": {
+            "default": false,
+            "description": "Discover and compare, without any mutation.",
+            "type": "boolean"
+          },
+          "groupNames": {
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "type": "array",
+            "uniqueItems": true
+          },
+          "platform": {
+            "default": "IOS",
+            "enum": [
+              "IOS",
+              "MAC_OS",
+              "TV_OS",
+              "VISION_OS"
+            ],
+            "type": "string"
+          },
+          "version": {
+            "description": "Optional marketing version to disambiguate build numbers.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "bundleId",
+          "buildNumber",
+          "groupNames"
+        ],
+        "type": "object"
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "testflight_remove",
+      "description": "Remove existing build/group relationships; warn when groups retain access to all builds.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "buildNumber": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "bundleId": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "dryRun": {
+            "default": false,
+            "description": "Discover and compare, without any mutation.",
+            "type": "boolean"
+          },
+          "groupNames": {
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "type": "array",
+            "uniqueItems": true
+          },
+          "platform": {
+            "default": "IOS",
+            "enum": [
+              "IOS",
+              "MAC_OS",
+              "TV_OS",
+              "VISION_OS"
+            ],
+            "type": "string"
+          },
+          "version": {
+            "description": "Optional marketing version to disambiguate build numbers.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "bundleId",
+          "buildNumber",
+          "groupNames"
+        ],
+        "type": "object"
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "testflight_status",
+      "description": "Resolve a build, inspect beta state/expiration and current group availability.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "buildNumber": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "bundleId": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "groupNames": {
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "type": "array",
+            "uniqueItems": true
+          },
+          "offset": {
+            "default": 0,
+            "description": "Group-page offset; follow nextOffset for larger apps.",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "platform": {
+            "default": "IOS",
+            "enum": [
+              "IOS",
+              "MAC_OS",
+              "TV_OS",
+              "VISION_OS"
+            ],
+            "type": "string"
+          },
+          "version": {
+            "description": "Optional marketing version to disambiguate build numbers.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "bundleId",
+          "buildNumber"
+        ],
+        "type": "object"
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "version_get",
+      "description": "Resolve app/version and attached build; return compact release state.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "bundleId": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "platform": {
+            "default": "IOS",
+            "enum": [
+              "IOS",
+              "MAC_OS",
+              "TV_OS",
+              "VISION_OS"
+            ],
+            "type": "string"
+          },
+          "version": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "bundleId",
+          "version"
+        ],
+        "type": "object"
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      }
+    }
+  ]
+}

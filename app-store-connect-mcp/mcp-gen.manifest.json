@@ -1,6 +1,6 @@
 {
   "crate_name": "app-store-connect-mcp",
-  "tool_count": 275,
+  "tool_count": 277,
   "resource_count": 2,
   "schema_kind": "openapi"
 }

@@ -83,10 +83,7 @@ fn every_generated_tool_has_a_profile_and_defaults_are_known() {
     for profile in crate::tools::default_profiles() {
         assert!(known.contains(profile.as_str()), "{profile}");
     }
-    assert_eq!(
-        crate::tools::default_profiles(),
-        ["core", "metadata", "assets", "testflight"]
-    );
+    assert_eq!(crate::tools::default_profiles(), ["workflow"]);
 }
 
 #[test]
@@ -134,7 +131,11 @@ fn disabled_profiles_are_absent_at_runtime() {
     assert!(!names.contains("subscriptions_createInstance"));
 
     let all = server_names(&["all"]);
-    assert_eq!(all.len(), generated().len() + 2);
+    assert_eq!(
+        all.len(),
+        generated().len()
+            + super::build_custom_tools(&config("http://127.0.0.1:9", &["all"])).len()
+    );
 }
 
 fn server_names(profiles: &[&str]) -> BTreeSet<String> {
@@ -216,7 +217,11 @@ fn schemas_keep_filters_pagination_enums_and_relationship_payloads() {
     let version = properties("appStoreVersions_updateInstance");
     assert_eq!(
         version["data"]["properties"]["attributes"]["properties"]["releaseType"]["enum"],
-        json!(["MANUAL", "AFTER_APPROVAL", "SCHEDULED"])
+        json!(["MANUAL", "AFTER_APPROVAL", "SCHEDULED", null])
+    );
+    assert_eq!(
+        version["data"]["properties"]["attributes"]["properties"]["releaseType"]["type"],
+        json!(["string", "null"])
     );
     assert_eq!(
         by_name()["appStoreVersions_updateInstance"].input_schema["required"],
@@ -560,6 +565,7 @@ fn upload_server(api: &MockServer, media_root: &std::path::Path) -> McpProxyServ
         media_root: config.media_root.clone(),
         kinds: enabled_kinds(&config),
         poll_interval: Duration::from_millis(10),
+        transfers: Arc::new(tokio::sync::Semaphore::new(2)),
     });
     McpProxyServer::builder(config)
         .tool_profiles(&crate::tools::build_tool_profiles())
@@ -851,7 +857,8 @@ fn asset_kinds_follow_enabled_profiles_and_their_tools_exist() {
 
     // asset_upload is assigned to exactly the profiles its kinds need, so it
     // is never exposed without at least one usable kind.
-    let declared: BTreeSet<&str> = KINDS.iter().map(|kind| kind.profile).collect();
+    let mut declared: BTreeSet<&str> = ["assets", "monetization"].into_iter().collect();
+    declared.extend(["workflow", "release_raw", "monetization_raw"]);
     let assigned: BTreeSet<&str> = profiles()["asset_upload"].iter().copied().collect();
     assert_eq!(assigned, declared);
 }

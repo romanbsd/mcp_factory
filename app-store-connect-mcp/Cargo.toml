@@ -6,7 +6,11 @@ edition.workspace = true
 [dependencies]
 mcp-factory-core.workspace = true
 tokio.workspace = true
+tokio-util.workspace = true
+tempfile.workspace = true
 serde_json.workspace = true
+serde.workspace = true
+csv.workspace = true
 anyhow.workspace = true
 tracing.workspace = true
 tracing-subscriber.workspace = true
@@ -15,8 +19,8 @@ md-5.workspace = true
 flate2.workspace = true
 
 [dev-dependencies]
+futures-util.workspace = true
 wiremock.workspace = true
-tempfile.workspace = true
 ring.workspace = true
 base64.workspace = true
 

@@ -1,0 +1,123 @@
+{
+  "measuredOn": "2026-10-11",
+  "baselineSource": "user-supplied compact tools/list measurements",
+  "baseline": {
+    "core": {
+      "tools": 31,
+      "compact_result_bytes": 43107
+    },
+    "default": {
+      "tools": 137,
+      "compact_result_bytes": 126861
+    },
+    "all": {
+      "tools": 277,
+      "compact_result_bytes": 249123
+    }
+  },
+  "profiles": [
+    {
+      "profile": "workflow",
+      "tools": 15,
+      "compact_result_bytes": 14777
+    },
+    {
+      "profile": "core",
+      "tools": 31,
+      "compact_result_bytes": 47845
+    },
+    {
+      "profile": "release_raw",
+      "tools": 85,
+      "compact_result_bytes": 99777
+    },
+    {
+      "profile": "testflight_raw",
+      "tools": 85,
+      "compact_result_bytes": 87163
+    },
+    {
+      "profile": "monetization_raw",
+      "tools": 126,
+      "compact_result_bytes": 140779
+    },
+    {
+      "profile": "signing_raw",
+      "tools": 57,
+      "compact_result_bytes": 71049
+    },
+    {
+      "profile": "reports_raw",
+      "tools": 44,
+      "compact_result_bytes": 57127
+    },
+    {
+      "profile": "all",
+      "tools": 293,
+      "compact_result_bytes": 282490
+    }
+  ],
+  "mockCompleteTasks": [
+    {
+      "raw_public_calls": 6,
+      "task": "release_status",
+      "workflow_output_bytes": 435,
+      "workflow_public_calls": 1
+    },
+    {
+      "raw_public_calls": 4,
+      "task": "metadata_apply",
+      "workflow_output_bytes": 145,
+      "workflow_public_calls": 1
+    },
+    {
+      "raw_public_calls": 7,
+      "task": "screenshots_sync",
+      "workflow_output_bytes": 592,
+      "workflow_public_calls": 1
+    },
+    {
+      "raw_public_calls": 6,
+      "task": "testflight_distribute",
+      "workflow_output_bytes": 151,
+      "workflow_public_calls": 1
+    }
+  ],
+  "concurrentTransferObservation": {
+    "build": "debug",
+    "concurrent_queries": 2,
+    "decoded_bytes_per_query": 16000016,
+    "peak_rss_bytes": 30965760,
+    "real_seconds": 2.16,
+    "user_cpu_seconds": 4.07,
+    "system_cpu_seconds": 0.07,
+    "output_bytes_per_query": [
+      134,
+      134
+    ],
+    "iteration": "initial workflow implementation, before DRY follow-up"
+  },
+  "measurementLimits": [
+    "Task call counts use real workflow/public dispatch and local mock HTTP, not a live Apple account.",
+    "Transfer observation measures the debug MCP process only, not the mock server. No historical RSS/CPU baseline is available.",
+    "Task outputs count one compact structured summary; MCP preserves both text and structuredContent representations."
+  ],
+  "dryRefactoringValidation": {
+    "workflow_metadata_exactly_unchanged": true,
+    "profile_memberships_checked": 293,
+    "profile_counts_and_bytes_unchanged": true,
+    "complete_task_measurements_unchanged": true,
+    "new_rss_cpu_benchmark": false
+  },
+  "boundedDiscoveryIteration": {
+    "workspaceTestsPassed": 293,
+    "ascTestsPassed": 104,
+    "generatorTestsPassed": 154,
+    "generatorBranchInclusiveCoveragePercent": 91.72,
+    "offlineLiveRunnerTestsPassed": 23,
+    "publicInputsAndToolMetadataUnchanged": true,
+    "profileCountsAndBytesUnchanged": true,
+    "newRssCpuBenchmark": false,
+    "liveEvidence": "iteration2-live.json"
+  }
+}

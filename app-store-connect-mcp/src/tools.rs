@@ -4,12 +4,1132 @@ use mcp_factory_core::ParamLocation;
 use mcp_factory_core::RestOperation;
 use mcp_factory_core::ToolHints;
 use mcp_factory_core::ToolSpec;
+#[allow(dead_code)]
 pub fn build_tools() -> Vec<ToolSpec> {
-    vec![
-        ToolSpec {
+    operation_catalog()
+        .iter()
+        .map(|operation| (operation.build)())
+        .collect()
+}
+
+/// All generated capabilities; creating this catalog does not parse any schema.
+pub fn operation_catalog() -> &'static [mcp_factory_core::OperationDescriptor] {
+    &[
+        mcp_factory_core::OperationDescriptor {
+            name: "ageRatingDeclarations_updateInstance",
+            build: build_operation_0,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "analyticsReportInstances_getInstance",
+            build: build_operation_1,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "analyticsReportRequests_createInstance",
+            build: build_operation_2,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "analyticsReportRequests_getInstance",
+            build: build_operation_3,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "analyticsReportRequests_deleteInstance",
+            build: build_operation_4,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "analyticsReportSegments_getInstance",
+            build: build_operation_5,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "analyticsReports_getInstance",
+            build: build_operation_6,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "appAvailabilitiesV2_createInstance",
+            build: build_operation_7,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "appAvailabilitiesV2_getInstance",
+            build: build_operation_8,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "appCategories_getCollection",
+            build: build_operation_9,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "appCategories_getInstance",
+            build: build_operation_10,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "appEncryptionDeclarationDocuments_createInstance",
+            build: build_operation_11,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "appEncryptionDeclarationDocuments_getInstance",
+            build: build_operation_12,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "appEncryptionDeclarationDocuments_updateInstance",
+            build: build_operation_13,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "appEncryptionDeclarations_getCollection",
+            build: build_operation_14,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "appEncryptionDeclarations_createInstance",
+            build: build_operation_15,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "appEncryptionDeclarations_getInstance",
+            build: build_operation_16,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "appInfoLocalizations_createInstance",
+            build: build_operation_17,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "appInfoLocalizations_getInstance",
+            build: build_operation_18,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "appInfoLocalizations_updateInstance",
+            build: build_operation_19,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "appInfoLocalizations_deleteInstance",
+            build: build_operation_20,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "appInfos_getInstance",
+            build: build_operation_21,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "appInfos_updateInstance",
+            build: build_operation_22,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "appPreviewSets_createInstance",
+            build: build_operation_23,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "appPreviewSets_getInstance",
+            build: build_operation_24,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "appPreviewSets_deleteInstance",
+            build: build_operation_25,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "appPreviews_createInstance",
+            build: build_operation_26,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "appPreviews_getInstance",
+            build: build_operation_27,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "appPreviews_updateInstance",
+            build: build_operation_28,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "appPreviews_deleteInstance",
+            build: build_operation_29,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "appPricePointsV3_getInstance",
+            build: build_operation_30,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "appPriceSchedules_createInstance",
+            build: build_operation_31,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "appPriceSchedules_getInstance",
+            build: build_operation_32,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "appScreenshotSets_createInstance",
+            build: build_operation_33,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "appScreenshotSets_getInstance",
+            build: build_operation_34,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "appScreenshotSets_deleteInstance",
+            build: build_operation_35,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "appScreenshots_createInstance",
+            build: build_operation_36,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "appScreenshots_getInstance",
+            build: build_operation_37,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "appScreenshots_updateInstance",
+            build: build_operation_38,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "appScreenshots_deleteInstance",
+            build: build_operation_39,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "appStoreReviewAttachments_createInstance",
+            build: build_operation_40,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "appStoreReviewAttachments_getInstance",
+            build: build_operation_41,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "appStoreReviewAttachments_updateInstance",
+            build: build_operation_42,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "appStoreReviewAttachments_deleteInstance",
+            build: build_operation_43,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "appStoreReviewDetails_createInstance",
+            build: build_operation_44,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "appStoreReviewDetails_getInstance",
+            build: build_operation_45,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "appStoreReviewDetails_updateInstance",
+            build: build_operation_46,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "appStoreVersionLocalizations_createInstance",
+            build: build_operation_47,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "appStoreVersionLocalizations_getInstance",
+            build: build_operation_48,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "appStoreVersionLocalizations_updateInstance",
+            build: build_operation_49,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "appStoreVersionLocalizations_deleteInstance",
+            build: build_operation_50,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "appStoreVersionPhasedReleases_createInstance",
+            build: build_operation_51,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "appStoreVersionPhasedReleases_updateInstance",
+            build: build_operation_52,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "appStoreVersionPhasedReleases_deleteInstance",
+            build: build_operation_53,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "appStoreVersionReleaseRequests_createInstance",
+            build: build_operation_54,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "appStoreVersions_createInstance",
+            build: build_operation_55,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "appStoreVersions_getInstance",
+            build: build_operation_56,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "appStoreVersions_updateInstance",
+            build: build_operation_57,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "appStoreVersions_deleteInstance",
+            build: build_operation_58,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "apps_getCollection",
+            build: build_operation_59,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "apps_getInstance",
+            build: build_operation_60,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "apps_updateInstance",
+            build: build_operation_61,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "betaAppLocalizations_getCollection",
+            build: build_operation_62,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "betaAppLocalizations_createInstance",
+            build: build_operation_63,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "betaAppLocalizations_getInstance",
+            build: build_operation_64,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "betaAppLocalizations_updateInstance",
+            build: build_operation_65,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "betaAppLocalizations_deleteInstance",
+            build: build_operation_66,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "betaAppReviewDetails_getCollection",
+            build: build_operation_67,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "betaAppReviewDetails_getInstance",
+            build: build_operation_68,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "betaAppReviewDetails_updateInstance",
+            build: build_operation_69,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "betaAppReviewSubmissions_getCollection",
+            build: build_operation_70,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "betaAppReviewSubmissions_createInstance",
+            build: build_operation_71,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "betaAppReviewSubmissions_getInstance",
+            build: build_operation_72,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "betaBuildLocalizations_getCollection",
+            build: build_operation_73,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "betaBuildLocalizations_createInstance",
+            build: build_operation_74,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "betaBuildLocalizations_getInstance",
+            build: build_operation_75,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "betaBuildLocalizations_updateInstance",
+            build: build_operation_76,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "betaBuildLocalizations_deleteInstance",
+            build: build_operation_77,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "betaGroups_getCollection",
+            build: build_operation_78,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "betaGroups_createInstance",
+            build: build_operation_79,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "betaGroups_getInstance",
+            build: build_operation_80,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "betaGroups_updateInstance",
+            build: build_operation_81,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "betaGroups_deleteInstance",
+            build: build_operation_82,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "betaLicenseAgreements_getCollection",
+            build: build_operation_83,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "betaLicenseAgreements_getInstance",
+            build: build_operation_84,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "betaLicenseAgreements_updateInstance",
+            build: build_operation_85,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "betaTesters_getCollection",
+            build: build_operation_86,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "betaTesters_createInstance",
+            build: build_operation_87,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "betaTesters_getInstance",
+            build: build_operation_88,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "betaTesters_deleteInstance",
+            build: build_operation_89,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "buildBetaDetails_getCollection",
+            build: build_operation_90,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "buildBetaDetails_getInstance",
+            build: build_operation_91,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "buildBetaDetails_updateInstance",
+            build: build_operation_92,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "builds_getCollection",
+            build: build_operation_93,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "builds_getInstance",
+            build: build_operation_94,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "builds_updateInstance",
+            build: build_operation_95,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "bundleIdCapabilities_createInstance",
+            build: build_operation_96,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "bundleIdCapabilities_updateInstance",
+            build: build_operation_97,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "bundleIdCapabilities_deleteInstance",
+            build: build_operation_98,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "bundleIds_getCollection",
+            build: build_operation_99,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "bundleIds_createInstance",
+            build: build_operation_100,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "bundleIds_getInstance",
+            build: build_operation_101,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "bundleIds_updateInstance",
+            build: build_operation_102,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "bundleIds_deleteInstance",
+            build: build_operation_103,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "certificates_getCollection",
+            build: build_operation_104,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "certificates_createInstance",
+            build: build_operation_105,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "certificates_getInstance",
+            build: build_operation_106,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "certificates_updateInstance",
+            build: build_operation_107,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "certificates_deleteInstance",
+            build: build_operation_108,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "customerReviewResponses_createInstance",
+            build: build_operation_109,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "customerReviewResponses_getInstance",
+            build: build_operation_110,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "customerReviewResponses_deleteInstance",
+            build: build_operation_111,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "customerReviews_getInstance",
+            build: build_operation_112,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "devices_getCollection",
+            build: build_operation_113,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "devices_createInstance",
+            build: build_operation_114,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "devices_getInstance",
+            build: build_operation_115,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "devices_updateInstance",
+            build: build_operation_116,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "financeReports_getCollection",
+            build: build_operation_117,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "inAppPurchaseAppStoreReviewScreenshots_createInstance",
+            build: build_operation_118,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "inAppPurchaseAppStoreReviewScreenshots_getInstance",
+            build: build_operation_119,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "inAppPurchaseAppStoreReviewScreenshots_updateInstance",
+            build: build_operation_120,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "inAppPurchaseAppStoreReviewScreenshots_deleteInstance",
+            build: build_operation_121,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "inAppPurchaseAvailabilities_createInstance",
+            build: build_operation_122,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "inAppPurchaseAvailabilities_getInstance",
+            build: build_operation_123,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "inAppPurchaseLocalizations_createInstance",
+            build: build_operation_124,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "inAppPurchaseLocalizations_getInstance",
+            build: build_operation_125,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "inAppPurchaseLocalizations_updateInstance",
+            build: build_operation_126,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "inAppPurchaseLocalizations_deleteInstance",
+            build: build_operation_127,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "inAppPurchasePriceSchedules_createInstance",
+            build: build_operation_128,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "inAppPurchasePriceSchedules_getInstance",
+            build: build_operation_129,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "inAppPurchaseSubmissions_createInstance",
+            build: build_operation_130,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "inAppPurchasesV2_createInstance",
+            build: build_operation_131,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "inAppPurchasesV2_getInstance",
+            build: build_operation_132,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "inAppPurchasesV2_updateInstance",
+            build: build_operation_133,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "inAppPurchasesV2_deleteInstance",
+            build: build_operation_134,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "preReleaseVersions_getCollection",
+            build: build_operation_135,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "profiles_getCollection",
+            build: build_operation_136,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "profiles_createInstance",
+            build: build_operation_137,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "profiles_getInstance",
+            build: build_operation_138,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "profiles_deleteInstance",
+            build: build_operation_139,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "reviewSubmissionItems_createInstance",
+            build: build_operation_140,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "reviewSubmissionItems_updateInstance",
+            build: build_operation_141,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "reviewSubmissionItems_deleteInstance",
+            build: build_operation_142,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "reviewSubmissions_getCollection",
+            build: build_operation_143,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "reviewSubmissions_createInstance",
+            build: build_operation_144,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "reviewSubmissions_getInstance",
+            build: build_operation_145,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "reviewSubmissions_updateInstance",
+            build: build_operation_146,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "salesReports_getCollection",
+            build: build_operation_147,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "subscriptionAppStoreReviewScreenshots_createInstance",
+            build: build_operation_148,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "subscriptionAppStoreReviewScreenshots_getInstance",
+            build: build_operation_149,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "subscriptionAppStoreReviewScreenshots_updateInstance",
+            build: build_operation_150,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "subscriptionAppStoreReviewScreenshots_deleteInstance",
+            build: build_operation_151,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "subscriptionGroupLocalizations_createInstance",
+            build: build_operation_152,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "subscriptionGroupLocalizations_getInstance",
+            build: build_operation_153,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "subscriptionGroupLocalizations_updateInstance",
+            build: build_operation_154,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "subscriptionGroupLocalizations_deleteInstance",
+            build: build_operation_155,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "subscriptionGroups_createInstance",
+            build: build_operation_156,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "subscriptionGroups_getInstance",
+            build: build_operation_157,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "subscriptionGroups_updateInstance",
+            build: build_operation_158,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "subscriptionGroups_deleteInstance",
+            build: build_operation_159,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "subscriptionIntroductoryOffers_createInstance",
+            build: build_operation_160,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "subscriptionIntroductoryOffers_updateInstance",
+            build: build_operation_161,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "subscriptionIntroductoryOffers_deleteInstance",
+            build: build_operation_162,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "subscriptionLocalizations_createInstance",
+            build: build_operation_163,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "subscriptionLocalizations_getInstance",
+            build: build_operation_164,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "subscriptionLocalizations_updateInstance",
+            build: build_operation_165,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "subscriptionLocalizations_deleteInstance",
+            build: build_operation_166,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "subscriptionPlanAvailabilities_createInstance",
+            build: build_operation_167,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "subscriptionPlanAvailabilities_getInstance",
+            build: build_operation_168,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "subscriptionPlanAvailabilities_updateInstance",
+            build: build_operation_169,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "subscriptionPricePoints_getInstance",
+            build: build_operation_170,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "subscriptionPrices_createInstance",
+            build: build_operation_171,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "subscriptionPrices_deleteInstance",
+            build: build_operation_172,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "subscriptionPromotionalOffers_createInstance",
+            build: build_operation_173,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "subscriptionPromotionalOffers_getInstance",
+            build: build_operation_174,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "subscriptionPromotionalOffers_updateInstance",
+            build: build_operation_175,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "subscriptionPromotionalOffers_deleteInstance",
+            build: build_operation_176,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "subscriptionSubmissions_createInstance",
+            build: build_operation_177,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "subscriptions_createInstance",
+            build: build_operation_178,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "subscriptions_getInstance",
+            build: build_operation_179,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "subscriptions_updateInstance",
+            build: build_operation_180,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "subscriptions_deleteInstance",
+            build: build_operation_181,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "territories_getCollection",
+            build: build_operation_182,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "territoryAvailabilities_updateInstance",
+            build: build_operation_183,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "analyticsReportInstances_segments_getToManyRelated",
+            build: build_operation_184,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "analyticsReportRequests_reports_getToManyRelated",
+            build: build_operation_185,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "analyticsReports_instances_getToManyRelated",
+            build: build_operation_186,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "appAvailabilitiesV2_territoryAvailabilities_getToManyRelationship",
+            build: build_operation_187,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "appAvailabilitiesV2_territoryAvailabilities_getToManyRelated",
+            build: build_operation_188,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "appCategories_subcategories_getToManyRelated",
+            build: build_operation_189,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "appInfos_ageRatingDeclaration_getToOneRelated",
+            build: build_operation_190,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "appInfos_appInfoLocalizations_getToManyRelated",
+            build: build_operation_191,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "appPreviewSets_appPreviews_replaceToManyRelationship",
+            build: build_operation_192,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "appPreviewSets_appPreviews_getToManyRelated",
+            build: build_operation_193,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "appPricePointsV3_equalizations_getToManyRelated",
+            build: build_operation_194,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "appPriceSchedules_automaticPrices_getToManyRelated",
+            build: build_operation_195,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "appPriceSchedules_baseTerritory_getToOneRelated",
+            build: build_operation_196,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "appPriceSchedules_manualPrices_getToManyRelated",
+            build: build_operation_197,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "appScreenshotSets_appScreenshots_replaceToManyRelationship",
+            build: build_operation_198,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "appScreenshotSets_appScreenshots_getToManyRelated",
+            build: build_operation_199,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "appStoreReviewDetails_appStoreReviewAttachments_getToManyRelated",
+            build: build_operation_200,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "appStoreVersionLocalizations_appPreviewSets_getToManyRelated",
+            build: build_operation_201,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "appStoreVersionLocalizations_appScreenshotSets_getToManyRelated",
+            build: build_operation_202,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "appStoreVersions_appStoreReviewDetail_getToOneRelated",
+            build: build_operation_203,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "appStoreVersions_appStoreVersionLocalizations_getToManyRelated",
+            build: build_operation_204,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "appStoreVersions_appStoreVersionPhasedRelease_getToOneRelated",
+            build: build_operation_205,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "appStoreVersions_build_updateToOneRelationship",
+            build: build_operation_206,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "appStoreVersions_build_getToOneRelated",
+            build: build_operation_207,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "appStoreVersions_customerReviews_getToManyRelated",
+            build: build_operation_208,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "apps_analyticsReportRequests_getToManyRelated",
+            build: build_operation_209,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "apps_appAvailabilityV2_getToOneRelated",
+            build: build_operation_210,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "apps_appEncryptionDeclarations_getToManyRelated",
+            build: build_operation_211,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "apps_appInfos_getToManyRelated",
+            build: build_operation_212,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "apps_appPricePoints_getToManyRelated",
+            build: build_operation_213,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "apps_appPriceSchedule_getToOneRelated",
+            build: build_operation_214,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "apps_appStoreVersions_getToManyRelated",
+            build: build_operation_215,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "apps_betaAppLocalizations_getToManyRelated",
+            build: build_operation_216,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "apps_betaAppReviewDetail_getToOneRelated",
+            build: build_operation_217,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "apps_betaGroups_getToManyRelated",
+            build: build_operation_218,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "apps_betaLicenseAgreement_getToOneRelated",
+            build: build_operation_219,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "apps_builds_getToManyRelated",
+            build: build_operation_220,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "apps_customerReviews_getToManyRelated",
+            build: build_operation_221,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "apps_inAppPurchasesV2_getToManyRelated",
+            build: build_operation_222,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "apps_preReleaseVersions_getToManyRelated",
+            build: build_operation_223,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "apps_subscriptionGroups_getToManyRelated",
+            build: build_operation_224,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "betaGroups_betaTesters_createToManyRelationship",
+            build: build_operation_225,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "betaGroups_betaTesters_deleteToManyRelationship",
+            build: build_operation_226,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "betaGroups_betaTesters_getToManyRelated",
+            build: build_operation_227,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "betaGroups_builds_getToManyRelationship",
+            build: build_operation_228,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "betaGroups_builds_createToManyRelationship",
+            build: build_operation_229,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "betaGroups_builds_deleteToManyRelationship",
+            build: build_operation_230,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "betaGroups_builds_getToManyRelated",
+            build: build_operation_231,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "betaTesters_apps_deleteToManyRelationship",
+            build: build_operation_232,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "betaTesters_betaGroups_getToManyRelated",
+            build: build_operation_233,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "builds_appEncryptionDeclaration_updateToOneRelationship",
+            build: build_operation_234,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "builds_appEncryptionDeclaration_getToOneRelated",
+            build: build_operation_235,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "builds_betaBuildLocalizations_getToManyRelated",
+            build: build_operation_236,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "builds_betaGroups_createToManyRelationship",
+            build: build_operation_237,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "builds_betaGroups_deleteToManyRelationship",
+            build: build_operation_238,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "builds_buildBetaDetail_getToOneRelated",
+            build: build_operation_239,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "builds_individualTesters_createToManyRelationship",
+            build: build_operation_240,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "builds_individualTesters_deleteToManyRelationship",
+            build: build_operation_241,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "builds_individualTesters_getToManyRelated",
+            build: build_operation_242,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "bundleIds_bundleIdCapabilities_getToManyRelated",
+            build: build_operation_243,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "bundleIds_profiles_getToManyRelated",
+            build: build_operation_244,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "customerReviews_response_getToOneRelated",
+            build: build_operation_245,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "inAppPurchaseAvailabilities_availableTerritories_getToManyRelationship",
+            build: build_operation_246,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "inAppPurchaseAvailabilities_availableTerritories_getToManyRelated",
+            build: build_operation_247,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "inAppPurchasePricePoints_equalizations_getToManyRelated",
+            build: build_operation_248,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "inAppPurchasePriceSchedules_automaticPrices_getToManyRelated",
+            build: build_operation_249,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "inAppPurchasePriceSchedules_baseTerritory_getToOneRelated",
+            build: build_operation_250,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "inAppPurchasePriceSchedules_manualPrices_getToManyRelated",
+            build: build_operation_251,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "inAppPurchasesV2_appStoreReviewScreenshot_getToOneRelated",
+            build: build_operation_252,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "inAppPurchasesV2_iapPriceSchedule_getToOneRelated",
+            build: build_operation_253,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "inAppPurchasesV2_inAppPurchaseAvailability_getToOneRelated",
+            build: build_operation_254,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "inAppPurchasesV2_inAppPurchaseLocalizations_getToManyRelated",
+            build: build_operation_255,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "inAppPurchasesV2_pricePoints_getToManyRelated",
+            build: build_operation_256,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "preReleaseVersions_builds_getToManyRelated",
+            build: build_operation_257,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "profiles_bundleId_getToOneRelated",
+            build: build_operation_258,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "profiles_certificates_getToManyRelated",
+            build: build_operation_259,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "profiles_devices_getToManyRelated",
+            build: build_operation_260,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "reviewSubmissions_items_getToManyRelationship",
+            build: build_operation_261,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "reviewSubmissions_items_getToManyRelated",
+            build: build_operation_262,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "subscriptionGroups_subscriptionGroupLocalizations_getToManyRelated",
+            build: build_operation_263,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "subscriptionGroups_subscriptions_getToManyRelated",
+            build: build_operation_264,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "subscriptionPlanAvailabilities_availableTerritories_getToManyRelationship",
+            build: build_operation_265,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "subscriptionPlanAvailabilities_availableTerritories_replaceToManyRelationship",
+            build: build_operation_266,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "subscriptionPlanAvailabilities_availableTerritories_getToManyRelated",
+            build: build_operation_267,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "subscriptionPricePoints_equalizations_getToManyRelated",
+            build: build_operation_268,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "subscriptions_appStoreReviewScreenshot_getToOneRelated",
+            build: build_operation_269,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "subscriptions_introductoryOffers_getToManyRelated",
+            build: build_operation_270,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "subscriptions_planAvailabilities_getToManyRelated",
+            build: build_operation_271,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "subscriptions_pricePoints_getToManyRelated",
+            build: build_operation_272,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "subscriptions_prices_deleteToManyRelationship",
+            build: build_operation_273,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "subscriptions_prices_getToManyRelated",
+            build: build_operation_274,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "subscriptions_promotionalOffers_getToManyRelated",
+            build: build_operation_275,
+        },
+        mcp_factory_core::OperationDescriptor {
+            name: "subscriptions_subscriptionLocalizations_getToManyRelated",
+            build: build_operation_276,
+        },
+    ]
+}
+fn build_operation_0() -> ToolSpec {
+    ToolSpec {
             name: "ageRatingDeclarations_updateInstance".to_string(),
             description: "Update age-rating questionnaire answers. The values must come from the user; the resulting rating is shown on the App Info.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"advertising":{"nullable":true,"type":"boolean"},"ageAssurance":{"nullable":true,"type":"boolean"},"ageRatingOverride":{"deprecated":true,"enum":["NONE","NINE_PLUS","THIRTEEN_PLUS","SIXTEEN_PLUS","SEVENTEEN_PLUS","UNRATED"],"nullable":true,"type":"string"},"ageRatingOverrideV2":{"enum":["NONE","NINE_PLUS","THIRTEEN_PLUS","SIXTEEN_PLUS","EIGHTEEN_PLUS","UNRATED"],"nullable":true,"type":"string"},"alcoholTobaccoOrDrugUseOrReferences":{"enum":["NONE","INFREQUENT_OR_MILD","FREQUENT_OR_INTENSE","INFREQUENT","FREQUENT"],"nullable":true,"type":"string"},"contests":{"enum":["NONE","INFREQUENT_OR_MILD","FREQUENT_OR_INTENSE","INFREQUENT","FREQUENT"],"nullable":true,"type":"string"},"developerAgeRatingInfoUrl":{"format":"uri","nullable":true,"type":"string"},"gambling":{"nullable":true,"type":"boolean"},"gamblingSimulated":{"enum":["NONE","INFREQUENT_OR_MILD","FREQUENT_OR_INTENSE","INFREQUENT","FREQUENT"],"nullable":true,"type":"string"},"gracRatingClassificationNumber":{"nullable":true,"type":"string"},"gunsOrOtherWeapons":{"enum":["NONE","INFREQUENT_OR_MILD","FREQUENT_OR_INTENSE","INFREQUENT","FREQUENT"],"nullable":true,"type":"string"},"healthOrWellnessTopics":{"nullable":true,"type":"boolean"},"horrorOrFearThemes":{"enum":["NONE","INFREQUENT_OR_MILD","FREQUENT_OR_INTENSE","INFREQUENT","FREQUENT"],"nullable":true,"type":"string"},"kidsAgeBand":{"enum":["FIVE_AND_UNDER","SIX_TO_EIGHT","NINE_TO_ELEVEN"],"type":"string"},"koreaAgeRatingOverride":{"enum":["NONE","ALL","TWELVE_PLUS","FIFTEEN_PLUS","NINETEEN_PLUS"],"nullable":true,"type":"string"},"lootBox":{"nullable":true,"type":"boolean"},"matureOrSuggestiveThemes":{"enum":["NONE","INFREQUENT_OR_MILD","FREQUENT_OR_INTENSE","INFREQUENT","FREQUENT"],"nullable":true,"type":"string"},"medicalOrTreatmentInformation":{"enum":["NONE","INFREQUENT_OR_MILD","FREQUENT_OR_INTENSE","INFREQUENT","FREQUENT"],"nullable":true,"type":"string"},"messagingAndChat":{"nullable":true,"type":"boolean"},"parentalControls":{"nullable":true,"type":"boolean"},"profanityOrCrudeHumor":{"enum":["NONE","INFREQUENT_OR_MILD","FREQUENT_OR_INTENSE","INFREQUENT","FREQUENT"],"nullable":true,"type":"string"},"sexualContentGraphicAndNudity":{"enum":["NONE","INFREQUENT_OR_MILD","FREQUENT_OR_INTENSE","INFREQUENT","FREQUENT"],"nullable":true,"type":"string"},"sexualContentOrNudity":{"enum":["NONE","INFREQUENT_OR_MILD","FREQUENT_OR_INTENSE","INFREQUENT","FREQUENT"],"nullable":true,"type":"string"},"socialMedia":{"nullable":true,"type":"boolean"},"socialMediaAgeRestricted":{"nullable":true,"type":"boolean"},"unrestrictedWebAccess":{"nullable":true,"type":"boolean"},"userGeneratedContent":{"nullable":true,"type":"boolean"},"violenceCartoonOrFantasy":{"enum":["NONE","INFREQUENT_OR_MILD","FREQUENT_OR_INTENSE","INFREQUENT","FREQUENT"],"nullable":true,"type":"string"},"violenceRealistic":{"enum":["NONE","INFREQUENT_OR_MILD","FREQUENT_OR_INTENSE","INFREQUENT","FREQUENT"],"nullable":true,"type":"string"},"violenceRealisticProlongedGraphicOrSadistic":{"enum":["NONE","INFREQUENT_OR_MILD","FREQUENT_OR_INTENSE","INFREQUENT","FREQUENT"],"nullable":true,"type":"string"}},"type":"object"},"id":{"type":"string"},"type":{"enum":["ageRatingDeclarations"],"type":"string"}},"required":["id","type"],"type":"object"},"id":{"type":"string"}},"required":["id","data"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"advertising":{"type":["boolean","null"]},"ageAssurance":{"type":["boolean","null"]},"ageRatingOverride":{"deprecated":true,"enum":["NONE","NINE_PLUS","THIRTEEN_PLUS","SIXTEEN_PLUS","SEVENTEEN_PLUS","UNRATED",null],"type":["string","null"]},"ageRatingOverrideV2":{"enum":["NONE","NINE_PLUS","THIRTEEN_PLUS","SIXTEEN_PLUS","EIGHTEEN_PLUS","UNRATED",null],"type":["string","null"]},"alcoholTobaccoOrDrugUseOrReferences":{"enum":["NONE","INFREQUENT_OR_MILD","FREQUENT_OR_INTENSE","INFREQUENT","FREQUENT",null],"type":["string","null"]},"contests":{"enum":["NONE","INFREQUENT_OR_MILD","FREQUENT_OR_INTENSE","INFREQUENT","FREQUENT",null],"type":["string","null"]},"developerAgeRatingInfoUrl":{"format":"uri","type":["string","null"]},"gambling":{"type":["boolean","null"]},"gamblingSimulated":{"enum":["NONE","INFREQUENT_OR_MILD","FREQUENT_OR_INTENSE","INFREQUENT","FREQUENT",null],"type":["string","null"]},"gracRatingClassificationNumber":{"type":["string","null"]},"gunsOrOtherWeapons":{"enum":["NONE","INFREQUENT_OR_MILD","FREQUENT_OR_INTENSE","INFREQUENT","FREQUENT",null],"type":["string","null"]},"healthOrWellnessTopics":{"type":["boolean","null"]},"horrorOrFearThemes":{"enum":["NONE","INFREQUENT_OR_MILD","FREQUENT_OR_INTENSE","INFREQUENT","FREQUENT",null],"type":["string","null"]},"kidsAgeBand":{"enum":["FIVE_AND_UNDER","SIX_TO_EIGHT","NINE_TO_ELEVEN"],"type":"string"},"koreaAgeRatingOverride":{"enum":["NONE","ALL","TWELVE_PLUS","FIFTEEN_PLUS","NINETEEN_PLUS",null],"type":["string","null"]},"lootBox":{"type":["boolean","null"]},"matureOrSuggestiveThemes":{"enum":["NONE","INFREQUENT_OR_MILD","FREQUENT_OR_INTENSE","INFREQUENT","FREQUENT",null],"type":["string","null"]},"medicalOrTreatmentInformation":{"enum":["NONE","INFREQUENT_OR_MILD","FREQUENT_OR_INTENSE","INFREQUENT","FREQUENT",null],"type":["string","null"]},"messagingAndChat":{"type":["boolean","null"]},"parentalControls":{"type":["boolean","null"]},"profanityOrCrudeHumor":{"enum":["NONE","INFREQUENT_OR_MILD","FREQUENT_OR_INTENSE","INFREQUENT","FREQUENT",null],"type":["string","null"]},"sexualContentGraphicAndNudity":{"enum":["NONE","INFREQUENT_OR_MILD","FREQUENT_OR_INTENSE","INFREQUENT","FREQUENT",null],"type":["string","null"]},"sexualContentOrNudity":{"enum":["NONE","INFREQUENT_OR_MILD","FREQUENT_OR_INTENSE","INFREQUENT","FREQUENT",null],"type":["string","null"]},"socialMedia":{"type":["boolean","null"]},"socialMediaAgeRestricted":{"type":["boolean","null"]},"unrestrictedWebAccess":{"type":["boolean","null"]},"userGeneratedContent":{"type":["boolean","null"]},"violenceCartoonOrFantasy":{"enum":["NONE","INFREQUENT_OR_MILD","FREQUENT_OR_INTENSE","INFREQUENT","FREQUENT",null],"type":["string","null"]},"violenceRealistic":{"enum":["NONE","INFREQUENT_OR_MILD","FREQUENT_OR_INTENSE","INFREQUENT","FREQUENT",null],"type":["string","null"]},"violenceRealisticProlongedGraphicOrSadistic":{"enum":["NONE","INFREQUENT_OR_MILD","FREQUENT_OR_INTENSE","INFREQUENT","FREQUENT",null],"type":["string","null"]}},"type":"object"},"id":{"type":"string"},"type":{"enum":["ageRatingDeclarations"],"type":"string"}},"required":["id","type"],"type":"object"},"id":{"type":"string"}},"required":["id","data"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "PATCH".to_string(),
@@ -35,11 +1155,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_1() -> ToolSpec {
+    ToolSpec {
             name: "analyticsReportInstances_getInstance".to_string(),
             description: "Get one `analyticsReportInstances` resource by id.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"fields[analyticsReportInstances]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"fields[analyticsReportInstances]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -68,8 +1190,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_2() -> ToolSpec {
+    ToolSpec {
             name: "analyticsReportRequests_createInstance".to_string(),
             description: "Create one `analyticsReportRequests` resource.".to_string(),
             input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"accessType":{"enum":["ONE_TIME_SNAPSHOT","ONGOING"],"type":"string"}},"required":["accessType"],"type":"object"},"relationships":{"properties":{"app":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["apps"],"type":"string"}},"required":["id","type"],"type":"object"}},"required":["data"],"type":"object"}},"required":["app"],"type":"object"},"type":{"enum":["analyticsReportRequests"],"type":"string"}},"required":["relationships","attributes","type"],"type":"object"}},"required":["data"],"title":"AnalyticsReportRequestCreateRequest","type":"object"}"#)
@@ -94,11 +1218,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_3() -> ToolSpec {
+    ToolSpec {
             name: "analyticsReportRequests_getInstance".to_string(),
             description: "Get one `analyticsReportRequests` resource by id.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"fields[analyticsReportRequests]":{"items":{"type":"string"},"type":"array"},"fields[analyticsReports]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["reports"],"type":"string"},"type":"array"},"limit[reports]":{"maximum":50,"type":"integer"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"fields[analyticsReportRequests]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[analyticsReports]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["reports"],"type":"string"},"type":"array","x-mcp-query-explode":false},"limit[reports]":{"maximum":50,"type":"integer"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -139,40 +1265,44 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
-            name: "analyticsReportRequests_deleteInstance".to_string(),
-            description: "Delete one `analyticsReportRequests` resource. This cannot be undone.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"id":{"type":"string"}},"required":["id"],"type":"object"}"#)
-                .expect("generated input schema must be valid JSON"),
-            execution: ExecutionKind::Rest(RestOperation {
-                method: "DELETE".to_string(),
-                path_template: "/v1/analyticsReportRequests/{id}".to_string(),
-                params: vec![
-                    ParamBinding {
-                        name: "id".to_string(),
-                        location: ParamLocation::Path,
-                    },
-                ],
-                body_fields: vec![
-                ],
+        }
+}
+fn build_operation_4() -> ToolSpec {
+    ToolSpec {
+        name: "analyticsReportRequests_deleteInstance".to_string(),
+        description: "Delete one `analyticsReportRequests` resource. This cannot be undone."
+            .to_string(),
+        input_schema: serde_json::from_str(
+            r#"{"properties":{"id":{"type":"string"}},"required":["id"],"type":"object"}"#,
+        )
+        .expect("generated input schema must be valid JSON"),
+        execution: ExecutionKind::Rest(RestOperation {
+            method: "DELETE".to_string(),
+            path_template: "/v1/analyticsReportRequests/{id}".to_string(),
+            params: vec![ParamBinding {
+                name: "id".to_string(),
+                location: ParamLocation::Path,
+            }],
+            body_fields: vec![],
             content_type: None,
             raw_body: false,
             media: None,
         }),
-            hints: ToolHints {
-                title: None,
-                output_schema: None,
-                read_only: Some(false),
-                destructive: Some(true),
-                idempotent: Some(true),
-                open_world: Some(true),
-            },
+        hints: ToolHints {
+            title: None,
+            output_schema: None,
+            read_only: Some(false),
+            destructive: Some(true),
+            idempotent: Some(true),
+            open_world: Some(true),
         },
-        ToolSpec {
+    }
+}
+fn build_operation_5() -> ToolSpec {
+    ToolSpec {
             name: "analyticsReportSegments_getInstance".to_string(),
             description: "Get an analytics report segment, including its download `url`. Use `analytics_segment_download` to fetch and decompress it.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"fields[analyticsReportSegments]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"fields[analyticsReportSegments]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -201,11 +1331,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_6() -> ToolSpec {
+    ToolSpec {
             name: "analyticsReports_getInstance".to_string(),
             description: "Get one `analyticsReports` resource by id.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"fields[analyticsReports]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"fields[analyticsReports]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -234,11 +1366,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_7() -> ToolSpec {
+    ToolSpec {
             name: "appAvailabilitiesV2_createInstance".to_string(),
             description: "Create one `appAvailabilities` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"availableInNewTerritories":{"type":"boolean"}},"required":["availableInNewTerritories"],"type":"object"},"relationships":{"properties":{"app":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["apps"],"type":"string"}},"required":["id","type"],"type":"object"}},"required":["data"],"type":"object"},"territoryAvailabilities":{"properties":{"data":{"items":{"properties":{"id":{"type":"string"},"type":{"enum":["territoryAvailabilities"],"type":"string"}},"required":["id","type"],"type":"object"},"type":"array"}},"required":["data"],"type":"object"}},"required":["app","territoryAvailabilities"],"type":"object"},"type":{"enum":["appAvailabilities"],"type":"string"}},"required":["relationships","attributes","type"],"type":"object"},"included":{"items":{"properties":{"attributes":{"properties":{"available":{"nullable":true,"type":"boolean"},"preOrderEnabled":{"nullable":true,"type":"boolean"},"releaseDate":{"format":"date","nullable":true,"type":"string"}},"type":"object"},"id":{"type":"string"},"relationships":{"properties":{"territory":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["territories"],"type":"string"}},"required":["id","type"],"type":"object"}},"type":"object"}},"type":"object"},"type":{"enum":["territoryAvailabilities"],"type":"string"}},"required":["type"],"type":"object"},"type":"array"}},"required":["data"],"title":"AppAvailabilityV2CreateRequest","type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"availableInNewTerritories":{"type":"boolean"}},"required":["availableInNewTerritories"],"type":"object"},"relationships":{"properties":{"app":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["apps"],"type":"string"}},"required":["id","type"],"type":"object"}},"required":["data"],"type":"object"},"territoryAvailabilities":{"properties":{"data":{"items":{"properties":{"id":{"type":"string"},"type":{"enum":["territoryAvailabilities"],"type":"string"}},"required":["id","type"],"type":"object"},"type":"array"}},"required":["data"],"type":"object"}},"required":["app","territoryAvailabilities"],"type":"object"},"type":{"enum":["appAvailabilities"],"type":"string"}},"required":["relationships","attributes","type"],"type":"object"},"included":{"items":{"properties":{"attributes":{"properties":{"available":{"type":["boolean","null"]},"preOrderEnabled":{"type":["boolean","null"]},"releaseDate":{"format":"date","type":["string","null"]}},"type":"object"},"id":{"type":"string"},"relationships":{"properties":{"territory":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["territories"],"type":"string"}},"required":["id","type"],"type":"object"}},"type":"object"}},"type":"object"},"type":{"enum":["territoryAvailabilities"],"type":"string"}},"required":["type"],"type":"object"},"type":"array"}},"required":["data"],"title":"AppAvailabilityV2CreateRequest","type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "POST".to_string(),
@@ -261,11 +1395,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_8() -> ToolSpec {
+    ToolSpec {
             name: "appAvailabilitiesV2_getInstance".to_string(),
             description: "Get one `appAvailabilities` resource by id.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"fields[appAvailabilities]":{"items":{"type":"string"},"type":"array"},"fields[territoryAvailabilities]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["territoryAvailabilities"],"type":"string"},"type":"array"},"limit[territoryAvailabilities]":{"maximum":50,"type":"integer"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"fields[appAvailabilities]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[territoryAvailabilities]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["territoryAvailabilities"],"type":"string"},"type":"array","x-mcp-query-explode":false},"limit[territoryAvailabilities]":{"maximum":50,"type":"integer"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -306,11 +1442,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_9() -> ToolSpec {
+    ToolSpec {
             name: "appCategories_getCollection".to_string(),
             description: "List `appCategories` resources; supports the filters and pagination parameters below.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"exists[parent]":{"type":"boolean"},"fields[appCategories]":{"items":{"type":"string"},"type":"array"},"filter[platforms]":{"items":{"enum":["IOS","MAC_OS","TV_OS","VISION_OS"],"type":"string"},"type":"array"},"include":{"items":{"enum":["subcategories","parent"],"type":"string"},"type":"array"},"limit":{"maximum":200,"type":"integer"},"limit[subcategories]":{"maximum":50,"type":"integer"}},"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"exists[parent]":{"type":"boolean"},"fields[appCategories]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[platforms]":{"items":{"enum":["IOS","MAC_OS","TV_OS","VISION_OS"],"type":"string"},"type":"array","x-mcp-query-explode":false},"include":{"items":{"enum":["subcategories","parent"],"type":"string"},"type":"array","x-mcp-query-explode":false},"limit":{"maximum":200,"type":"integer"},"limit[subcategories]":{"maximum":50,"type":"integer"}},"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -359,11 +1497,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_10() -> ToolSpec {
+    ToolSpec {
             name: "appCategories_getInstance".to_string(),
             description: "Get one `appCategories` resource by id.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"fields[appCategories]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["subcategories","parent"],"type":"string"},"type":"array"},"limit[subcategories]":{"maximum":50,"type":"integer"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"fields[appCategories]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["subcategories","parent"],"type":"string"},"type":"array","x-mcp-query-explode":false},"limit[subcategories]":{"maximum":50,"type":"integer"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -400,8 +1540,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_11() -> ToolSpec {
+    ToolSpec {
             name: "appEncryptionDeclarationDocuments_createInstance".to_string(),
             description: "Create one `appEncryptionDeclarationDocuments` resource.".to_string(),
             input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"fileName":{"type":"string"},"fileSize":{"type":"integer"}},"required":["fileName","fileSize"],"type":"object"},"relationships":{"properties":{"appEncryptionDeclaration":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["appEncryptionDeclarations"],"type":"string"}},"required":["id","type"],"type":"object"}},"required":["data"],"type":"object"}},"required":["appEncryptionDeclaration"],"type":"object"},"type":{"enum":["appEncryptionDeclarationDocuments"],"type":"string"}},"required":["relationships","attributes","type"],"type":"object"}},"required":["data"],"title":"AppEncryptionDeclarationDocumentCreateRequest","type":"object"}"#)
@@ -426,11 +1568,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_12() -> ToolSpec {
+    ToolSpec {
             name: "appEncryptionDeclarationDocuments_getInstance".to_string(),
             description: "Get one `appEncryptionDeclarationDocuments` resource by id.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"fields[appEncryptionDeclarationDocuments]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"fields[appEncryptionDeclarationDocuments]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -459,11 +1603,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_13() -> ToolSpec {
+    ToolSpec {
             name: "appEncryptionDeclarationDocuments_updateInstance".to_string(),
             description: "Update attributes or relationships of one `appEncryptionDeclarationDocuments` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"sourceFileChecksum":{"nullable":true,"type":"string"},"uploaded":{"nullable":true,"type":"boolean"}},"type":"object"},"id":{"type":"string"},"type":{"enum":["appEncryptionDeclarationDocuments"],"type":"string"}},"required":["id","type"],"type":"object"},"id":{"type":"string"}},"required":["id","data"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"sourceFileChecksum":{"type":["string","null"]},"uploaded":{"type":["boolean","null"]}},"type":"object"},"id":{"type":"string"},"type":{"enum":["appEncryptionDeclarationDocuments"],"type":"string"}},"required":["id","type"],"type":"object"},"id":{"type":"string"}},"required":["id","data"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "PATCH".to_string(),
@@ -489,11 +1635,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_14() -> ToolSpec {
+    ToolSpec {
             name: "appEncryptionDeclarations_getCollection".to_string(),
             description: "List `appEncryptionDeclarations` resources; supports the filters and pagination parameters below.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[appEncryptionDeclarationDocuments]":{"items":{"type":"string"},"type":"array"},"fields[appEncryptionDeclarations]":{"items":{"type":"string"},"type":"array"},"fields[apps]":{"items":{"type":"string"},"type":"array"},"fields[builds]":{"items":{"type":"string"},"type":"array"},"filter[app]":{"items":{"type":"string"},"type":"array"},"filter[builds]":{"items":{"type":"string"},"type":"array"},"filter[platform]":{"items":{"enum":["IOS","MAC_OS","TV_OS","VISION_OS"],"type":"string"},"type":"array"},"include":{"items":{"enum":["app","builds","appEncryptionDeclarationDocument"],"type":"string"},"type":"array"},"limit":{"maximum":200,"type":"integer"},"limit[builds]":{"maximum":50,"type":"integer"}},"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[appEncryptionDeclarationDocuments]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[appEncryptionDeclarations]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[apps]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[builds]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[app]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[builds]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[platform]":{"items":{"enum":["IOS","MAC_OS","TV_OS","VISION_OS"],"type":"string"},"type":"array","x-mcp-query-explode":false},"include":{"items":{"enum":["app","builds","appEncryptionDeclarationDocument"],"type":"string"},"type":"array","x-mcp-query-explode":false},"limit":{"maximum":200,"type":"integer"},"limit[builds]":{"maximum":50,"type":"integer"}},"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -558,8 +1706,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_15() -> ToolSpec {
+    ToolSpec {
             name: "appEncryptionDeclarations_createInstance".to_string(),
             description: "Create an export-compliance declaration from answers supplied by the user. This tool never decides compliance.".to_string(),
             input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"appDescription":{"type":"string"},"availableOnFrenchStore":{"type":"boolean"},"containsProprietaryCryptography":{"type":"boolean"},"containsThirdPartyCryptography":{"type":"boolean"}},"required":["availableOnFrenchStore","appDescription","containsThirdPartyCryptography","containsProprietaryCryptography"],"type":"object"},"relationships":{"properties":{"app":{"deprecated":true,"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["apps"],"type":"string"}},"required":["id","type"],"type":"object"}},"required":["data"],"type":"object"}},"required":["app"],"type":"object"},"type":{"enum":["appEncryptionDeclarations"],"type":"string"}},"required":["relationships","attributes","type"],"type":"object"}},"required":["data"],"title":"AppEncryptionDeclarationCreateRequest","type":"object"}"#)
@@ -584,11 +1734,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_16() -> ToolSpec {
+    ToolSpec {
             name: "appEncryptionDeclarations_getInstance".to_string(),
             description: "Get one `appEncryptionDeclarations` resource by id.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"fields[appEncryptionDeclarationDocuments]":{"items":{"type":"string"},"type":"array"},"fields[appEncryptionDeclarations]":{"items":{"type":"string"},"type":"array"},"fields[apps]":{"items":{"type":"string"},"type":"array"},"fields[builds]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["app","builds","appEncryptionDeclarationDocument"],"type":"string"},"type":"array"},"limit[builds]":{"maximum":50,"type":"integer"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"fields[appEncryptionDeclarationDocuments]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[appEncryptionDeclarations]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[apps]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[builds]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["app","builds","appEncryptionDeclarationDocument"],"type":"string"},"type":"array","x-mcp-query-explode":false},"limit[builds]":{"maximum":50,"type":"integer"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -637,11 +1789,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_17() -> ToolSpec {
+    ToolSpec {
             name: "appInfoLocalizations_createInstance".to_string(),
             description: "Create one `appInfoLocalizations` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"locale":{"type":"string"},"name":{"type":"string"},"privacyChoicesUrl":{"nullable":true,"type":"string"},"privacyPolicyText":{"nullable":true,"type":"string"},"privacyPolicyUrl":{"nullable":true,"type":"string"},"subtitle":{"nullable":true,"type":"string"}},"required":["name","locale"],"type":"object"},"relationships":{"properties":{"appInfo":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["appInfos"],"type":"string"}},"required":["id","type"],"type":"object"}},"required":["data"],"type":"object"}},"required":["appInfo"],"type":"object"},"type":{"enum":["appInfoLocalizations"],"type":"string"}},"required":["relationships","attributes","type"],"type":"object"}},"required":["data"],"title":"AppInfoLocalizationCreateRequest","type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"locale":{"type":"string"},"name":{"type":"string"},"privacyChoicesUrl":{"type":["string","null"]},"privacyPolicyText":{"type":["string","null"]},"privacyPolicyUrl":{"type":["string","null"]},"subtitle":{"type":["string","null"]}},"required":["name","locale"],"type":"object"},"relationships":{"properties":{"appInfo":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["appInfos"],"type":"string"}},"required":["id","type"],"type":"object"}},"required":["data"],"type":"object"}},"required":["appInfo"],"type":"object"},"type":{"enum":["appInfoLocalizations"],"type":"string"}},"required":["relationships","attributes","type"],"type":"object"}},"required":["data"],"title":"AppInfoLocalizationCreateRequest","type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "POST".to_string(),
@@ -663,11 +1817,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_18() -> ToolSpec {
+    ToolSpec {
             name: "appInfoLocalizations_getInstance".to_string(),
             description: "Get one `appInfoLocalizations` resource by id.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"fields[appInfoLocalizations]":{"items":{"type":"string"},"type":"array"},"fields[appInfos]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["appInfo"],"type":"string"},"type":"array"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"fields[appInfoLocalizations]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[appInfos]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["appInfo"],"type":"string"},"type":"array","x-mcp-query-explode":false}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -704,11 +1860,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_19() -> ToolSpec {
+    ToolSpec {
             name: "appInfoLocalizations_updateInstance".to_string(),
             description: "Update app-level text for one locale: `name`, `subtitle`, `privacyPolicyUrl`, `privacyChoicesUrl`, `privacyPolicyText`.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"name":{"nullable":true,"type":"string"},"privacyChoicesUrl":{"nullable":true,"type":"string"},"privacyPolicyText":{"nullable":true,"type":"string"},"privacyPolicyUrl":{"nullable":true,"type":"string"},"subtitle":{"nullable":true,"type":"string"}},"type":"object"},"id":{"type":"string"},"type":{"enum":["appInfoLocalizations"],"type":"string"}},"required":["id","type"],"type":"object"},"id":{"type":"string"}},"required":["id","data"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"name":{"type":["string","null"]},"privacyChoicesUrl":{"type":["string","null"]},"privacyPolicyText":{"type":["string","null"]},"privacyPolicyUrl":{"type":["string","null"]},"subtitle":{"type":["string","null"]}},"type":"object"},"id":{"type":"string"},"type":{"enum":["appInfoLocalizations"],"type":"string"}},"required":["id","type"],"type":"object"},"id":{"type":"string"}},"required":["id","data"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "PATCH".to_string(),
@@ -734,40 +1892,44 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
-            name: "appInfoLocalizations_deleteInstance".to_string(),
-            description: "Delete one `appInfoLocalizations` resource. This cannot be undone.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"id":{"type":"string"}},"required":["id"],"type":"object"}"#)
-                .expect("generated input schema must be valid JSON"),
-            execution: ExecutionKind::Rest(RestOperation {
-                method: "DELETE".to_string(),
-                path_template: "/v1/appInfoLocalizations/{id}".to_string(),
-                params: vec![
-                    ParamBinding {
-                        name: "id".to_string(),
-                        location: ParamLocation::Path,
-                    },
-                ],
-                body_fields: vec![
-                ],
+        }
+}
+fn build_operation_20() -> ToolSpec {
+    ToolSpec {
+        name: "appInfoLocalizations_deleteInstance".to_string(),
+        description: "Delete one `appInfoLocalizations` resource. This cannot be undone."
+            .to_string(),
+        input_schema: serde_json::from_str(
+            r#"{"properties":{"id":{"type":"string"}},"required":["id"],"type":"object"}"#,
+        )
+        .expect("generated input schema must be valid JSON"),
+        execution: ExecutionKind::Rest(RestOperation {
+            method: "DELETE".to_string(),
+            path_template: "/v1/appInfoLocalizations/{id}".to_string(),
+            params: vec![ParamBinding {
+                name: "id".to_string(),
+                location: ParamLocation::Path,
+            }],
+            body_fields: vec![],
             content_type: None,
             raw_body: false,
             media: None,
         }),
-            hints: ToolHints {
-                title: None,
-                output_schema: None,
-                read_only: Some(false),
-                destructive: Some(true),
-                idempotent: Some(true),
-                open_world: Some(true),
-            },
+        hints: ToolHints {
+            title: None,
+            output_schema: None,
+            read_only: Some(false),
+            destructive: Some(true),
+            idempotent: Some(true),
+            open_world: Some(true),
         },
-        ToolSpec {
+    }
+}
+fn build_operation_21() -> ToolSpec {
+    ToolSpec {
             name: "appInfos_getInstance".to_string(),
             description: "Get one `appInfos` resource by id.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"fields[ageRatingDeclarations]":{"items":{"type":"string"},"type":"array"},"fields[appCategories]":{"items":{"type":"string"},"type":"array"},"fields[appInfoLocalizations]":{"items":{"type":"string"},"type":"array"},"fields[appInfos]":{"items":{"type":"string"},"type":"array"},"fields[apps]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["app","ageRatingDeclaration","appInfoLocalizations","primaryCategory","primarySubcategoryOne","primarySubcategoryTwo","secondaryCategory","secondarySubcategoryOne","secondarySubcategoryTwo"],"type":"string"},"type":"array"},"limit[appInfoLocalizations]":{"maximum":50,"type":"integer"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"fields[ageRatingDeclarations]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[appCategories]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[appInfoLocalizations]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[appInfos]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[apps]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["app","ageRatingDeclaration","appInfoLocalizations","primaryCategory","primarySubcategoryOne","primarySubcategoryTwo","secondaryCategory","secondarySubcategoryOne","secondarySubcategoryTwo"],"type":"string"},"type":"array","x-mcp-query-explode":false},"limit[appInfoLocalizations]":{"maximum":50,"type":"integer"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -820,8 +1982,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_22() -> ToolSpec {
+    ToolSpec {
             name: "appInfos_updateInstance".to_string(),
             description: "Update App Info relationships such as `primaryCategory`/`secondaryCategory` (IDs from `appCategories_getCollection`).".to_string(),
             input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"id":{"type":"string"},"relationships":{"properties":{"primaryCategory":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["appCategories"],"type":"string"}},"required":["id","type"],"type":"object"}},"type":"object"},"primarySubcategoryOne":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["appCategories"],"type":"string"}},"required":["id","type"],"type":"object"}},"type":"object"},"primarySubcategoryTwo":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["appCategories"],"type":"string"}},"required":["id","type"],"type":"object"}},"type":"object"},"secondaryCategory":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["appCategories"],"type":"string"}},"required":["id","type"],"type":"object"}},"type":"object"},"secondarySubcategoryOne":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["appCategories"],"type":"string"}},"required":["id","type"],"type":"object"}},"type":"object"},"secondarySubcategoryTwo":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["appCategories"],"type":"string"}},"required":["id","type"],"type":"object"}},"type":"object"}},"type":"object"},"type":{"enum":["appInfos"],"type":"string"}},"required":["id","type"],"type":"object"},"id":{"type":"string"}},"required":["id","data"],"type":"object"}"#)
@@ -850,8 +2014,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_23() -> ToolSpec {
+    ToolSpec {
             name: "appPreviewSets_createInstance".to_string(),
             description: "Create one `appPreviewSets` resource.".to_string(),
             input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"previewType":{"enum":["IPHONE_67","IPHONE_61","IPHONE_65","IPHONE_58","IPHONE_55","IPHONE_47","IPHONE_40","IPHONE_35","IPAD_PRO_3GEN_129","IPAD_PRO_3GEN_11","IPAD_PRO_129","IPAD_105","IPAD_97","DESKTOP","APPLE_TV","APPLE_VISION_PRO"],"type":"string"}},"required":["previewType"],"type":"object"},"relationships":{"properties":{"appCustomProductPageLocalization":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["appCustomProductPageLocalizations"],"type":"string"}},"required":["id","type"],"type":"object"}},"type":"object"},"appStoreVersionExperimentTreatmentLocalization":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["appStoreVersionExperimentTreatmentLocalizations"],"type":"string"}},"required":["id","type"],"type":"object"}},"type":"object"},"appStoreVersionLocalization":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["appStoreVersionLocalizations"],"type":"string"}},"required":["id","type"],"type":"object"}},"type":"object"}},"type":"object"},"type":{"enum":["appPreviewSets"],"type":"string"}},"required":["attributes","type"],"type":"object"}},"required":["data"],"title":"AppPreviewSetCreateRequest","type":"object"}"#)
@@ -876,11 +2042,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_24() -> ToolSpec {
+    ToolSpec {
             name: "appPreviewSets_getInstance".to_string(),
             description: "Get one `appPreviewSets` resource by id.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"fields[appCustomProductPageLocalizations]":{"items":{"type":"string"},"type":"array"},"fields[appPreviewSets]":{"items":{"type":"string"},"type":"array"},"fields[appPreviews]":{"items":{"type":"string"},"type":"array"},"fields[appStoreVersionExperimentTreatmentLocalizations]":{"items":{"type":"string"},"type":"array"},"fields[appStoreVersionLocalizations]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["appStoreVersionLocalization","appCustomProductPageLocalization","appStoreVersionExperimentTreatmentLocalization","appPreviews"],"type":"string"},"type":"array"},"limit[appPreviews]":{"maximum":50,"type":"integer"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"fields[appCustomProductPageLocalizations]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[appPreviewSets]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[appPreviews]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[appStoreVersionExperimentTreatmentLocalizations]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[appStoreVersionLocalizations]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["appStoreVersionLocalization","appCustomProductPageLocalization","appStoreVersionExperimentTreatmentLocalization","appPreviews"],"type":"string"},"type":"array","x-mcp-query-explode":false},"limit[appPreviews]":{"maximum":50,"type":"integer"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -933,40 +2101,43 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
-            name: "appPreviewSets_deleteInstance".to_string(),
-            description: "Delete one `appPreviewSets` resource. This cannot be undone.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"id":{"type":"string"}},"required":["id"],"type":"object"}"#)
-                .expect("generated input schema must be valid JSON"),
-            execution: ExecutionKind::Rest(RestOperation {
-                method: "DELETE".to_string(),
-                path_template: "/v1/appPreviewSets/{id}".to_string(),
-                params: vec![
-                    ParamBinding {
-                        name: "id".to_string(),
-                        location: ParamLocation::Path,
-                    },
-                ],
-                body_fields: vec![
-                ],
+        }
+}
+fn build_operation_25() -> ToolSpec {
+    ToolSpec {
+        name: "appPreviewSets_deleteInstance".to_string(),
+        description: "Delete one `appPreviewSets` resource. This cannot be undone.".to_string(),
+        input_schema: serde_json::from_str(
+            r#"{"properties":{"id":{"type":"string"}},"required":["id"],"type":"object"}"#,
+        )
+        .expect("generated input schema must be valid JSON"),
+        execution: ExecutionKind::Rest(RestOperation {
+            method: "DELETE".to_string(),
+            path_template: "/v1/appPreviewSets/{id}".to_string(),
+            params: vec![ParamBinding {
+                name: "id".to_string(),
+                location: ParamLocation::Path,
+            }],
+            body_fields: vec![],
             content_type: None,
             raw_body: false,
             media: None,
         }),
-            hints: ToolHints {
-                title: None,
-                output_schema: None,
-                read_only: Some(false),
-                destructive: Some(true),
-                idempotent: Some(true),
-                open_world: Some(true),
-            },
+        hints: ToolHints {
+            title: None,
+            output_schema: None,
+            read_only: Some(false),
+            destructive: Some(true),
+            idempotent: Some(true),
+            open_world: Some(true),
         },
-        ToolSpec {
+    }
+}
+fn build_operation_26() -> ToolSpec {
+    ToolSpec {
             name: "appPreviews_createInstance".to_string(),
             description: "Low-level step 1 of an upload (reserve). Prefer `asset_upload`.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"fileName":{"type":"string"},"fileSize":{"type":"integer"},"mimeType":{"nullable":true,"type":"string"},"previewFrameTimeCode":{"nullable":true,"type":"string"}},"required":["fileName","fileSize"],"type":"object"},"relationships":{"properties":{"appPreviewSet":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["appPreviewSets"],"type":"string"}},"required":["id","type"],"type":"object"}},"required":["data"],"type":"object"}},"required":["appPreviewSet"],"type":"object"},"type":{"enum":["appPreviews"],"type":"string"}},"required":["relationships","attributes","type"],"type":"object"}},"required":["data"],"title":"AppPreviewCreateRequest","type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"fileName":{"type":"string"},"fileSize":{"type":"integer"},"mimeType":{"type":["string","null"]},"previewFrameTimeCode":{"type":["string","null"]}},"required":["fileName","fileSize"],"type":"object"},"relationships":{"properties":{"appPreviewSet":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["appPreviewSets"],"type":"string"}},"required":["id","type"],"type":"object"}},"required":["data"],"type":"object"}},"required":["appPreviewSet"],"type":"object"},"type":{"enum":["appPreviews"],"type":"string"}},"required":["relationships","attributes","type"],"type":"object"}},"required":["data"],"title":"AppPreviewCreateRequest","type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "POST".to_string(),
@@ -988,11 +2159,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_27() -> ToolSpec {
+    ToolSpec {
             name: "appPreviews_getInstance".to_string(),
             description: "Get one `appPreviews` resource by id.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"fields[appPreviewSets]":{"items":{"type":"string"},"type":"array"},"fields[appPreviews]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["appPreviewSet"],"type":"string"},"type":"array"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"fields[appPreviewSets]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[appPreviews]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["appPreviewSet"],"type":"string"},"type":"array","x-mcp-query-explode":false}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -1029,11 +2202,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_28() -> ToolSpec {
+    ToolSpec {
             name: "appPreviews_updateInstance".to_string(),
             description: "Low-level commit step or `previewFrameTimeCode` update. Prefer `asset_upload` for uploads.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"previewFrameTimeCode":{"nullable":true,"type":"string"},"sourceFileChecksum":{"nullable":true,"type":"string"},"uploaded":{"nullable":true,"type":"boolean"}},"type":"object"},"id":{"type":"string"},"type":{"enum":["appPreviews"],"type":"string"}},"required":["id","type"],"type":"object"},"id":{"type":"string"}},"required":["id","data"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"previewFrameTimeCode":{"type":["string","null"]},"sourceFileChecksum":{"type":["string","null"]},"uploaded":{"type":["boolean","null"]}},"type":"object"},"id":{"type":"string"},"type":{"enum":["appPreviews"],"type":"string"}},"required":["id","type"],"type":"object"},"id":{"type":"string"}},"required":["id","data"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "PATCH".to_string(),
@@ -1059,40 +2234,43 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
-            name: "appPreviews_deleteInstance".to_string(),
-            description: "Delete one `appPreviews` resource. This cannot be undone.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"id":{"type":"string"}},"required":["id"],"type":"object"}"#)
-                .expect("generated input schema must be valid JSON"),
-            execution: ExecutionKind::Rest(RestOperation {
-                method: "DELETE".to_string(),
-                path_template: "/v1/appPreviews/{id}".to_string(),
-                params: vec![
-                    ParamBinding {
-                        name: "id".to_string(),
-                        location: ParamLocation::Path,
-                    },
-                ],
-                body_fields: vec![
-                ],
+        }
+}
+fn build_operation_29() -> ToolSpec {
+    ToolSpec {
+        name: "appPreviews_deleteInstance".to_string(),
+        description: "Delete one `appPreviews` resource. This cannot be undone.".to_string(),
+        input_schema: serde_json::from_str(
+            r#"{"properties":{"id":{"type":"string"}},"required":["id"],"type":"object"}"#,
+        )
+        .expect("generated input schema must be valid JSON"),
+        execution: ExecutionKind::Rest(RestOperation {
+            method: "DELETE".to_string(),
+            path_template: "/v1/appPreviews/{id}".to_string(),
+            params: vec![ParamBinding {
+                name: "id".to_string(),
+                location: ParamLocation::Path,
+            }],
+            body_fields: vec![],
             content_type: None,
             raw_body: false,
             media: None,
         }),
-            hints: ToolHints {
-                title: None,
-                output_schema: None,
-                read_only: Some(false),
-                destructive: Some(true),
-                idempotent: Some(true),
-                open_world: Some(true),
-            },
+        hints: ToolHints {
+            title: None,
+            output_schema: None,
+            read_only: Some(false),
+            destructive: Some(true),
+            idempotent: Some(true),
+            open_world: Some(true),
         },
-        ToolSpec {
+    }
+}
+fn build_operation_30() -> ToolSpec {
+    ToolSpec {
             name: "appPricePointsV3_getInstance".to_string(),
             description: "Get one `appPricePoints` resource by id.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"fields[appPricePoints]":{"items":{"type":"string"},"type":"array"},"fields[apps]":{"items":{"type":"string"},"type":"array"},"fields[territories]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["app","territory"],"type":"string"},"type":"array"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"fields[appPricePoints]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[apps]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[territories]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["app","territory"],"type":"string"},"type":"array","x-mcp-query-explode":false}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -1133,11 +2311,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_31() -> ToolSpec {
+    ToolSpec {
             name: "appPriceSchedules_createInstance".to_string(),
             description: "Create one `appPriceSchedules` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"relationships":{"properties":{"app":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["apps"],"type":"string"}},"required":["id","type"],"type":"object"}},"required":["data"],"type":"object"},"baseTerritory":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["territories"],"type":"string"}},"required":["id","type"],"type":"object"}},"required":["data"],"type":"object"},"manualPrices":{"properties":{"data":{"items":{"properties":{"id":{"type":"string"},"type":{"enum":["appPrices"],"type":"string"}},"required":["id","type"],"type":"object"},"type":"array"}},"required":["data"],"type":"object"}},"required":["app","manualPrices","baseTerritory"],"type":"object"},"type":{"enum":["appPriceSchedules"],"type":"string"}},"required":["relationships","type"],"type":"object"},"included":{"items":{"oneOf":[{"properties":{"attributes":{"properties":{"endDate":{"format":"date","nullable":true,"type":"string"},"startDate":{"format":"date","nullable":true,"type":"string"}},"type":"object"},"id":{"type":"string"},"relationships":{"properties":{"appPricePoint":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["appPricePoints"],"type":"string"}},"required":["id","type"],"type":"object"}},"type":"object"}},"type":"object"},"type":{"enum":["appPrices"],"type":"string"}},"required":["type"],"type":"object"},{"properties":{"id":{"type":"string"},"type":{"enum":["territories"],"type":"string"}},"required":["type"],"type":"object"}]},"type":"array"}},"required":["data"],"title":"AppPriceScheduleCreateRequest","type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"relationships":{"properties":{"app":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["apps"],"type":"string"}},"required":["id","type"],"type":"object"}},"required":["data"],"type":"object"},"baseTerritory":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["territories"],"type":"string"}},"required":["id","type"],"type":"object"}},"required":["data"],"type":"object"},"manualPrices":{"properties":{"data":{"items":{"properties":{"id":{"type":"string"},"type":{"enum":["appPrices"],"type":"string"}},"required":["id","type"],"type":"object"},"type":"array"}},"required":["data"],"type":"object"}},"required":["app","manualPrices","baseTerritory"],"type":"object"},"type":{"enum":["appPriceSchedules"],"type":"string"}},"required":["relationships","type"],"type":"object"},"included":{"items":{"oneOf":[{"properties":{"attributes":{"properties":{"endDate":{"format":"date","type":["string","null"]},"startDate":{"format":"date","type":["string","null"]}},"type":"object"},"id":{"type":"string"},"relationships":{"properties":{"appPricePoint":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["appPricePoints"],"type":"string"}},"required":["id","type"],"type":"object"}},"type":"object"}},"type":"object"},"type":{"enum":["appPrices"],"type":"string"}},"required":["type"],"type":"object"},{"properties":{"id":{"type":"string"},"type":{"enum":["territories"],"type":"string"}},"required":["type"],"type":"object"}]},"type":"array"}},"required":["data"],"title":"AppPriceScheduleCreateRequest","type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "POST".to_string(),
@@ -1160,11 +2340,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_32() -> ToolSpec {
+    ToolSpec {
             name: "appPriceSchedules_getInstance".to_string(),
             description: "Get one `appPriceSchedules` resource by id.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"fields[appPriceSchedules]":{"items":{"type":"string"},"type":"array"},"fields[appPrices]":{"items":{"type":"string"},"type":"array"},"fields[apps]":{"items":{"type":"string"},"type":"array"},"fields[territories]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["app","baseTerritory","manualPrices","automaticPrices"],"type":"string"},"type":"array"},"limit[automaticPrices]":{"maximum":50,"type":"integer"},"limit[manualPrices]":{"maximum":50,"type":"integer"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"fields[appPriceSchedules]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[appPrices]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[apps]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[territories]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["app","baseTerritory","manualPrices","automaticPrices"],"type":"string"},"type":"array","x-mcp-query-explode":false},"limit[automaticPrices]":{"maximum":50,"type":"integer"},"limit[manualPrices]":{"maximum":50,"type":"integer"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -1217,8 +2399,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_33() -> ToolSpec {
+    ToolSpec {
             name: "appScreenshotSets_createInstance".to_string(),
             description: "Create a screenshot set for one `screenshotDisplayType` (e.g. APP_IPHONE_67) under a version localization. List existing sets first.".to_string(),
             input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"screenshotDisplayType":{"enum":["APP_IPHONE_67","APP_IPHONE_61","APP_IPHONE_65","APP_IPHONE_58","APP_IPHONE_55","APP_IPHONE_47","APP_IPHONE_40","APP_IPHONE_35","APP_IPAD_PRO_3GEN_129","APP_IPAD_PRO_3GEN_11","APP_IPAD_PRO_129","APP_IPAD_105","APP_IPAD_97","APP_DESKTOP","APP_WATCH_ULTRA","APP_WATCH_SERIES_10","APP_WATCH_SERIES_7","APP_WATCH_SERIES_4","APP_WATCH_SERIES_3","APP_APPLE_TV","APP_APPLE_VISION_PRO","IMESSAGE_APP_IPHONE_67","IMESSAGE_APP_IPHONE_61","IMESSAGE_APP_IPHONE_65","IMESSAGE_APP_IPHONE_58","IMESSAGE_APP_IPHONE_55","IMESSAGE_APP_IPHONE_47","IMESSAGE_APP_IPHONE_40","IMESSAGE_APP_IPAD_PRO_3GEN_129","IMESSAGE_APP_IPAD_PRO_3GEN_11","IMESSAGE_APP_IPAD_PRO_129","IMESSAGE_APP_IPAD_105","IMESSAGE_APP_IPAD_97"],"type":"string"}},"required":["screenshotDisplayType"],"type":"object"},"relationships":{"properties":{"appCustomProductPageLocalization":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["appCustomProductPageLocalizations"],"type":"string"}},"required":["id","type"],"type":"object"}},"type":"object"},"appStoreVersionExperimentTreatmentLocalization":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["appStoreVersionExperimentTreatmentLocalizations"],"type":"string"}},"required":["id","type"],"type":"object"}},"type":"object"},"appStoreVersionLocalization":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["appStoreVersionLocalizations"],"type":"string"}},"required":["id","type"],"type":"object"}},"type":"object"}},"type":"object"},"type":{"enum":["appScreenshotSets"],"type":"string"}},"required":["attributes","type"],"type":"object"}},"required":["data"],"title":"AppScreenshotSetCreateRequest","type":"object"}"#)
@@ -1243,11 +2427,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_34() -> ToolSpec {
+    ToolSpec {
             name: "appScreenshotSets_getInstance".to_string(),
             description: "Get one `appScreenshotSets` resource by id.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"fields[appCustomProductPageLocalizations]":{"items":{"type":"string"},"type":"array"},"fields[appScreenshotSets]":{"items":{"type":"string"},"type":"array"},"fields[appScreenshots]":{"items":{"type":"string"},"type":"array"},"fields[appStoreVersionExperimentTreatmentLocalizations]":{"items":{"type":"string"},"type":"array"},"fields[appStoreVersionLocalizations]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["appStoreVersionLocalization","appCustomProductPageLocalization","appStoreVersionExperimentTreatmentLocalization","appScreenshots"],"type":"string"},"type":"array"},"limit[appScreenshots]":{"maximum":50,"type":"integer"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"fields[appCustomProductPageLocalizations]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[appScreenshotSets]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[appScreenshots]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[appStoreVersionExperimentTreatmentLocalizations]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[appStoreVersionLocalizations]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["appStoreVersionLocalization","appCustomProductPageLocalization","appStoreVersionExperimentTreatmentLocalization","appScreenshots"],"type":"string"},"type":"array","x-mcp-query-explode":false},"limit[appScreenshots]":{"maximum":50,"type":"integer"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -1300,37 +2486,40 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
-            name: "appScreenshotSets_deleteInstance".to_string(),
-            description: "Delete one `appScreenshotSets` resource. This cannot be undone.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"id":{"type":"string"}},"required":["id"],"type":"object"}"#)
-                .expect("generated input schema must be valid JSON"),
-            execution: ExecutionKind::Rest(RestOperation {
-                method: "DELETE".to_string(),
-                path_template: "/v1/appScreenshotSets/{id}".to_string(),
-                params: vec![
-                    ParamBinding {
-                        name: "id".to_string(),
-                        location: ParamLocation::Path,
-                    },
-                ],
-                body_fields: vec![
-                ],
+        }
+}
+fn build_operation_35() -> ToolSpec {
+    ToolSpec {
+        name: "appScreenshotSets_deleteInstance".to_string(),
+        description: "Delete one `appScreenshotSets` resource. This cannot be undone.".to_string(),
+        input_schema: serde_json::from_str(
+            r#"{"properties":{"id":{"type":"string"}},"required":["id"],"type":"object"}"#,
+        )
+        .expect("generated input schema must be valid JSON"),
+        execution: ExecutionKind::Rest(RestOperation {
+            method: "DELETE".to_string(),
+            path_template: "/v1/appScreenshotSets/{id}".to_string(),
+            params: vec![ParamBinding {
+                name: "id".to_string(),
+                location: ParamLocation::Path,
+            }],
+            body_fields: vec![],
             content_type: None,
             raw_body: false,
             media: None,
         }),
-            hints: ToolHints {
-                title: None,
-                output_schema: None,
-                read_only: Some(false),
-                destructive: Some(true),
-                idempotent: Some(true),
-                open_world: Some(true),
-            },
+        hints: ToolHints {
+            title: None,
+            output_schema: None,
+            read_only: Some(false),
+            destructive: Some(true),
+            idempotent: Some(true),
+            open_world: Some(true),
         },
-        ToolSpec {
+    }
+}
+fn build_operation_36() -> ToolSpec {
+    ToolSpec {
             name: "appScreenshots_createInstance".to_string(),
             description: "Low-level step 1 of an upload (reserve). Prefer `asset_upload`, which performs reserve, upload, commit and processing checks.".to_string(),
             input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"fileName":{"type":"string"},"fileSize":{"type":"integer"}},"required":["fileName","fileSize"],"type":"object"},"relationships":{"properties":{"appScreenshotSet":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["appScreenshotSets"],"type":"string"}},"required":["id","type"],"type":"object"}},"required":["data"],"type":"object"}},"required":["appScreenshotSet"],"type":"object"},"type":{"enum":["appScreenshots"],"type":"string"}},"required":["relationships","attributes","type"],"type":"object"}},"required":["data"],"title":"AppScreenshotCreateRequest","type":"object"}"#)
@@ -1355,11 +2544,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_37() -> ToolSpec {
+    ToolSpec {
             name: "appScreenshots_getInstance".to_string(),
             description: "Get one `appScreenshots` resource by id.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"fields[appScreenshotSets]":{"items":{"type":"string"},"type":"array"},"fields[appScreenshots]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["appScreenshotSet"],"type":"string"},"type":"array"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"fields[appScreenshotSets]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[appScreenshots]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["appScreenshotSet"],"type":"string"},"type":"array","x-mcp-query-explode":false}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -1396,11 +2587,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_38() -> ToolSpec {
+    ToolSpec {
             name: "appScreenshots_updateInstance".to_string(),
             description: "Low-level step 3 of an upload (commit with `uploaded: true` and `sourceFileChecksum`). Prefer `asset_upload`.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"sourceFileChecksum":{"nullable":true,"type":"string"},"uploaded":{"nullable":true,"type":"boolean"}},"type":"object"},"id":{"type":"string"},"type":{"enum":["appScreenshots"],"type":"string"}},"required":["id","type"],"type":"object"},"id":{"type":"string"}},"required":["id","data"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"sourceFileChecksum":{"type":["string","null"]},"uploaded":{"type":["boolean","null"]}},"type":"object"},"id":{"type":"string"},"type":{"enum":["appScreenshots"],"type":"string"}},"required":["id","type"],"type":"object"},"id":{"type":"string"}},"required":["id","data"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "PATCH".to_string(),
@@ -1426,37 +2619,40 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
-            name: "appScreenshots_deleteInstance".to_string(),
-            description: "Delete a screenshot from its set. This cannot be undone.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"id":{"type":"string"}},"required":["id"],"type":"object"}"#)
-                .expect("generated input schema must be valid JSON"),
-            execution: ExecutionKind::Rest(RestOperation {
-                method: "DELETE".to_string(),
-                path_template: "/v1/appScreenshots/{id}".to_string(),
-                params: vec![
-                    ParamBinding {
-                        name: "id".to_string(),
-                        location: ParamLocation::Path,
-                    },
-                ],
-                body_fields: vec![
-                ],
+        }
+}
+fn build_operation_39() -> ToolSpec {
+    ToolSpec {
+        name: "appScreenshots_deleteInstance".to_string(),
+        description: "Delete a screenshot from its set. This cannot be undone.".to_string(),
+        input_schema: serde_json::from_str(
+            r#"{"properties":{"id":{"type":"string"}},"required":["id"],"type":"object"}"#,
+        )
+        .expect("generated input schema must be valid JSON"),
+        execution: ExecutionKind::Rest(RestOperation {
+            method: "DELETE".to_string(),
+            path_template: "/v1/appScreenshots/{id}".to_string(),
+            params: vec![ParamBinding {
+                name: "id".to_string(),
+                location: ParamLocation::Path,
+            }],
+            body_fields: vec![],
             content_type: None,
             raw_body: false,
             media: None,
         }),
-            hints: ToolHints {
-                title: None,
-                output_schema: None,
-                read_only: Some(false),
-                destructive: Some(true),
-                idempotent: Some(true),
-                open_world: Some(true),
-            },
+        hints: ToolHints {
+            title: None,
+            output_schema: None,
+            read_only: Some(false),
+            destructive: Some(true),
+            idempotent: Some(true),
+            open_world: Some(true),
         },
-        ToolSpec {
+    }
+}
+fn build_operation_40() -> ToolSpec {
+    ToolSpec {
             name: "appStoreReviewAttachments_createInstance".to_string(),
             description: "Create one `appStoreReviewAttachments` resource.".to_string(),
             input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"fileName":{"type":"string"},"fileSize":{"type":"integer"}},"required":["fileName","fileSize"],"type":"object"},"relationships":{"properties":{"appStoreReviewDetail":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["appStoreReviewDetails"],"type":"string"}},"required":["id","type"],"type":"object"}},"required":["data"],"type":"object"}},"required":["appStoreReviewDetail"],"type":"object"},"type":{"enum":["appStoreReviewAttachments"],"type":"string"}},"required":["relationships","attributes","type"],"type":"object"}},"required":["data"],"title":"AppStoreReviewAttachmentCreateRequest","type":"object"}"#)
@@ -1481,11 +2677,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_41() -> ToolSpec {
+    ToolSpec {
             name: "appStoreReviewAttachments_getInstance".to_string(),
             description: "Get one `appStoreReviewAttachments` resource by id.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"fields[appStoreReviewAttachments]":{"items":{"type":"string"},"type":"array"},"fields[appStoreReviewDetails]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["appStoreReviewDetail"],"type":"string"},"type":"array"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"fields[appStoreReviewAttachments]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[appStoreReviewDetails]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["appStoreReviewDetail"],"type":"string"},"type":"array","x-mcp-query-explode":false}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -1522,11 +2720,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_42() -> ToolSpec {
+    ToolSpec {
             name: "appStoreReviewAttachments_updateInstance".to_string(),
             description: "Update attributes or relationships of one `appStoreReviewAttachments` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"sourceFileChecksum":{"nullable":true,"type":"string"},"uploaded":{"nullable":true,"type":"boolean"}},"type":"object"},"id":{"type":"string"},"type":{"enum":["appStoreReviewAttachments"],"type":"string"}},"required":["id","type"],"type":"object"},"id":{"type":"string"}},"required":["id","data"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"sourceFileChecksum":{"type":["string","null"]},"uploaded":{"type":["boolean","null"]}},"type":"object"},"id":{"type":"string"},"type":{"enum":["appStoreReviewAttachments"],"type":"string"}},"required":["id","type"],"type":"object"},"id":{"type":"string"}},"required":["id","data"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "PATCH".to_string(),
@@ -1552,40 +2752,44 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
-            name: "appStoreReviewAttachments_deleteInstance".to_string(),
-            description: "Delete one `appStoreReviewAttachments` resource. This cannot be undone.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"id":{"type":"string"}},"required":["id"],"type":"object"}"#)
-                .expect("generated input schema must be valid JSON"),
-            execution: ExecutionKind::Rest(RestOperation {
-                method: "DELETE".to_string(),
-                path_template: "/v1/appStoreReviewAttachments/{id}".to_string(),
-                params: vec![
-                    ParamBinding {
-                        name: "id".to_string(),
-                        location: ParamLocation::Path,
-                    },
-                ],
-                body_fields: vec![
-                ],
+        }
+}
+fn build_operation_43() -> ToolSpec {
+    ToolSpec {
+        name: "appStoreReviewAttachments_deleteInstance".to_string(),
+        description: "Delete one `appStoreReviewAttachments` resource. This cannot be undone."
+            .to_string(),
+        input_schema: serde_json::from_str(
+            r#"{"properties":{"id":{"type":"string"}},"required":["id"],"type":"object"}"#,
+        )
+        .expect("generated input schema must be valid JSON"),
+        execution: ExecutionKind::Rest(RestOperation {
+            method: "DELETE".to_string(),
+            path_template: "/v1/appStoreReviewAttachments/{id}".to_string(),
+            params: vec![ParamBinding {
+                name: "id".to_string(),
+                location: ParamLocation::Path,
+            }],
+            body_fields: vec![],
             content_type: None,
             raw_body: false,
             media: None,
         }),
-            hints: ToolHints {
-                title: None,
-                output_schema: None,
-                read_only: Some(false),
-                destructive: Some(true),
-                idempotent: Some(true),
-                open_world: Some(true),
-            },
+        hints: ToolHints {
+            title: None,
+            output_schema: None,
+            read_only: Some(false),
+            destructive: Some(true),
+            idempotent: Some(true),
+            open_world: Some(true),
         },
-        ToolSpec {
+    }
+}
+fn build_operation_44() -> ToolSpec {
+    ToolSpec {
             name: "appStoreReviewDetails_createInstance".to_string(),
             description: "Create App Review details (contact, demo account, notes) for a version that has none; check `appStoreVersions_appStoreReviewDetail_getToOneRelated` first.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"contactEmail":{"nullable":true,"type":"string"},"contactFirstName":{"nullable":true,"type":"string"},"contactLastName":{"nullable":true,"type":"string"},"contactPhone":{"nullable":true,"type":"string"},"demoAccountName":{"nullable":true,"type":"string"},"demoAccountPassword":{"nullable":true,"type":"string"},"demoAccountRequired":{"nullable":true,"type":"boolean"},"notes":{"nullable":true,"type":"string"}},"type":"object"},"relationships":{"properties":{"appStoreVersion":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["appStoreVersions"],"type":"string"}},"required":["id","type"],"type":"object"}},"required":["data"],"type":"object"}},"required":["appStoreVersion"],"type":"object"},"type":{"enum":["appStoreReviewDetails"],"type":"string"}},"required":["relationships","type"],"type":"object"}},"required":["data"],"title":"AppStoreReviewDetailCreateRequest","type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"contactEmail":{"type":["string","null"]},"contactFirstName":{"type":["string","null"]},"contactLastName":{"type":["string","null"]},"contactPhone":{"type":["string","null"]},"demoAccountName":{"type":["string","null"]},"demoAccountPassword":{"type":["string","null"]},"demoAccountRequired":{"type":["boolean","null"]},"notes":{"type":["string","null"]}},"type":"object"},"relationships":{"properties":{"appStoreVersion":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["appStoreVersions"],"type":"string"}},"required":["id","type"],"type":"object"}},"required":["data"],"type":"object"}},"required":["appStoreVersion"],"type":"object"},"type":{"enum":["appStoreReviewDetails"],"type":"string"}},"required":["relationships","type"],"type":"object"}},"required":["data"],"title":"AppStoreReviewDetailCreateRequest","type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "POST".to_string(),
@@ -1607,11 +2811,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_45() -> ToolSpec {
+    ToolSpec {
             name: "appStoreReviewDetails_getInstance".to_string(),
             description: "Get one `appStoreReviewDetails` resource by id.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"fields[appStoreReviewAttachments]":{"items":{"type":"string"},"type":"array"},"fields[appStoreReviewDetails]":{"items":{"type":"string"},"type":"array"},"fields[appStoreVersions]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["appStoreVersion","appStoreReviewAttachments"],"type":"string"},"type":"array"},"limit[appStoreReviewAttachments]":{"maximum":50,"type":"integer"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"fields[appStoreReviewAttachments]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[appStoreReviewDetails]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[appStoreVersions]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["appStoreVersion","appStoreReviewAttachments"],"type":"string"},"type":"array","x-mcp-query-explode":false},"limit[appStoreReviewAttachments]":{"maximum":50,"type":"integer"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -1656,11 +2862,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_46() -> ToolSpec {
+    ToolSpec {
             name: "appStoreReviewDetails_updateInstance".to_string(),
             description: "Update attributes or relationships of one `appStoreReviewDetails` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"contactEmail":{"nullable":true,"type":"string"},"contactFirstName":{"nullable":true,"type":"string"},"contactLastName":{"nullable":true,"type":"string"},"contactPhone":{"nullable":true,"type":"string"},"demoAccountName":{"nullable":true,"type":"string"},"demoAccountPassword":{"nullable":true,"type":"string"},"demoAccountRequired":{"nullable":true,"type":"boolean"},"notes":{"nullable":true,"type":"string"}},"type":"object"},"id":{"type":"string"},"type":{"enum":["appStoreReviewDetails"],"type":"string"}},"required":["id","type"],"type":"object"},"id":{"type":"string"}},"required":["id","data"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"contactEmail":{"type":["string","null"]},"contactFirstName":{"type":["string","null"]},"contactLastName":{"type":["string","null"]},"contactPhone":{"type":["string","null"]},"demoAccountName":{"type":["string","null"]},"demoAccountPassword":{"type":["string","null"]},"demoAccountRequired":{"type":["boolean","null"]},"notes":{"type":["string","null"]}},"type":"object"},"id":{"type":"string"},"type":{"enum":["appStoreReviewDetails"],"type":"string"}},"required":["id","type"],"type":"object"},"id":{"type":"string"}},"required":["id","data"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "PATCH".to_string(),
@@ -1686,11 +2894,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_47() -> ToolSpec {
+    ToolSpec {
             name: "appStoreVersionLocalizations_createInstance".to_string(),
             description: "Create one `appStoreVersionLocalizations` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"description":{"nullable":true,"type":"string"},"keywords":{"nullable":true,"type":"string"},"locale":{"type":"string"},"marketingUrl":{"format":"uri","nullable":true,"type":"string"},"promotionalText":{"nullable":true,"type":"string"},"supportUrl":{"format":"uri","nullable":true,"type":"string"},"whatsNew":{"nullable":true,"type":"string"}},"required":["locale"],"type":"object"},"relationships":{"properties":{"appStoreVersion":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["appStoreVersions"],"type":"string"}},"required":["id","type"],"type":"object"}},"required":["data"],"type":"object"}},"required":["appStoreVersion"],"type":"object"},"type":{"enum":["appStoreVersionLocalizations"],"type":"string"}},"required":["relationships","attributes","type"],"type":"object"}},"required":["data"],"title":"AppStoreVersionLocalizationCreateRequest","type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"description":{"type":["string","null"]},"keywords":{"type":["string","null"]},"locale":{"type":"string"},"marketingUrl":{"format":"uri","type":["string","null"]},"promotionalText":{"type":["string","null"]},"supportUrl":{"format":"uri","type":["string","null"]},"whatsNew":{"type":["string","null"]}},"required":["locale"],"type":"object"},"relationships":{"properties":{"appStoreVersion":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["appStoreVersions"],"type":"string"}},"required":["id","type"],"type":"object"}},"required":["data"],"type":"object"}},"required":["appStoreVersion"],"type":"object"},"type":{"enum":["appStoreVersionLocalizations"],"type":"string"}},"required":["relationships","attributes","type"],"type":"object"}},"required":["data"],"title":"AppStoreVersionLocalizationCreateRequest","type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "POST".to_string(),
@@ -1712,11 +2922,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_48() -> ToolSpec {
+    ToolSpec {
             name: "appStoreVersionLocalizations_getInstance".to_string(),
             description: "Get one `appStoreVersionLocalizations` resource by id.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"fields[appPreviewSets]":{"items":{"type":"string"},"type":"array"},"fields[appScreenshotSets]":{"items":{"type":"string"},"type":"array"},"fields[appStoreVersionLocalizations]":{"items":{"type":"string"},"type":"array"},"fields[appStoreVersions]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["appStoreVersion","appScreenshotSets","appPreviewSets","searchKeywords"],"type":"string"},"type":"array"},"limit[appPreviewSets]":{"maximum":50,"type":"integer"},"limit[appScreenshotSets]":{"maximum":50,"type":"integer"},"limit[searchKeywords]":{"maximum":50,"type":"integer"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"fields[appPreviewSets]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[appScreenshotSets]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[appStoreVersionLocalizations]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[appStoreVersions]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["appStoreVersion","appScreenshotSets","appPreviewSets","searchKeywords"],"type":"string"},"type":"array","x-mcp-query-explode":false},"limit[appPreviewSets]":{"maximum":50,"type":"integer"},"limit[appScreenshotSets]":{"maximum":50,"type":"integer"},"limit[searchKeywords]":{"maximum":50,"type":"integer"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -1773,11 +2985,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_49() -> ToolSpec {
+    ToolSpec {
             name: "appStoreVersionLocalizations_updateInstance".to_string(),
             description: "Update store text for one locale of a version: `description`, `keywords`, `whatsNew`, `promotionalText`, `marketingUrl`, `supportUrl`. Read it first with `appStoreVersionLocalizations_getInstance`.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"description":{"nullable":true,"type":"string"},"keywords":{"nullable":true,"type":"string"},"marketingUrl":{"format":"uri","nullable":true,"type":"string"},"promotionalText":{"nullable":true,"type":"string"},"supportUrl":{"format":"uri","nullable":true,"type":"string"},"whatsNew":{"nullable":true,"type":"string"}},"type":"object"},"id":{"type":"string"},"type":{"enum":["appStoreVersionLocalizations"],"type":"string"}},"required":["id","type"],"type":"object"},"id":{"type":"string"}},"required":["id","data"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"description":{"type":["string","null"]},"keywords":{"type":["string","null"]},"marketingUrl":{"format":"uri","type":["string","null"]},"promotionalText":{"type":["string","null"]},"supportUrl":{"format":"uri","type":["string","null"]},"whatsNew":{"type":["string","null"]}},"type":"object"},"id":{"type":"string"},"type":{"enum":["appStoreVersionLocalizations"],"type":"string"}},"required":["id","type"],"type":"object"},"id":{"type":"string"}},"required":["id","data"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "PATCH".to_string(),
@@ -1803,37 +3017,41 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
-            name: "appStoreVersionLocalizations_deleteInstance".to_string(),
-            description: "Delete one `appStoreVersionLocalizations` resource. This cannot be undone.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"id":{"type":"string"}},"required":["id"],"type":"object"}"#)
-                .expect("generated input schema must be valid JSON"),
-            execution: ExecutionKind::Rest(RestOperation {
-                method: "DELETE".to_string(),
-                path_template: "/v1/appStoreVersionLocalizations/{id}".to_string(),
-                params: vec![
-                    ParamBinding {
-                        name: "id".to_string(),
-                        location: ParamLocation::Path,
-                    },
-                ],
-                body_fields: vec![
-                ],
+        }
+}
+fn build_operation_50() -> ToolSpec {
+    ToolSpec {
+        name: "appStoreVersionLocalizations_deleteInstance".to_string(),
+        description: "Delete one `appStoreVersionLocalizations` resource. This cannot be undone."
+            .to_string(),
+        input_schema: serde_json::from_str(
+            r#"{"properties":{"id":{"type":"string"}},"required":["id"],"type":"object"}"#,
+        )
+        .expect("generated input schema must be valid JSON"),
+        execution: ExecutionKind::Rest(RestOperation {
+            method: "DELETE".to_string(),
+            path_template: "/v1/appStoreVersionLocalizations/{id}".to_string(),
+            params: vec![ParamBinding {
+                name: "id".to_string(),
+                location: ParamLocation::Path,
+            }],
+            body_fields: vec![],
             content_type: None,
             raw_body: false,
             media: None,
         }),
-            hints: ToolHints {
-                title: None,
-                output_schema: None,
-                read_only: Some(false),
-                destructive: Some(true),
-                idempotent: Some(true),
-                open_world: Some(true),
-            },
+        hints: ToolHints {
+            title: None,
+            output_schema: None,
+            read_only: Some(false),
+            destructive: Some(true),
+            idempotent: Some(true),
+            open_world: Some(true),
         },
-        ToolSpec {
+    }
+}
+fn build_operation_51() -> ToolSpec {
+    ToolSpec {
             name: "appStoreVersionPhasedReleases_createInstance".to_string(),
             description: "Enable a 7-day phased release for an App Store version.".to_string(),
             input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"phasedReleaseState":{"enum":["INACTIVE","ACTIVE","PAUSED","COMPLETE"],"type":"string"}},"type":"object"},"relationships":{"properties":{"appStoreVersion":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["appStoreVersions"],"type":"string"}},"required":["id","type"],"type":"object"}},"required":["data"],"type":"object"}},"required":["appStoreVersion"],"type":"object"},"type":{"enum":["appStoreVersionPhasedReleases"],"type":"string"}},"required":["relationships","type"],"type":"object"}},"required":["data"],"title":"AppStoreVersionPhasedReleaseCreateRequest","type":"object"}"#)
@@ -1858,8 +3076,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_52() -> ToolSpec {
+    ToolSpec {
             name: "appStoreVersionPhasedReleases_updateInstance".to_string(),
             description: "Control a phased release: `phasedReleaseState` ACTIVE (resume), PAUSED, or COMPLETE (release to everyone now).".to_string(),
             input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"phasedReleaseState":{"enum":["INACTIVE","ACTIVE","PAUSED","COMPLETE"],"type":"string"}},"type":"object"},"id":{"type":"string"},"type":{"enum":["appStoreVersionPhasedReleases"],"type":"string"}},"required":["id","type"],"type":"object"},"id":{"type":"string"}},"required":["id","data"],"type":"object"}"#)
@@ -1888,8 +3108,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_53() -> ToolSpec {
+    ToolSpec {
             name: "appStoreVersionPhasedReleases_deleteInstance".to_string(),
             description: "Remove a phased release from a version that has not started releasing, so it releases to everyone at once.".to_string(),
             input_schema: serde_json::from_str(r#"{"properties":{"id":{"type":"string"}},"required":["id"],"type":"object"}"#)
@@ -1917,8 +3139,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_54() -> ToolSpec {
+    ToolSpec {
             name: "appStoreVersionReleaseRequests_createInstance".to_string(),
             description: "Release an approved App Store version that uses manual release (state PENDING_DEVELOPER_RELEASE). This publishes the app.".to_string(),
             input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"relationships":{"properties":{"appStoreVersion":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["appStoreVersions"],"type":"string"}},"required":["id","type"],"type":"object"}},"required":["data"],"type":"object"}},"required":["appStoreVersion"],"type":"object"},"type":{"enum":["appStoreVersionReleaseRequests"],"type":"string"}},"required":["relationships","type"],"type":"object"}},"required":["data"],"title":"AppStoreVersionReleaseRequestCreateRequest","type":"object"}"#)
@@ -1943,11 +3167,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_55() -> ToolSpec {
+    ToolSpec {
             name: "appStoreVersions_createInstance".to_string(),
             description: "Create a new App Store version (`versionString`, `platform`) for an app. Localizations are copied from the previous version.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"copyright":{"nullable":true,"type":"string"},"earliestReleaseDate":{"format":"date-time","nullable":true,"type":"string"},"platform":{"enum":["IOS","MAC_OS","TV_OS","VISION_OS"],"type":"string"},"releaseType":{"enum":["MANUAL","AFTER_APPROVAL","SCHEDULED"],"nullable":true,"type":"string"},"reviewType":{"enum":["APP_STORE","NOTARIZATION"],"nullable":true,"type":"string"},"usesIdfa":{"deprecated":true,"nullable":true,"type":"boolean"},"versionString":{"type":"string"}},"required":["versionString","platform"],"type":"object"},"relationships":{"properties":{"app":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["apps"],"type":"string"}},"required":["id","type"],"type":"object"}},"required":["data"],"type":"object"},"appStoreVersionLocalizations":{"properties":{"data":{"items":{"properties":{"id":{"type":"string"},"type":{"enum":["appStoreVersionLocalizations"],"type":"string"}},"required":["id","type"],"type":"object"},"type":"array"}},"type":"object"},"build":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["builds"],"type":"string"}},"required":["id","type"],"type":"object"}},"type":"object"}},"required":["app"],"type":"object"},"type":{"enum":["appStoreVersions"],"type":"string"}},"required":["relationships","attributes","type"],"type":"object"}},"required":["data"],"title":"AppStoreVersionCreateRequest","type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"copyright":{"type":["string","null"]},"earliestReleaseDate":{"format":"date-time","type":["string","null"]},"platform":{"enum":["IOS","MAC_OS","TV_OS","VISION_OS"],"type":"string"},"releaseType":{"enum":["MANUAL","AFTER_APPROVAL","SCHEDULED",null],"type":["string","null"]},"reviewType":{"enum":["APP_STORE","NOTARIZATION",null],"type":["string","null"]},"usesIdfa":{"deprecated":true,"type":["boolean","null"]},"versionString":{"type":"string"}},"required":["versionString","platform"],"type":"object"},"relationships":{"properties":{"app":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["apps"],"type":"string"}},"required":["id","type"],"type":"object"}},"required":["data"],"type":"object"},"appStoreVersionLocalizations":{"properties":{"data":{"items":{"properties":{"id":{"type":"string"},"type":{"enum":["appStoreVersionLocalizations"],"type":"string"}},"required":["id","type"],"type":"object"},"type":"array"}},"type":"object"},"build":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["builds"],"type":"string"}},"required":["id","type"],"type":"object"}},"type":"object"}},"required":["app"],"type":"object"},"type":{"enum":["appStoreVersions"],"type":"string"}},"required":["relationships","attributes","type"],"type":"object"}},"required":["data"],"title":"AppStoreVersionCreateRequest","type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "POST".to_string(),
@@ -1969,11 +3195,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_56() -> ToolSpec {
+    ToolSpec {
             name: "appStoreVersions_getInstance".to_string(),
             description: "Get one `appStoreVersions` resource by id.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"fields[alternativeDistributionPackages]":{"items":{"type":"string"},"type":"array"},"fields[appClipDefaultExperiences]":{"items":{"type":"string"},"type":"array"},"fields[appStoreReviewDetails]":{"items":{"type":"string"},"type":"array"},"fields[appStoreVersionExperiments]":{"items":{"type":"string"},"type":"array"},"fields[appStoreVersionLocalizations]":{"items":{"type":"string"},"type":"array"},"fields[appStoreVersionPhasedReleases]":{"items":{"type":"string"},"type":"array"},"fields[appStoreVersionSubmissions]":{"items":{"type":"string"},"type":"array"},"fields[appStoreVersions]":{"items":{"type":"string"},"type":"array"},"fields[apps]":{"items":{"type":"string"},"type":"array"},"fields[builds]":{"items":{"type":"string"},"type":"array"},"fields[gameCenterAppVersions]":{"items":{"type":"string"},"type":"array"},"fields[routingAppCoverages]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["app","appStoreVersionLocalizations","build","appStoreVersionPhasedRelease","gameCenterAppVersion","routingAppCoverage","appStoreReviewDetail","appStoreVersionSubmission","appClipDefaultExperience","appStoreVersionExperiments","appStoreVersionExperimentsV2","alternativeDistributionPackage"],"type":"string"},"type":"array"},"limit[appStoreVersionExperimentsV2]":{"maximum":50,"type":"integer"},"limit[appStoreVersionExperiments]":{"maximum":50,"type":"integer"},"limit[appStoreVersionLocalizations]":{"maximum":50,"type":"integer"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"fields[alternativeDistributionPackages]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[appClipDefaultExperiences]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[appStoreReviewDetails]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[appStoreVersionExperiments]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[appStoreVersionLocalizations]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[appStoreVersionPhasedReleases]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[appStoreVersionSubmissions]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[appStoreVersions]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[apps]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[builds]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[gameCenterAppVersions]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[routingAppCoverages]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["app","appStoreVersionLocalizations","build","appStoreVersionPhasedRelease","gameCenterAppVersion","routingAppCoverage","appStoreReviewDetail","appStoreVersionSubmission","appClipDefaultExperience","appStoreVersionExperiments","appStoreVersionExperimentsV2","alternativeDistributionPackage"],"type":"string"},"type":"array","x-mcp-query-explode":false},"limit[appStoreVersionExperimentsV2]":{"maximum":50,"type":"integer"},"limit[appStoreVersionExperiments]":{"maximum":50,"type":"integer"},"limit[appStoreVersionLocalizations]":{"maximum":50,"type":"integer"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -2062,11 +3290,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_57() -> ToolSpec {
+    ToolSpec {
             name: "appStoreVersions_updateInstance".to_string(),
             description: "Update an App Store version: `versionString`, `releaseType` (MANUAL, AFTER_APPROVAL, SCHEDULED), `earliestReleaseDate`, `copyright`.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"copyright":{"nullable":true,"type":"string"},"downloadable":{"nullable":true,"type":"boolean"},"earliestReleaseDate":{"format":"date-time","nullable":true,"type":"string"},"releaseType":{"enum":["MANUAL","AFTER_APPROVAL","SCHEDULED"],"nullable":true,"type":"string"},"reviewType":{"enum":["APP_STORE","NOTARIZATION"],"nullable":true,"type":"string"},"usesIdfa":{"deprecated":true,"nullable":true,"type":"boolean"},"versionString":{"nullable":true,"type":"string"}},"type":"object"},"id":{"type":"string"},"relationships":{"properties":{"appClipDefaultExperience":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["appClipDefaultExperiences"],"type":"string"}},"required":["id","type"],"type":"object"}},"type":"object"},"build":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["builds"],"type":"string"}},"required":["id","type"],"type":"object"}},"type":"object"}},"type":"object"},"type":{"enum":["appStoreVersions"],"type":"string"}},"required":["id","type"],"type":"object"},"id":{"type":"string"}},"required":["id","data"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"copyright":{"type":["string","null"]},"downloadable":{"type":["boolean","null"]},"earliestReleaseDate":{"format":"date-time","type":["string","null"]},"releaseType":{"enum":["MANUAL","AFTER_APPROVAL","SCHEDULED",null],"type":["string","null"]},"reviewType":{"enum":["APP_STORE","NOTARIZATION",null],"type":["string","null"]},"usesIdfa":{"deprecated":true,"type":["boolean","null"]},"versionString":{"type":["string","null"]}},"type":"object"},"id":{"type":"string"},"relationships":{"properties":{"appClipDefaultExperience":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["appClipDefaultExperiences"],"type":"string"}},"required":["id","type"],"type":"object"}},"type":"object"},"build":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["builds"],"type":"string"}},"required":["id","type"],"type":"object"}},"type":"object"}},"type":"object"},"type":{"enum":["appStoreVersions"],"type":"string"}},"required":["id","type"],"type":"object"},"id":{"type":"string"}},"required":["id","data"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "PATCH".to_string(),
@@ -2092,40 +3322,43 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
-            name: "appStoreVersions_deleteInstance".to_string(),
-            description: "Delete one `appStoreVersions` resource. This cannot be undone.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"id":{"type":"string"}},"required":["id"],"type":"object"}"#)
-                .expect("generated input schema must be valid JSON"),
-            execution: ExecutionKind::Rest(RestOperation {
-                method: "DELETE".to_string(),
-                path_template: "/v1/appStoreVersions/{id}".to_string(),
-                params: vec![
-                    ParamBinding {
-                        name: "id".to_string(),
-                        location: ParamLocation::Path,
-                    },
-                ],
-                body_fields: vec![
-                ],
+        }
+}
+fn build_operation_58() -> ToolSpec {
+    ToolSpec {
+        name: "appStoreVersions_deleteInstance".to_string(),
+        description: "Delete one `appStoreVersions` resource. This cannot be undone.".to_string(),
+        input_schema: serde_json::from_str(
+            r#"{"properties":{"id":{"type":"string"}},"required":["id"],"type":"object"}"#,
+        )
+        .expect("generated input schema must be valid JSON"),
+        execution: ExecutionKind::Rest(RestOperation {
+            method: "DELETE".to_string(),
+            path_template: "/v1/appStoreVersions/{id}".to_string(),
+            params: vec![ParamBinding {
+                name: "id".to_string(),
+                location: ParamLocation::Path,
+            }],
+            body_fields: vec![],
             content_type: None,
             raw_body: false,
             media: None,
         }),
-            hints: ToolHints {
-                title: None,
-                output_schema: None,
-                read_only: Some(false),
-                destructive: Some(true),
-                idempotent: Some(true),
-                open_world: Some(true),
-            },
+        hints: ToolHints {
+            title: None,
+            output_schema: None,
+            read_only: Some(false),
+            destructive: Some(true),
+            idempotent: Some(true),
+            open_world: Some(true),
         },
-        ToolSpec {
+    }
+}
+fn build_operation_59() -> ToolSpec {
+    ToolSpec {
             name: "apps_getCollection".to_string(),
             description: "Find apps. Filter by `filter[bundleId]` or `filter[name]` to resolve an app ID; never guess IDs.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"exists[gameCenterEnabledVersions]":{"type":"boolean"},"fields[androidToIosAppMappingDetails]":{"items":{"type":"string"},"type":"array"},"fields[appClips]":{"items":{"type":"string"},"type":"array"},"fields[appCustomProductPages]":{"items":{"type":"string"},"type":"array"},"fields[appEncryptionDeclarations]":{"items":{"type":"string"},"type":"array"},"fields[appEvents]":{"items":{"type":"string"},"type":"array"},"fields[appInfos]":{"items":{"type":"string"},"type":"array"},"fields[appStoreVersionExperiments]":{"items":{"type":"string"},"type":"array"},"fields[appStoreVersions]":{"items":{"type":"string"},"type":"array"},"fields[apps]":{"items":{"type":"string"},"type":"array"},"fields[betaAppLocalizations]":{"items":{"type":"string"},"type":"array"},"fields[betaAppReviewDetails]":{"items":{"type":"string"},"type":"array"},"fields[betaGroups]":{"items":{"type":"string"},"type":"array"},"fields[betaLicenseAgreements]":{"items":{"type":"string"},"type":"array"},"fields[buildIcons]":{"items":{"type":"string"},"type":"array"},"fields[builds]":{"items":{"type":"string"},"type":"array"},"fields[ciProducts]":{"items":{"type":"string"},"type":"array"},"fields[endUserLicenseAgreements]":{"items":{"type":"string"},"type":"array"},"fields[gameCenterDetails]":{"items":{"type":"string"},"type":"array"},"fields[gameCenterEnabledVersions]":{"items":{"type":"string"},"type":"array"},"fields[inAppPurchases]":{"items":{"type":"string"},"type":"array"},"fields[preReleaseVersions]":{"items":{"type":"string"},"type":"array"},"fields[promotedPurchases]":{"items":{"type":"string"},"type":"array"},"fields[reviewSubmissions]":{"items":{"type":"string"},"type":"array"},"fields[subscriptionGracePeriods]":{"items":{"type":"string"},"type":"array"},"fields[subscriptionGroups]":{"items":{"type":"string"},"type":"array"},"filter[appStoreVersions.appStoreState]":{"items":{"enum":["ACCEPTED","DEVELOPER_REMOVED_FROM_SALE","DEVELOPER_REJECTED","IN_REVIEW","INVALID_BINARY","METADATA_REJECTED","PENDING_APPLE_RELEASE","PENDING_CONTRACT","PENDING_DEVELOPER_RELEASE","PREPARE_FOR_SUBMISSION","PREORDER_READY_FOR_SALE","PROCESSING_FOR_APP_STORE","READY_FOR_REVIEW","READY_FOR_SALE","REJECTED","REMOVED_FROM_SALE","WAITING_FOR_EXPORT_COMPLIANCE","WAITING_FOR_REVIEW","REPLACED_WITH_NEW_VERSION","NOT_APPLICABLE"],"type":"string"},"type":"array"},"filter[appStoreVersions.appVersionState]":{"items":{"enum":["ACCEPTED","DEVELOPER_REJECTED","IN_REVIEW","INVALID_BINARY","METADATA_REJECTED","PENDING_APPLE_RELEASE","PENDING_DEVELOPER_RELEASE","PREPARE_FOR_SUBMISSION","PROCESSING_FOR_DISTRIBUTION","READY_FOR_DISTRIBUTION","READY_FOR_REVIEW","REJECTED","REPLACED_WITH_NEW_VERSION","WAITING_FOR_EXPORT_COMPLIANCE","WAITING_FOR_REVIEW"],"type":"string"},"type":"array"},"filter[appStoreVersions.platform]":{"items":{"enum":["IOS","MAC_OS","TV_OS","VISION_OS"],"type":"string"},"type":"array"},"filter[appStoreVersions]":{"items":{"type":"string"},"type":"array"},"filter[bundleId]":{"items":{"type":"string"},"type":"array"},"filter[id]":{"items":{"type":"string"},"type":"array"},"filter[name]":{"items":{"type":"string"},"type":"array"},"filter[reviewSubmissions.platform]":{"items":{"enum":["IOS","MAC_OS","TV_OS","VISION_OS"],"type":"string"},"type":"array"},"filter[reviewSubmissions.state]":{"items":{"enum":["READY_FOR_REVIEW","WAITING_FOR_REVIEW","IN_REVIEW","UNRESOLVED_ISSUES","CANCELING","COMPLETING","COMPLETE"],"type":"string"},"type":"array"},"filter[sku]":{"items":{"type":"string"},"type":"array"},"include":{"items":{"enum":["appEncryptionDeclarations","appStoreIcon","ciProduct","betaGroups","appStoreVersions","preReleaseVersions","betaAppLocalizations","builds","betaLicenseAgreement","betaAppReviewDetail","appInfos","appClips","endUserLicenseAgreement","inAppPurchases","subscriptionGroups","gameCenterEnabledVersions","appCustomProductPages","inAppPurchasesV2","promotedPurchases","appEvents","reviewSubmissions","subscriptionGracePeriod","gameCenterDetail","appStoreVersionExperimentsV2","androidToIosAppMappingDetails"],"type":"string"},"type":"array"},"limit":{"maximum":200,"type":"integer"},"limit[androidToIosAppMappingDetails]":{"maximum":50,"type":"integer"},"limit[appClips]":{"maximum":50,"type":"integer"},"limit[appCustomProductPages]":{"maximum":50,"type":"integer"},"limit[appEncryptionDeclarations]":{"maximum":50,"type":"integer"},"limit[appEvents]":{"maximum":50,"type":"integer"},"limit[appInfos]":{"maximum":50,"type":"integer"},"limit[appStoreVersionExperimentsV2]":{"maximum":50,"type":"integer"},"limit[appStoreVersions]":{"maximum":50,"type":"integer"},"limit[betaAppLocalizations]":{"maximum":50,"type":"integer"},"limit[betaGroups]":{"maximum":50,"type":"integer"},"limit[builds]":{"maximum":50,"type":"integer"},"limit[gameCenterEnabledVersions]":{"maximum":50,"type":"integer"},"limit[inAppPurchasesV2]":{"maximum":50,"type":"integer"},"limit[inAppPurchases]":{"maximum":50,"type":"integer"},"limit[preReleaseVersions]":{"maximum":50,"type":"integer"},"limit[promotedPurchases]":{"maximum":50,"type":"integer"},"limit[reviewSubmissions]":{"maximum":50,"type":"integer"},"limit[subscriptionGroups]":{"maximum":50,"type":"integer"},"sort":{"items":{"enum":["name","-name","bundleId","-bundleId","sku","-sku"],"type":"string"},"type":"array"}},"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"exists[gameCenterEnabledVersions]":{"type":"boolean"},"fields[androidToIosAppMappingDetails]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[appClips]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[appCustomProductPages]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[appEncryptionDeclarations]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[appEvents]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[appInfos]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[appStoreVersionExperiments]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[appStoreVersions]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[apps]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[betaAppLocalizations]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[betaAppReviewDetails]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[betaGroups]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[betaLicenseAgreements]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[buildIcons]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[builds]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[ciProducts]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[endUserLicenseAgreements]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[gameCenterDetails]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[gameCenterEnabledVersions]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[inAppPurchases]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[preReleaseVersions]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[promotedPurchases]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[reviewSubmissions]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[subscriptionGracePeriods]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[subscriptionGroups]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[appStoreVersions.appStoreState]":{"items":{"enum":["ACCEPTED","DEVELOPER_REMOVED_FROM_SALE","DEVELOPER_REJECTED","IN_REVIEW","INVALID_BINARY","METADATA_REJECTED","PENDING_APPLE_RELEASE","PENDING_CONTRACT","PENDING_DEVELOPER_RELEASE","PREPARE_FOR_SUBMISSION","PREORDER_READY_FOR_SALE","PROCESSING_FOR_APP_STORE","READY_FOR_REVIEW","READY_FOR_SALE","REJECTED","REMOVED_FROM_SALE","WAITING_FOR_EXPORT_COMPLIANCE","WAITING_FOR_REVIEW","REPLACED_WITH_NEW_VERSION","NOT_APPLICABLE"],"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[appStoreVersions.appVersionState]":{"items":{"enum":["ACCEPTED","DEVELOPER_REJECTED","IN_REVIEW","INVALID_BINARY","METADATA_REJECTED","PENDING_APPLE_RELEASE","PENDING_DEVELOPER_RELEASE","PREPARE_FOR_SUBMISSION","PROCESSING_FOR_DISTRIBUTION","READY_FOR_DISTRIBUTION","READY_FOR_REVIEW","REJECTED","REPLACED_WITH_NEW_VERSION","WAITING_FOR_EXPORT_COMPLIANCE","WAITING_FOR_REVIEW"],"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[appStoreVersions.platform]":{"items":{"enum":["IOS","MAC_OS","TV_OS","VISION_OS"],"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[appStoreVersions]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[bundleId]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[id]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[name]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[reviewSubmissions.platform]":{"items":{"enum":["IOS","MAC_OS","TV_OS","VISION_OS"],"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[reviewSubmissions.state]":{"items":{"enum":["READY_FOR_REVIEW","WAITING_FOR_REVIEW","IN_REVIEW","UNRESOLVED_ISSUES","CANCELING","COMPLETING","COMPLETE"],"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[sku]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"include":{"items":{"enum":["appEncryptionDeclarations","appStoreIcon","ciProduct","betaGroups","appStoreVersions","preReleaseVersions","betaAppLocalizations","builds","betaLicenseAgreement","betaAppReviewDetail","appInfos","appClips","endUserLicenseAgreement","inAppPurchases","subscriptionGroups","gameCenterEnabledVersions","appCustomProductPages","inAppPurchasesV2","promotedPurchases","appEvents","reviewSubmissions","subscriptionGracePeriod","gameCenterDetail","appStoreVersionExperimentsV2","androidToIosAppMappingDetails"],"type":"string"},"type":"array","x-mcp-query-explode":false},"limit":{"maximum":200,"type":"integer"},"limit[androidToIosAppMappingDetails]":{"maximum":50,"type":"integer"},"limit[appClips]":{"maximum":50,"type":"integer"},"limit[appCustomProductPages]":{"maximum":50,"type":"integer"},"limit[appEncryptionDeclarations]":{"maximum":50,"type":"integer"},"limit[appEvents]":{"maximum":50,"type":"integer"},"limit[appInfos]":{"maximum":50,"type":"integer"},"limit[appStoreVersionExperimentsV2]":{"maximum":50,"type":"integer"},"limit[appStoreVersions]":{"maximum":50,"type":"integer"},"limit[betaAppLocalizations]":{"maximum":50,"type":"integer"},"limit[betaGroups]":{"maximum":50,"type":"integer"},"limit[builds]":{"maximum":50,"type":"integer"},"limit[gameCenterEnabledVersions]":{"maximum":50,"type":"integer"},"limit[inAppPurchasesV2]":{"maximum":50,"type":"integer"},"limit[inAppPurchases]":{"maximum":50,"type":"integer"},"limit[preReleaseVersions]":{"maximum":50,"type":"integer"},"limit[promotedPurchases]":{"maximum":50,"type":"integer"},"limit[reviewSubmissions]":{"maximum":50,"type":"integer"},"limit[subscriptionGroups]":{"maximum":50,"type":"integer"},"sort":{"items":{"enum":["name","-name","bundleId","-bundleId","sku","-sku"],"type":"string"},"type":"array","x-mcp-query-explode":false}},"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -2378,11 +3611,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_60() -> ToolSpec {
+    ToolSpec {
             name: "apps_getInstance".to_string(),
             description: "Get one `apps` resource by id.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"fields[androidToIosAppMappingDetails]":{"items":{"type":"string"},"type":"array"},"fields[appClips]":{"items":{"type":"string"},"type":"array"},"fields[appCustomProductPages]":{"items":{"type":"string"},"type":"array"},"fields[appEncryptionDeclarations]":{"items":{"type":"string"},"type":"array"},"fields[appEvents]":{"items":{"type":"string"},"type":"array"},"fields[appInfos]":{"items":{"type":"string"},"type":"array"},"fields[appStoreVersionExperiments]":{"items":{"type":"string"},"type":"array"},"fields[appStoreVersions]":{"items":{"type":"string"},"type":"array"},"fields[apps]":{"items":{"type":"string"},"type":"array"},"fields[betaAppLocalizations]":{"items":{"type":"string"},"type":"array"},"fields[betaAppReviewDetails]":{"items":{"type":"string"},"type":"array"},"fields[betaGroups]":{"items":{"type":"string"},"type":"array"},"fields[betaLicenseAgreements]":{"items":{"type":"string"},"type":"array"},"fields[buildIcons]":{"items":{"type":"string"},"type":"array"},"fields[builds]":{"items":{"type":"string"},"type":"array"},"fields[ciProducts]":{"items":{"type":"string"},"type":"array"},"fields[endUserLicenseAgreements]":{"items":{"type":"string"},"type":"array"},"fields[gameCenterDetails]":{"items":{"type":"string"},"type":"array"},"fields[gameCenterEnabledVersions]":{"items":{"type":"string"},"type":"array"},"fields[inAppPurchases]":{"items":{"type":"string"},"type":"array"},"fields[preReleaseVersions]":{"items":{"type":"string"},"type":"array"},"fields[promotedPurchases]":{"items":{"type":"string"},"type":"array"},"fields[reviewSubmissions]":{"items":{"type":"string"},"type":"array"},"fields[subscriptionGracePeriods]":{"items":{"type":"string"},"type":"array"},"fields[subscriptionGroups]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["appEncryptionDeclarations","appStoreIcon","ciProduct","betaGroups","appStoreVersions","preReleaseVersions","betaAppLocalizations","builds","betaLicenseAgreement","betaAppReviewDetail","appInfos","appClips","endUserLicenseAgreement","inAppPurchases","subscriptionGroups","gameCenterEnabledVersions","appCustomProductPages","inAppPurchasesV2","promotedPurchases","appEvents","reviewSubmissions","subscriptionGracePeriod","gameCenterDetail","appStoreVersionExperimentsV2","androidToIosAppMappingDetails"],"type":"string"},"type":"array"},"limit[androidToIosAppMappingDetails]":{"maximum":50,"type":"integer"},"limit[appClips]":{"maximum":50,"type":"integer"},"limit[appCustomProductPages]":{"maximum":50,"type":"integer"},"limit[appEncryptionDeclarations]":{"maximum":50,"type":"integer"},"limit[appEvents]":{"maximum":50,"type":"integer"},"limit[appInfos]":{"maximum":50,"type":"integer"},"limit[appStoreVersionExperimentsV2]":{"maximum":50,"type":"integer"},"limit[appStoreVersions]":{"maximum":50,"type":"integer"},"limit[betaAppLocalizations]":{"maximum":50,"type":"integer"},"limit[betaGroups]":{"maximum":50,"type":"integer"},"limit[builds]":{"maximum":50,"type":"integer"},"limit[gameCenterEnabledVersions]":{"maximum":50,"type":"integer"},"limit[inAppPurchasesV2]":{"maximum":50,"type":"integer"},"limit[inAppPurchases]":{"maximum":50,"type":"integer"},"limit[preReleaseVersions]":{"maximum":50,"type":"integer"},"limit[promotedPurchases]":{"maximum":50,"type":"integer"},"limit[reviewSubmissions]":{"maximum":50,"type":"integer"},"limit[subscriptionGroups]":{"maximum":50,"type":"integer"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"fields[androidToIosAppMappingDetails]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[appClips]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[appCustomProductPages]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[appEncryptionDeclarations]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[appEvents]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[appInfos]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[appStoreVersionExperiments]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[appStoreVersions]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[apps]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[betaAppLocalizations]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[betaAppReviewDetails]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[betaGroups]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[betaLicenseAgreements]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[buildIcons]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[builds]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[ciProducts]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[endUserLicenseAgreements]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[gameCenterDetails]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[gameCenterEnabledVersions]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[inAppPurchases]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[preReleaseVersions]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[promotedPurchases]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[reviewSubmissions]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[subscriptionGracePeriods]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[subscriptionGroups]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["appEncryptionDeclarations","appStoreIcon","ciProduct","betaGroups","appStoreVersions","preReleaseVersions","betaAppLocalizations","builds","betaLicenseAgreement","betaAppReviewDetail","appInfos","appClips","endUserLicenseAgreement","inAppPurchases","subscriptionGroups","gameCenterEnabledVersions","appCustomProductPages","inAppPurchasesV2","promotedPurchases","appEvents","reviewSubmissions","subscriptionGracePeriod","gameCenterDetail","appStoreVersionExperimentsV2","androidToIosAppMappingDetails"],"type":"string"},"type":"array","x-mcp-query-explode":false},"limit[androidToIosAppMappingDetails]":{"maximum":50,"type":"integer"},"limit[appClips]":{"maximum":50,"type":"integer"},"limit[appCustomProductPages]":{"maximum":50,"type":"integer"},"limit[appEncryptionDeclarations]":{"maximum":50,"type":"integer"},"limit[appEvents]":{"maximum":50,"type":"integer"},"limit[appInfos]":{"maximum":50,"type":"integer"},"limit[appStoreVersionExperimentsV2]":{"maximum":50,"type":"integer"},"limit[appStoreVersions]":{"maximum":50,"type":"integer"},"limit[betaAppLocalizations]":{"maximum":50,"type":"integer"},"limit[betaGroups]":{"maximum":50,"type":"integer"},"limit[builds]":{"maximum":50,"type":"integer"},"limit[gameCenterEnabledVersions]":{"maximum":50,"type":"integer"},"limit[inAppPurchasesV2]":{"maximum":50,"type":"integer"},"limit[inAppPurchases]":{"maximum":50,"type":"integer"},"limit[preReleaseVersions]":{"maximum":50,"type":"integer"},"limit[promotedPurchases]":{"maximum":50,"type":"integer"},"limit[reviewSubmissions]":{"maximum":50,"type":"integer"},"limit[subscriptionGroups]":{"maximum":50,"type":"integer"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -2583,11 +3818,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_61() -> ToolSpec {
+    ToolSpec {
             name: "apps_updateInstance".to_string(),
             description: "Update attributes or relationships of one `apps` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"accessibilityUrl":{"format":"uri","nullable":true,"type":"string"},"bundleId":{"nullable":true,"type":"string"},"contentRightsDeclaration":{"enum":["DOES_NOT_USE_THIRD_PARTY_CONTENT","USES_THIRD_PARTY_CONTENT"],"nullable":true,"type":"string"},"primaryLocale":{"nullable":true,"type":"string"},"streamlinedPurchasingEnabled":{"nullable":true,"type":"boolean"},"subscriptionStatusUrl":{"format":"uri","nullable":true,"type":"string"},"subscriptionStatusUrlForSandbox":{"format":"uri","nullable":true,"type":"string"},"subscriptionStatusUrlVersion":{"enum":["V1","V2"],"type":"string"},"subscriptionStatusUrlVersionForSandbox":{"enum":["V1","V2"],"type":"string"}},"type":"object"},"id":{"type":"string"},"type":{"enum":["apps"],"type":"string"}},"required":["id","type"],"type":"object"},"id":{"type":"string"}},"required":["id","data"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"accessibilityUrl":{"format":"uri","type":["string","null"]},"bundleId":{"type":["string","null"]},"contentRightsDeclaration":{"enum":["DOES_NOT_USE_THIRD_PARTY_CONTENT","USES_THIRD_PARTY_CONTENT",null],"type":["string","null"]},"primaryLocale":{"type":["string","null"]},"streamlinedPurchasingEnabled":{"type":["boolean","null"]},"subscriptionStatusUrl":{"format":"uri","type":["string","null"]},"subscriptionStatusUrlForSandbox":{"format":"uri","type":["string","null"]},"subscriptionStatusUrlVersion":{"enum":["V1","V2"],"type":"string"},"subscriptionStatusUrlVersionForSandbox":{"enum":["V1","V2"],"type":"string"}},"type":"object"},"id":{"type":"string"},"type":{"enum":["apps"],"type":"string"}},"required":["id","type"],"type":"object"},"id":{"type":"string"}},"required":["id","data"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "PATCH".to_string(),
@@ -2613,11 +3850,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_62() -> ToolSpec {
+    ToolSpec {
             name: "betaAppLocalizations_getCollection".to_string(),
             description: "List `betaAppLocalizations` resources; supports the filters and pagination parameters below.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[apps]":{"items":{"type":"string"},"type":"array"},"fields[betaAppLocalizations]":{"items":{"type":"string"},"type":"array"},"filter[app]":{"items":{"type":"string"},"type":"array"},"filter[locale]":{"items":{"type":"string"},"type":"array"},"include":{"items":{"enum":["app"],"type":"string"},"type":"array"},"limit":{"maximum":200,"type":"integer"}},"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[apps]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[betaAppLocalizations]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[app]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[locale]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"include":{"items":{"enum":["app"],"type":"string"},"type":"array","x-mcp-query-explode":false},"limit":{"maximum":200,"type":"integer"}},"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -2666,11 +3905,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_63() -> ToolSpec {
+    ToolSpec {
             name: "betaAppLocalizations_createInstance".to_string(),
             description: "Create one `betaAppLocalizations` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"description":{"nullable":true,"type":"string"},"feedbackEmail":{"nullable":true,"type":"string"},"locale":{"type":"string"},"marketingUrl":{"nullable":true,"type":"string"},"privacyPolicyUrl":{"nullable":true,"type":"string"},"tvOsPrivacyPolicy":{"nullable":true,"type":"string"}},"required":["locale"],"type":"object"},"relationships":{"properties":{"app":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["apps"],"type":"string"}},"required":["id","type"],"type":"object"}},"required":["data"],"type":"object"}},"required":["app"],"type":"object"},"type":{"enum":["betaAppLocalizations"],"type":"string"}},"required":["relationships","attributes","type"],"type":"object"}},"required":["data"],"title":"BetaAppLocalizationCreateRequest","type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"description":{"type":["string","null"]},"feedbackEmail":{"type":["string","null"]},"locale":{"type":"string"},"marketingUrl":{"type":["string","null"]},"privacyPolicyUrl":{"type":["string","null"]},"tvOsPrivacyPolicy":{"type":["string","null"]}},"required":["locale"],"type":"object"},"relationships":{"properties":{"app":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["apps"],"type":"string"}},"required":["id","type"],"type":"object"}},"required":["data"],"type":"object"}},"required":["app"],"type":"object"},"type":{"enum":["betaAppLocalizations"],"type":"string"}},"required":["relationships","attributes","type"],"type":"object"}},"required":["data"],"title":"BetaAppLocalizationCreateRequest","type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "POST".to_string(),
@@ -2692,11 +3933,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_64() -> ToolSpec {
+    ToolSpec {
             name: "betaAppLocalizations_getInstance".to_string(),
             description: "Get one `betaAppLocalizations` resource by id.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"fields[apps]":{"items":{"type":"string"},"type":"array"},"fields[betaAppLocalizations]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["app"],"type":"string"},"type":"array"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"fields[apps]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[betaAppLocalizations]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["app"],"type":"string"},"type":"array","x-mcp-query-explode":false}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -2733,11 +3976,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_65() -> ToolSpec {
+    ToolSpec {
             name: "betaAppLocalizations_updateInstance".to_string(),
             description: "Update attributes or relationships of one `betaAppLocalizations` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"description":{"nullable":true,"type":"string"},"feedbackEmail":{"nullable":true,"type":"string"},"marketingUrl":{"nullable":true,"type":"string"},"privacyPolicyUrl":{"nullable":true,"type":"string"},"tvOsPrivacyPolicy":{"nullable":true,"type":"string"}},"type":"object"},"id":{"type":"string"},"type":{"enum":["betaAppLocalizations"],"type":"string"}},"required":["id","type"],"type":"object"},"id":{"type":"string"}},"required":["id","data"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"description":{"type":["string","null"]},"feedbackEmail":{"type":["string","null"]},"marketingUrl":{"type":["string","null"]},"privacyPolicyUrl":{"type":["string","null"]},"tvOsPrivacyPolicy":{"type":["string","null"]}},"type":"object"},"id":{"type":"string"},"type":{"enum":["betaAppLocalizations"],"type":"string"}},"required":["id","type"],"type":"object"},"id":{"type":"string"}},"required":["id","data"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "PATCH".to_string(),
@@ -2763,40 +4008,44 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
-            name: "betaAppLocalizations_deleteInstance".to_string(),
-            description: "Delete one `betaAppLocalizations` resource. This cannot be undone.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"id":{"type":"string"}},"required":["id"],"type":"object"}"#)
-                .expect("generated input schema must be valid JSON"),
-            execution: ExecutionKind::Rest(RestOperation {
-                method: "DELETE".to_string(),
-                path_template: "/v1/betaAppLocalizations/{id}".to_string(),
-                params: vec![
-                    ParamBinding {
-                        name: "id".to_string(),
-                        location: ParamLocation::Path,
-                    },
-                ],
-                body_fields: vec![
-                ],
+        }
+}
+fn build_operation_66() -> ToolSpec {
+    ToolSpec {
+        name: "betaAppLocalizations_deleteInstance".to_string(),
+        description: "Delete one `betaAppLocalizations` resource. This cannot be undone."
+            .to_string(),
+        input_schema: serde_json::from_str(
+            r#"{"properties":{"id":{"type":"string"}},"required":["id"],"type":"object"}"#,
+        )
+        .expect("generated input schema must be valid JSON"),
+        execution: ExecutionKind::Rest(RestOperation {
+            method: "DELETE".to_string(),
+            path_template: "/v1/betaAppLocalizations/{id}".to_string(),
+            params: vec![ParamBinding {
+                name: "id".to_string(),
+                location: ParamLocation::Path,
+            }],
+            body_fields: vec![],
             content_type: None,
             raw_body: false,
             media: None,
         }),
-            hints: ToolHints {
-                title: None,
-                output_schema: None,
-                read_only: Some(false),
-                destructive: Some(true),
-                idempotent: Some(true),
-                open_world: Some(true),
-            },
+        hints: ToolHints {
+            title: None,
+            output_schema: None,
+            read_only: Some(false),
+            destructive: Some(true),
+            idempotent: Some(true),
+            open_world: Some(true),
         },
-        ToolSpec {
+    }
+}
+fn build_operation_67() -> ToolSpec {
+    ToolSpec {
             name: "betaAppReviewDetails_getCollection".to_string(),
             description: "List `betaAppReviewDetails` resources; supports the filters and pagination parameters below.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[apps]":{"items":{"type":"string"},"type":"array"},"fields[betaAppReviewDetails]":{"items":{"type":"string"},"type":"array"},"filter[app]":{"items":{"type":"string"},"type":"array"},"include":{"items":{"enum":["app"],"type":"string"},"type":"array"},"limit":{"maximum":200,"type":"integer"}},"required":["filter[app]"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[apps]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[betaAppReviewDetails]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[app]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"include":{"items":{"enum":["app"],"type":"string"},"type":"array","x-mcp-query-explode":false},"limit":{"maximum":200,"type":"integer"}},"required":["filter[app]"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -2841,11 +4090,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_68() -> ToolSpec {
+    ToolSpec {
             name: "betaAppReviewDetails_getInstance".to_string(),
             description: "Get one `betaAppReviewDetails` resource by id.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"fields[apps]":{"items":{"type":"string"},"type":"array"},"fields[betaAppReviewDetails]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["app"],"type":"string"},"type":"array"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"fields[apps]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[betaAppReviewDetails]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["app"],"type":"string"},"type":"array","x-mcp-query-explode":false}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -2882,11 +4133,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_69() -> ToolSpec {
+    ToolSpec {
             name: "betaAppReviewDetails_updateInstance".to_string(),
             description: "Update Beta App Review contact, demo account (`demoAccountRequired`, `demoAccountName`, `demoAccountPassword`) and notes. Apple creates this resource with the app; there is no create.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"contactEmail":{"nullable":true,"type":"string"},"contactFirstName":{"nullable":true,"type":"string"},"contactLastName":{"nullable":true,"type":"string"},"contactPhone":{"nullable":true,"type":"string"},"demoAccountName":{"nullable":true,"type":"string"},"demoAccountPassword":{"nullable":true,"type":"string"},"demoAccountRequired":{"nullable":true,"type":"boolean"},"notes":{"nullable":true,"type":"string"}},"type":"object"},"id":{"type":"string"},"type":{"enum":["betaAppReviewDetails"],"type":"string"}},"required":["id","type"],"type":"object"},"id":{"type":"string"}},"required":["id","data"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"contactEmail":{"type":["string","null"]},"contactFirstName":{"type":["string","null"]},"contactLastName":{"type":["string","null"]},"contactPhone":{"type":["string","null"]},"demoAccountName":{"type":["string","null"]},"demoAccountPassword":{"type":["string","null"]},"demoAccountRequired":{"type":["boolean","null"]},"notes":{"type":["string","null"]}},"type":"object"},"id":{"type":"string"},"type":{"enum":["betaAppReviewDetails"],"type":"string"}},"required":["id","type"],"type":"object"},"id":{"type":"string"}},"required":["id","data"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "PATCH".to_string(),
@@ -2912,11 +4165,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_70() -> ToolSpec {
+    ToolSpec {
             name: "betaAppReviewSubmissions_getCollection".to_string(),
             description: "List `betaAppReviewSubmissions` resources; supports the filters and pagination parameters below.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[betaAppReviewSubmissions]":{"items":{"type":"string"},"type":"array"},"fields[builds]":{"items":{"type":"string"},"type":"array"},"filter[betaReviewState]":{"items":{"enum":["WAITING_FOR_REVIEW","IN_REVIEW","REJECTED","APPROVED"],"type":"string"},"type":"array"},"filter[build]":{"items":{"type":"string"},"type":"array"},"include":{"items":{"enum":["build"],"type":"string"},"type":"array"},"limit":{"maximum":200,"type":"integer"}},"required":["filter[build]"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[betaAppReviewSubmissions]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[builds]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[betaReviewState]":{"items":{"enum":["WAITING_FOR_REVIEW","IN_REVIEW","REJECTED","APPROVED"],"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[build]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"include":{"items":{"enum":["build"],"type":"string"},"type":"array","x-mcp-query-explode":false},"limit":{"maximum":200,"type":"integer"}},"required":["filter[build]"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -2965,8 +4220,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_71() -> ToolSpec {
+    ToolSpec {
             name: "betaAppReviewSubmissions_createInstance".to_string(),
             description: "Submit a build to Beta App Review so external TestFlight groups can test it.".to_string(),
             input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"relationships":{"properties":{"build":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["builds"],"type":"string"}},"required":["id","type"],"type":"object"}},"required":["data"],"type":"object"}},"required":["build"],"type":"object"},"type":{"enum":["betaAppReviewSubmissions"],"type":"string"}},"required":["relationships","type"],"type":"object"}},"required":["data"],"title":"BetaAppReviewSubmissionCreateRequest","type":"object"}"#)
@@ -2991,11 +4248,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_72() -> ToolSpec {
+    ToolSpec {
             name: "betaAppReviewSubmissions_getInstance".to_string(),
             description: "Get one `betaAppReviewSubmissions` resource by id.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"fields[betaAppReviewSubmissions]":{"items":{"type":"string"},"type":"array"},"fields[builds]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["build"],"type":"string"},"type":"array"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"fields[betaAppReviewSubmissions]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[builds]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["build"],"type":"string"},"type":"array","x-mcp-query-explode":false}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -3032,11 +4291,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_73() -> ToolSpec {
+    ToolSpec {
             name: "betaBuildLocalizations_getCollection".to_string(),
             description: "List `betaBuildLocalizations` resources; supports the filters and pagination parameters below.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[betaBuildLocalizations]":{"items":{"type":"string"},"type":"array"},"fields[builds]":{"items":{"type":"string"},"type":"array"},"filter[build]":{"items":{"type":"string"},"type":"array"},"filter[locale]":{"items":{"type":"string"},"type":"array"},"include":{"items":{"enum":["build"],"type":"string"},"type":"array"},"limit":{"maximum":200,"type":"integer"}},"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[betaBuildLocalizations]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[builds]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[build]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[locale]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"include":{"items":{"enum":["build"],"type":"string"},"type":"array","x-mcp-query-explode":false},"limit":{"maximum":200,"type":"integer"}},"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -3085,11 +4346,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_74() -> ToolSpec {
+    ToolSpec {
             name: "betaBuildLocalizations_createInstance".to_string(),
             description: "Create one `betaBuildLocalizations` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"locale":{"type":"string"},"whatsNew":{"nullable":true,"type":"string"}},"required":["locale"],"type":"object"},"relationships":{"properties":{"build":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["builds"],"type":"string"}},"required":["id","type"],"type":"object"}},"required":["data"],"type":"object"}},"required":["build"],"type":"object"},"type":{"enum":["betaBuildLocalizations"],"type":"string"}},"required":["relationships","attributes","type"],"type":"object"}},"required":["data"],"title":"BetaBuildLocalizationCreateRequest","type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"locale":{"type":"string"},"whatsNew":{"type":["string","null"]}},"required":["locale"],"type":"object"},"relationships":{"properties":{"build":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["builds"],"type":"string"}},"required":["id","type"],"type":"object"}},"required":["data"],"type":"object"}},"required":["build"],"type":"object"},"type":{"enum":["betaBuildLocalizations"],"type":"string"}},"required":["relationships","attributes","type"],"type":"object"}},"required":["data"],"title":"BetaBuildLocalizationCreateRequest","type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "POST".to_string(),
@@ -3111,11 +4374,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_75() -> ToolSpec {
+    ToolSpec {
             name: "betaBuildLocalizations_getInstance".to_string(),
             description: "Get one `betaBuildLocalizations` resource by id.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"fields[betaBuildLocalizations]":{"items":{"type":"string"},"type":"array"},"fields[builds]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["build"],"type":"string"},"type":"array"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"fields[betaBuildLocalizations]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[builds]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["build"],"type":"string"},"type":"array","x-mcp-query-explode":false}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -3152,11 +4417,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_76() -> ToolSpec {
+    ToolSpec {
             name: "betaBuildLocalizations_updateInstance".to_string(),
             description: "Update TestFlight 'What to Test' (`whatsNew`) for one locale of a build.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"whatsNew":{"nullable":true,"type":"string"}},"type":"object"},"id":{"type":"string"},"type":{"enum":["betaBuildLocalizations"],"type":"string"}},"required":["id","type"],"type":"object"},"id":{"type":"string"}},"required":["id","data"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"whatsNew":{"type":["string","null"]}},"type":"object"},"id":{"type":"string"},"type":{"enum":["betaBuildLocalizations"],"type":"string"}},"required":["id","type"],"type":"object"},"id":{"type":"string"}},"required":["id","data"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "PATCH".to_string(),
@@ -3182,40 +4449,44 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
-            name: "betaBuildLocalizations_deleteInstance".to_string(),
-            description: "Delete one `betaBuildLocalizations` resource. This cannot be undone.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"id":{"type":"string"}},"required":["id"],"type":"object"}"#)
-                .expect("generated input schema must be valid JSON"),
-            execution: ExecutionKind::Rest(RestOperation {
-                method: "DELETE".to_string(),
-                path_template: "/v1/betaBuildLocalizations/{id}".to_string(),
-                params: vec![
-                    ParamBinding {
-                        name: "id".to_string(),
-                        location: ParamLocation::Path,
-                    },
-                ],
-                body_fields: vec![
-                ],
+        }
+}
+fn build_operation_77() -> ToolSpec {
+    ToolSpec {
+        name: "betaBuildLocalizations_deleteInstance".to_string(),
+        description: "Delete one `betaBuildLocalizations` resource. This cannot be undone."
+            .to_string(),
+        input_schema: serde_json::from_str(
+            r#"{"properties":{"id":{"type":"string"}},"required":["id"],"type":"object"}"#,
+        )
+        .expect("generated input schema must be valid JSON"),
+        execution: ExecutionKind::Rest(RestOperation {
+            method: "DELETE".to_string(),
+            path_template: "/v1/betaBuildLocalizations/{id}".to_string(),
+            params: vec![ParamBinding {
+                name: "id".to_string(),
+                location: ParamLocation::Path,
+            }],
+            body_fields: vec![],
             content_type: None,
             raw_body: false,
             media: None,
         }),
-            hints: ToolHints {
-                title: None,
-                output_schema: None,
-                read_only: Some(false),
-                destructive: Some(true),
-                idempotent: Some(true),
-                open_world: Some(true),
-            },
+        hints: ToolHints {
+            title: None,
+            output_schema: None,
+            read_only: Some(false),
+            destructive: Some(true),
+            idempotent: Some(true),
+            open_world: Some(true),
         },
-        ToolSpec {
+    }
+}
+fn build_operation_78() -> ToolSpec {
+    ToolSpec {
             name: "betaGroups_getCollection".to_string(),
             description: "List `betaGroups` resources; supports the filters and pagination parameters below.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[apps]":{"items":{"type":"string"},"type":"array"},"fields[betaGroups]":{"items":{"type":"string"},"type":"array"},"fields[betaRecruitmentCriteria]":{"items":{"type":"string"},"type":"array"},"fields[betaTesters]":{"items":{"type":"string"},"type":"array"},"fields[builds]":{"items":{"type":"string"},"type":"array"},"filter[app]":{"items":{"type":"string"},"type":"array"},"filter[builds]":{"items":{"type":"string"},"type":"array"},"filter[id]":{"items":{"type":"string"},"type":"array"},"filter[isInternalGroup]":{"items":{"type":"string"},"type":"array"},"filter[name]":{"items":{"type":"string"},"type":"array"},"filter[publicLinkEnabled]":{"items":{"type":"string"},"type":"array"},"filter[publicLinkLimitEnabled]":{"items":{"type":"string"},"type":"array"},"filter[publicLink]":{"items":{"type":"string"},"type":"array"},"include":{"items":{"enum":["app","builds","betaTesters","betaRecruitmentCriteria"],"type":"string"},"type":"array"},"limit":{"maximum":200,"type":"integer"},"limit[betaTesters]":{"maximum":50,"type":"integer"},"limit[builds]":{"maximum":1000,"type":"integer"},"sort":{"items":{"enum":["name","-name","createdDate","-createdDate","publicLinkEnabled","-publicLinkEnabled","publicLinkLimit","-publicLinkLimit"],"type":"string"},"type":"array"}},"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[apps]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[betaGroups]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[betaRecruitmentCriteria]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[betaTesters]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[builds]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[app]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[builds]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[id]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[isInternalGroup]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[name]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[publicLinkEnabled]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[publicLinkLimitEnabled]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[publicLink]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"include":{"items":{"enum":["app","builds","betaTesters","betaRecruitmentCriteria"],"type":"string"},"type":"array","x-mcp-query-explode":false},"limit":{"maximum":200,"type":"integer"},"limit[betaTesters]":{"maximum":50,"type":"integer"},"limit[builds]":{"maximum":1000,"type":"integer"},"sort":{"items":{"enum":["name","-name","createdDate","-createdDate","publicLinkEnabled","-publicLinkEnabled","publicLinkLimit","-publicLinkLimit"],"type":"string"},"type":"array","x-mcp-query-explode":false}},"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -3312,11 +4583,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_79() -> ToolSpec {
+    ToolSpec {
             name: "betaGroups_createInstance".to_string(),
             description: "Create a TestFlight group for an app. `isInternalGroup` true for App Store Connect users; external groups need Beta App Review before testers can install.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"feedbackEnabled":{"nullable":true,"type":"boolean"},"hasAccessToAllBuilds":{"nullable":true,"type":"boolean"},"isInternalGroup":{"nullable":true,"type":"boolean"},"name":{"type":"string"},"publicLinkEnabled":{"nullable":true,"type":"boolean"},"publicLinkLimit":{"nullable":true,"type":"integer"},"publicLinkLimitEnabled":{"nullable":true,"type":"boolean"}},"required":["name"],"type":"object"},"relationships":{"properties":{"app":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["apps"],"type":"string"}},"required":["id","type"],"type":"object"}},"required":["data"],"type":"object"},"betaTesters":{"properties":{"data":{"items":{"properties":{"id":{"type":"string"},"type":{"enum":["betaTesters"],"type":"string"}},"required":["id","type"],"type":"object"},"type":"array"}},"type":"object"},"builds":{"properties":{"data":{"items":{"properties":{"id":{"type":"string"},"type":{"enum":["builds"],"type":"string"}},"required":["id","type"],"type":"object"},"type":"array"}},"type":"object"}},"required":["app"],"type":"object"},"type":{"enum":["betaGroups"],"type":"string"}},"required":["relationships","attributes","type"],"type":"object"}},"required":["data"],"title":"BetaGroupCreateRequest","type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"feedbackEnabled":{"type":["boolean","null"]},"hasAccessToAllBuilds":{"type":["boolean","null"]},"isInternalGroup":{"type":["boolean","null"]},"name":{"type":"string"},"publicLinkEnabled":{"type":["boolean","null"]},"publicLinkLimit":{"type":["integer","null"]},"publicLinkLimitEnabled":{"type":["boolean","null"]}},"required":["name"],"type":"object"},"relationships":{"properties":{"app":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["apps"],"type":"string"}},"required":["id","type"],"type":"object"}},"required":["data"],"type":"object"},"betaTesters":{"properties":{"data":{"items":{"properties":{"id":{"type":"string"},"type":{"enum":["betaTesters"],"type":"string"}},"required":["id","type"],"type":"object"},"type":"array"}},"type":"object"},"builds":{"properties":{"data":{"items":{"properties":{"id":{"type":"string"},"type":{"enum":["builds"],"type":"string"}},"required":["id","type"],"type":"object"},"type":"array"}},"type":"object"}},"required":["app"],"type":"object"},"type":{"enum":["betaGroups"],"type":"string"}},"required":["relationships","attributes","type"],"type":"object"}},"required":["data"],"title":"BetaGroupCreateRequest","type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "POST".to_string(),
@@ -3338,11 +4611,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_80() -> ToolSpec {
+    ToolSpec {
             name: "betaGroups_getInstance".to_string(),
             description: "Get one `betaGroups` resource by id.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"fields[apps]":{"items":{"type":"string"},"type":"array"},"fields[betaGroups]":{"items":{"type":"string"},"type":"array"},"fields[betaRecruitmentCriteria]":{"items":{"type":"string"},"type":"array"},"fields[betaTesters]":{"items":{"type":"string"},"type":"array"},"fields[builds]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["app","builds","betaTesters","betaRecruitmentCriteria"],"type":"string"},"type":"array"},"limit[betaTesters]":{"maximum":50,"type":"integer"},"limit[builds]":{"maximum":1000,"type":"integer"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"fields[apps]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[betaGroups]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[betaRecruitmentCriteria]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[betaTesters]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[builds]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["app","builds","betaTesters","betaRecruitmentCriteria"],"type":"string"},"type":"array","x-mcp-query-explode":false},"limit[betaTesters]":{"maximum":50,"type":"integer"},"limit[builds]":{"maximum":1000,"type":"integer"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -3399,11 +4674,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_81() -> ToolSpec {
+    ToolSpec {
             name: "betaGroups_updateInstance".to_string(),
             description: "Update attributes or relationships of one `betaGroups` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"feedbackEnabled":{"nullable":true,"type":"boolean"},"iosBuildsAvailableForAppleSiliconMac":{"nullable":true,"type":"boolean"},"iosBuildsAvailableForAppleVision":{"nullable":true,"type":"boolean"},"name":{"nullable":true,"type":"string"},"publicLinkEnabled":{"nullable":true,"type":"boolean"},"publicLinkLimit":{"nullable":true,"type":"integer"},"publicLinkLimitEnabled":{"nullable":true,"type":"boolean"}},"type":"object"},"id":{"type":"string"},"type":{"enum":["betaGroups"],"type":"string"}},"required":["id","type"],"type":"object"},"id":{"type":"string"}},"required":["id","data"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"feedbackEnabled":{"type":["boolean","null"]},"iosBuildsAvailableForAppleSiliconMac":{"type":["boolean","null"]},"iosBuildsAvailableForAppleVision":{"type":["boolean","null"]},"name":{"type":["string","null"]},"publicLinkEnabled":{"type":["boolean","null"]},"publicLinkLimit":{"type":["integer","null"]},"publicLinkLimitEnabled":{"type":["boolean","null"]}},"type":"object"},"id":{"type":"string"},"type":{"enum":["betaGroups"],"type":"string"}},"required":["id","type"],"type":"object"},"id":{"type":"string"}},"required":["id","data"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "PATCH".to_string(),
@@ -3429,40 +4706,43 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
-            name: "betaGroups_deleteInstance".to_string(),
-            description: "Delete one `betaGroups` resource. This cannot be undone.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"id":{"type":"string"}},"required":["id"],"type":"object"}"#)
-                .expect("generated input schema must be valid JSON"),
-            execution: ExecutionKind::Rest(RestOperation {
-                method: "DELETE".to_string(),
-                path_template: "/v1/betaGroups/{id}".to_string(),
-                params: vec![
-                    ParamBinding {
-                        name: "id".to_string(),
-                        location: ParamLocation::Path,
-                    },
-                ],
-                body_fields: vec![
-                ],
+        }
+}
+fn build_operation_82() -> ToolSpec {
+    ToolSpec {
+        name: "betaGroups_deleteInstance".to_string(),
+        description: "Delete one `betaGroups` resource. This cannot be undone.".to_string(),
+        input_schema: serde_json::from_str(
+            r#"{"properties":{"id":{"type":"string"}},"required":["id"],"type":"object"}"#,
+        )
+        .expect("generated input schema must be valid JSON"),
+        execution: ExecutionKind::Rest(RestOperation {
+            method: "DELETE".to_string(),
+            path_template: "/v1/betaGroups/{id}".to_string(),
+            params: vec![ParamBinding {
+                name: "id".to_string(),
+                location: ParamLocation::Path,
+            }],
+            body_fields: vec![],
             content_type: None,
             raw_body: false,
             media: None,
         }),
-            hints: ToolHints {
-                title: None,
-                output_schema: None,
-                read_only: Some(false),
-                destructive: Some(true),
-                idempotent: Some(true),
-                open_world: Some(true),
-            },
+        hints: ToolHints {
+            title: None,
+            output_schema: None,
+            read_only: Some(false),
+            destructive: Some(true),
+            idempotent: Some(true),
+            open_world: Some(true),
         },
-        ToolSpec {
+    }
+}
+fn build_operation_83() -> ToolSpec {
+    ToolSpec {
             name: "betaLicenseAgreements_getCollection".to_string(),
             description: "List `betaLicenseAgreements` resources; supports the filters and pagination parameters below.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[apps]":{"items":{"type":"string"},"type":"array"},"fields[betaLicenseAgreements]":{"items":{"type":"string"},"type":"array"},"filter[app]":{"items":{"type":"string"},"type":"array"},"include":{"items":{"enum":["app"],"type":"string"},"type":"array"},"limit":{"maximum":200,"type":"integer"}},"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[apps]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[betaLicenseAgreements]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[app]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"include":{"items":{"enum":["app"],"type":"string"},"type":"array","x-mcp-query-explode":false},"limit":{"maximum":200,"type":"integer"}},"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -3507,11 +4787,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_84() -> ToolSpec {
+    ToolSpec {
             name: "betaLicenseAgreements_getInstance".to_string(),
             description: "Get one `betaLicenseAgreements` resource by id.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"fields[apps]":{"items":{"type":"string"},"type":"array"},"fields[betaLicenseAgreements]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["app"],"type":"string"},"type":"array"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"fields[apps]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[betaLicenseAgreements]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["app"],"type":"string"},"type":"array","x-mcp-query-explode":false}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -3548,11 +4830,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_85() -> ToolSpec {
+    ToolSpec {
             name: "betaLicenseAgreements_updateInstance".to_string(),
             description: "Update attributes or relationships of one `betaLicenseAgreements` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"agreementText":{"nullable":true,"type":"string"}},"type":"object"},"id":{"type":"string"},"type":{"enum":["betaLicenseAgreements"],"type":"string"}},"required":["id","type"],"type":"object"},"id":{"type":"string"}},"required":["id","data"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"agreementText":{"type":["string","null"]}},"type":"object"},"id":{"type":"string"},"type":{"enum":["betaLicenseAgreements"],"type":"string"}},"required":["id","type"],"type":"object"},"id":{"type":"string"}},"required":["id","data"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "PATCH".to_string(),
@@ -3578,11 +4862,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_86() -> ToolSpec {
+    ToolSpec {
             name: "betaTesters_getCollection".to_string(),
             description: "Find TestFlight testers. Filter by `filter[email]`, `filter[apps]` or `filter[betaGroups]`.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[apps]":{"items":{"type":"string"},"type":"array"},"fields[betaGroups]":{"items":{"type":"string"},"type":"array"},"fields[betaTesters]":{"items":{"type":"string"},"type":"array"},"fields[builds]":{"items":{"type":"string"},"type":"array"},"filter[apps]":{"items":{"type":"string"},"type":"array"},"filter[betaGroups]":{"items":{"type":"string"},"type":"array"},"filter[builds]":{"items":{"type":"string"},"type":"array"},"filter[email]":{"items":{"type":"string"},"type":"array"},"filter[firstName]":{"items":{"type":"string"},"type":"array"},"filter[id]":{"items":{"type":"string"},"type":"array"},"filter[inviteType]":{"items":{"enum":["EMAIL","PUBLIC_LINK"],"type":"string"},"type":"array"},"filter[lastName]":{"items":{"type":"string"},"type":"array"},"include":{"items":{"enum":["apps","betaGroups","builds"],"type":"string"},"type":"array"},"limit":{"maximum":200,"type":"integer"},"limit[apps]":{"maximum":50,"type":"integer"},"limit[betaGroups]":{"maximum":50,"type":"integer"},"limit[builds]":{"maximum":50,"type":"integer"},"sort":{"items":{"enum":["firstName","-firstName","lastName","-lastName","email","-email","inviteType","-inviteType","state","-state"],"type":"string"},"type":"array"}},"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[apps]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[betaGroups]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[betaTesters]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[builds]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[apps]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[betaGroups]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[builds]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[email]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[firstName]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[id]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[inviteType]":{"items":{"enum":["EMAIL","PUBLIC_LINK"],"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[lastName]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"include":{"items":{"enum":["apps","betaGroups","builds"],"type":"string"},"type":"array","x-mcp-query-explode":false},"limit":{"maximum":200,"type":"integer"},"limit[apps]":{"maximum":50,"type":"integer"},"limit[betaGroups]":{"maximum":50,"type":"integer"},"limit[builds]":{"maximum":50,"type":"integer"},"sort":{"items":{"enum":["firstName","-firstName","lastName","-lastName","email","-email","inviteType","-inviteType","state","-state"],"type":"string"},"type":"array","x-mcp-query-explode":false}},"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -3679,11 +4965,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_87() -> ToolSpec {
+    ToolSpec {
             name: "betaTesters_createInstance".to_string(),
             description: "Invite a tester by email into one or more beta groups (relationship `betaGroups`) or builds. Sends an invitation email.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"email":{"format":"email","type":"string"},"firstName":{"nullable":true,"type":"string"},"lastName":{"nullable":true,"type":"string"}},"required":["email"],"type":"object"},"relationships":{"properties":{"betaGroups":{"properties":{"data":{"items":{"properties":{"id":{"type":"string"},"type":{"enum":["betaGroups"],"type":"string"}},"required":["id","type"],"type":"object"},"type":"array"}},"type":"object"},"builds":{"properties":{"data":{"items":{"properties":{"id":{"type":"string"},"type":{"enum":["builds"],"type":"string"}},"required":["id","type"],"type":"object"},"type":"array"}},"type":"object"}},"type":"object"},"type":{"enum":["betaTesters"],"type":"string"}},"required":["attributes","type"],"type":"object"}},"required":["data"],"title":"BetaTesterCreateRequest","type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"email":{"format":"email","type":"string"},"firstName":{"type":["string","null"]},"lastName":{"type":["string","null"]}},"required":["email"],"type":"object"},"relationships":{"properties":{"betaGroups":{"properties":{"data":{"items":{"properties":{"id":{"type":"string"},"type":{"enum":["betaGroups"],"type":"string"}},"required":["id","type"],"type":"object"},"type":"array"}},"type":"object"},"builds":{"properties":{"data":{"items":{"properties":{"id":{"type":"string"},"type":{"enum":["builds"],"type":"string"}},"required":["id","type"],"type":"object"},"type":"array"}},"type":"object"}},"type":"object"},"type":{"enum":["betaTesters"],"type":"string"}},"required":["attributes","type"],"type":"object"}},"required":["data"],"title":"BetaTesterCreateRequest","type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "POST".to_string(),
@@ -3705,11 +4993,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_88() -> ToolSpec {
+    ToolSpec {
             name: "betaTesters_getInstance".to_string(),
             description: "Get one `betaTesters` resource by id.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"fields[apps]":{"items":{"type":"string"},"type":"array"},"fields[betaGroups]":{"items":{"type":"string"},"type":"array"},"fields[betaTesters]":{"items":{"type":"string"},"type":"array"},"fields[builds]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["apps","betaGroups","builds"],"type":"string"},"type":"array"},"limit[apps]":{"maximum":50,"type":"integer"},"limit[betaGroups]":{"maximum":50,"type":"integer"},"limit[builds]":{"maximum":50,"type":"integer"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"fields[apps]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[betaGroups]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[betaTesters]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[builds]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["apps","betaGroups","builds"],"type":"string"},"type":"array","x-mcp-query-explode":false},"limit[apps]":{"maximum":50,"type":"integer"},"limit[betaGroups]":{"maximum":50,"type":"integer"},"limit[builds]":{"maximum":50,"type":"integer"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -3766,40 +5056,43 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
-            name: "betaTesters_deleteInstance".to_string(),
-            description: "Remove a tester from all apps and groups. This cannot be undone.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"id":{"type":"string"}},"required":["id"],"type":"object"}"#)
-                .expect("generated input schema must be valid JSON"),
-            execution: ExecutionKind::Rest(RestOperation {
-                method: "DELETE".to_string(),
-                path_template: "/v1/betaTesters/{id}".to_string(),
-                params: vec![
-                    ParamBinding {
-                        name: "id".to_string(),
-                        location: ParamLocation::Path,
-                    },
-                ],
-                body_fields: vec![
-                ],
+        }
+}
+fn build_operation_89() -> ToolSpec {
+    ToolSpec {
+        name: "betaTesters_deleteInstance".to_string(),
+        description: "Remove a tester from all apps and groups. This cannot be undone.".to_string(),
+        input_schema: serde_json::from_str(
+            r#"{"properties":{"id":{"type":"string"}},"required":["id"],"type":"object"}"#,
+        )
+        .expect("generated input schema must be valid JSON"),
+        execution: ExecutionKind::Rest(RestOperation {
+            method: "DELETE".to_string(),
+            path_template: "/v1/betaTesters/{id}".to_string(),
+            params: vec![ParamBinding {
+                name: "id".to_string(),
+                location: ParamLocation::Path,
+            }],
+            body_fields: vec![],
             content_type: None,
             raw_body: false,
             media: None,
         }),
-            hints: ToolHints {
-                title: None,
-                output_schema: None,
-                read_only: Some(false),
-                destructive: Some(true),
-                idempotent: Some(true),
-                open_world: Some(true),
-            },
+        hints: ToolHints {
+            title: None,
+            output_schema: None,
+            read_only: Some(false),
+            destructive: Some(true),
+            idempotent: Some(true),
+            open_world: Some(true),
         },
-        ToolSpec {
+    }
+}
+fn build_operation_90() -> ToolSpec {
+    ToolSpec {
             name: "buildBetaDetails_getCollection".to_string(),
             description: "List `buildBetaDetails` resources; supports the filters and pagination parameters below.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[buildBetaDetails]":{"items":{"type":"string"},"type":"array"},"fields[builds]":{"items":{"type":"string"},"type":"array"},"filter[build]":{"items":{"type":"string"},"type":"array"},"filter[id]":{"items":{"type":"string"},"type":"array"},"include":{"items":{"enum":["build"],"type":"string"},"type":"array"},"limit":{"maximum":200,"type":"integer"}},"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[buildBetaDetails]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[builds]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[build]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[id]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"include":{"items":{"enum":["build"],"type":"string"},"type":"array","x-mcp-query-explode":false},"limit":{"maximum":200,"type":"integer"}},"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -3848,11 +5141,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_91() -> ToolSpec {
+    ToolSpec {
             name: "buildBetaDetails_getInstance".to_string(),
             description: "Get one `buildBetaDetails` resource by id.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"fields[buildBetaDetails]":{"items":{"type":"string"},"type":"array"},"fields[builds]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["build"],"type":"string"},"type":"array"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"fields[buildBetaDetails]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[builds]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["build"],"type":"string"},"type":"array","x-mcp-query-explode":false}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -3889,11 +5184,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_92() -> ToolSpec {
+    ToolSpec {
             name: "buildBetaDetails_updateInstance".to_string(),
             description: "Update attributes or relationships of one `buildBetaDetails` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"autoNotifyEnabled":{"nullable":true,"type":"boolean"}},"type":"object"},"id":{"type":"string"},"type":{"enum":["buildBetaDetails"],"type":"string"}},"required":["id","type"],"type":"object"},"id":{"type":"string"}},"required":["id","data"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"autoNotifyEnabled":{"type":["boolean","null"]}},"type":"object"},"id":{"type":"string"},"type":{"enum":["buildBetaDetails"],"type":"string"}},"required":["id","type"],"type":"object"},"id":{"type":"string"}},"required":["id","data"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "PATCH".to_string(),
@@ -3919,11 +5216,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_93() -> ToolSpec {
+    ToolSpec {
             name: "builds_getCollection".to_string(),
             description: "Find builds. Filter by `filter[app]`, `filter[version]` (build number), `filter[preReleaseVersion.version]` (marketing version) and `filter[processingState]=VALID` to find a build ready to attach.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"exists[usesNonExemptEncryption]":{"type":"boolean"},"fields[appEncryptionDeclarations]":{"items":{"type":"string"},"type":"array"},"fields[appStoreVersions]":{"items":{"type":"string"},"type":"array"},"fields[apps]":{"items":{"type":"string"},"type":"array"},"fields[betaAppReviewSubmissions]":{"items":{"type":"string"},"type":"array"},"fields[betaBuildLocalizations]":{"items":{"type":"string"},"type":"array"},"fields[betaGroups]":{"items":{"type":"string"},"type":"array"},"fields[betaTesters]":{"items":{"type":"string"},"type":"array"},"fields[buildBetaDetails]":{"items":{"type":"string"},"type":"array"},"fields[buildBundles]":{"items":{"type":"string"},"type":"array"},"fields[buildIcons]":{"items":{"type":"string"},"type":"array"},"fields[buildUploads]":{"items":{"type":"string"},"type":"array"},"fields[builds]":{"items":{"type":"string"},"type":"array"},"fields[preReleaseVersions]":{"items":{"type":"string"},"type":"array"},"filter[appStoreVersion]":{"items":{"type":"string"},"type":"array"},"filter[app]":{"items":{"type":"string"},"type":"array"},"filter[betaAppReviewSubmission.betaReviewState]":{"items":{"enum":["WAITING_FOR_REVIEW","IN_REVIEW","REJECTED","APPROVED"],"type":"string"},"type":"array"},"filter[betaGroups]":{"items":{"type":"string"},"type":"array"},"filter[buildAudienceType]":{"items":{"enum":["INTERNAL_ONLY","APP_STORE_ELIGIBLE"],"type":"string"},"type":"array"},"filter[expired]":{"items":{"type":"string"},"type":"array"},"filter[id]":{"items":{"type":"string"},"type":"array"},"filter[preReleaseVersion.platform]":{"items":{"enum":["IOS","MAC_OS","TV_OS","VISION_OS"],"type":"string"},"type":"array"},"filter[preReleaseVersion.version]":{"items":{"type":"string"},"type":"array"},"filter[preReleaseVersion]":{"items":{"type":"string"},"type":"array"},"filter[processingState]":{"items":{"enum":["PROCESSING","FAILED","INVALID","VALID"],"type":"string"},"type":"array"},"filter[usesNonExemptEncryption]":{"items":{"type":"string"},"type":"array"},"filter[version]":{"items":{"type":"string"},"type":"array"},"include":{"items":{"enum":["preReleaseVersion","individualTesters","betaGroups","betaBuildLocalizations","appEncryptionDeclaration","betaAppReviewSubmission","app","buildBetaDetail","appStoreVersion","icons","buildBundles","buildUpload"],"type":"string"},"type":"array"},"limit":{"maximum":200,"type":"integer"},"limit[betaBuildLocalizations]":{"maximum":50,"type":"integer"},"limit[betaGroups]":{"maximum":50,"type":"integer"},"limit[buildBundles]":{"maximum":50,"type":"integer"},"limit[icons]":{"maximum":50,"type":"integer"},"limit[individualTesters]":{"maximum":50,"type":"integer"},"sort":{"items":{"enum":["version","-version","uploadedDate","-uploadedDate","preReleaseVersion","-preReleaseVersion"],"type":"string"},"type":"array"}},"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"exists[usesNonExemptEncryption]":{"type":"boolean"},"fields[appEncryptionDeclarations]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[appStoreVersions]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[apps]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[betaAppReviewSubmissions]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[betaBuildLocalizations]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[betaGroups]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[betaTesters]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[buildBetaDetails]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[buildBundles]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[buildIcons]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[buildUploads]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[builds]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[preReleaseVersions]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[appStoreVersion]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[app]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[betaAppReviewSubmission.betaReviewState]":{"items":{"enum":["WAITING_FOR_REVIEW","IN_REVIEW","REJECTED","APPROVED"],"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[betaGroups]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[buildAudienceType]":{"items":{"enum":["INTERNAL_ONLY","APP_STORE_ELIGIBLE"],"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[expired]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[id]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[preReleaseVersion.platform]":{"items":{"enum":["IOS","MAC_OS","TV_OS","VISION_OS"],"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[preReleaseVersion.version]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[preReleaseVersion]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[processingState]":{"items":{"enum":["PROCESSING","FAILED","INVALID","VALID"],"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[usesNonExemptEncryption]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[version]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"include":{"items":{"enum":["preReleaseVersion","individualTesters","betaGroups","betaBuildLocalizations","appEncryptionDeclaration","betaAppReviewSubmission","app","buildBetaDetail","appStoreVersion","icons","buildBundles","buildUpload"],"type":"string"},"type":"array","x-mcp-query-explode":false},"limit":{"maximum":200,"type":"integer"},"limit[betaBuildLocalizations]":{"maximum":50,"type":"integer"},"limit[betaGroups]":{"maximum":50,"type":"integer"},"limit[buildBundles]":{"maximum":50,"type":"integer"},"limit[icons]":{"maximum":50,"type":"integer"},"limit[individualTesters]":{"maximum":50,"type":"integer"},"sort":{"items":{"enum":["version","-version","uploadedDate","-uploadedDate","preReleaseVersion","-preReleaseVersion"],"type":"string"},"type":"array","x-mcp-query-explode":false}},"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -4088,11 +5387,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_94() -> ToolSpec {
+    ToolSpec {
             name: "builds_getInstance".to_string(),
             description: "Get one `builds` resource by id.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"fields[appEncryptionDeclarations]":{"items":{"type":"string"},"type":"array"},"fields[appStoreVersions]":{"items":{"type":"string"},"type":"array"},"fields[apps]":{"items":{"type":"string"},"type":"array"},"fields[betaAppReviewSubmissions]":{"items":{"type":"string"},"type":"array"},"fields[betaBuildLocalizations]":{"items":{"type":"string"},"type":"array"},"fields[betaGroups]":{"items":{"type":"string"},"type":"array"},"fields[betaTesters]":{"items":{"type":"string"},"type":"array"},"fields[buildBetaDetails]":{"items":{"type":"string"},"type":"array"},"fields[buildBundles]":{"items":{"type":"string"},"type":"array"},"fields[buildIcons]":{"items":{"type":"string"},"type":"array"},"fields[buildUploads]":{"items":{"type":"string"},"type":"array"},"fields[builds]":{"items":{"type":"string"},"type":"array"},"fields[preReleaseVersions]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["preReleaseVersion","individualTesters","betaGroups","betaBuildLocalizations","appEncryptionDeclaration","betaAppReviewSubmission","app","buildBetaDetail","appStoreVersion","icons","buildBundles","buildUpload"],"type":"string"},"type":"array"},"limit[betaBuildLocalizations]":{"maximum":50,"type":"integer"},"limit[betaGroups]":{"maximum":50,"type":"integer"},"limit[buildBundles]":{"maximum":50,"type":"integer"},"limit[icons]":{"maximum":50,"type":"integer"},"limit[individualTesters]":{"maximum":50,"type":"integer"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"fields[appEncryptionDeclarations]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[appStoreVersions]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[apps]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[betaAppReviewSubmissions]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[betaBuildLocalizations]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[betaGroups]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[betaTesters]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[buildBetaDetails]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[buildBundles]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[buildIcons]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[buildUploads]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[builds]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[preReleaseVersions]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["preReleaseVersion","individualTesters","betaGroups","betaBuildLocalizations","appEncryptionDeclaration","betaAppReviewSubmission","app","buildBetaDetail","appStoreVersion","icons","buildBundles","buildUpload"],"type":"string"},"type":"array","x-mcp-query-explode":false},"limit[betaBuildLocalizations]":{"maximum":50,"type":"integer"},"limit[betaGroups]":{"maximum":50,"type":"integer"},"limit[buildBundles]":{"maximum":50,"type":"integer"},"limit[icons]":{"maximum":50,"type":"integer"},"limit[individualTesters]":{"maximum":50,"type":"integer"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -4193,11 +5494,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_95() -> ToolSpec {
+    ToolSpec {
             name: "builds_updateInstance".to_string(),
             description: "Update a build: `usesNonExemptEncryption` (export compliance answer supplied by the user), `expired=true` to expire it from TestFlight.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"expired":{"nullable":true,"type":"boolean"},"usesNonExemptEncryption":{"nullable":true,"type":"boolean"}},"type":"object"},"id":{"type":"string"},"relationships":{"properties":{"appEncryptionDeclaration":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["appEncryptionDeclarations"],"type":"string"}},"required":["id","type"],"type":"object"}},"type":"object"}},"type":"object"},"type":{"enum":["builds"],"type":"string"}},"required":["id","type"],"type":"object"},"id":{"type":"string"}},"required":["id","data"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"expired":{"type":["boolean","null"]},"usesNonExemptEncryption":{"type":["boolean","null"]}},"type":"object"},"id":{"type":"string"},"relationships":{"properties":{"appEncryptionDeclaration":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["appEncryptionDeclarations"],"type":"string"}},"required":["id","type"],"type":"object"}},"type":"object"}},"type":"object"},"type":{"enum":["builds"],"type":"string"}},"required":["id","type"],"type":"object"},"id":{"type":"string"}},"required":["id","data"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "PATCH".to_string(),
@@ -4223,11 +5526,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_96() -> ToolSpec {
+    ToolSpec {
             name: "bundleIdCapabilities_createInstance".to_string(),
             description: "Create one `bundleIdCapabilities` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"capabilityType":{"enum":["ICLOUD","IN_APP_PURCHASE","GAME_CENTER","PUSH_NOTIFICATIONS","WALLET","INTER_APP_AUDIO","MAPS","ASSOCIATED_DOMAINS","PERSONAL_VPN","APP_GROUPS","HEALTHKIT","HOMEKIT","WIRELESS_ACCESSORY_CONFIGURATION","APPLE_PAY","DATA_PROTECTION","SIRIKIT","NETWORK_EXTENSIONS","MULTIPATH","HOT_SPOT","NFC_TAG_READING","CLASSKIT","AUTOFILL_CREDENTIAL_PROVIDER","ACCESS_WIFI_INFORMATION","NETWORK_CUSTOM_PROTOCOL","COREMEDIA_HLS_LOW_LATENCY","SYSTEM_EXTENSION_INSTALL","USER_MANAGEMENT","APPLE_ID_AUTH"],"type":"string"},"settings":{"items":{"properties":{"allowedInstances":{"enum":["ENTRY","SINGLE","MULTIPLE"],"type":"string"},"description":{"type":"string"},"enabledByDefault":{"type":"boolean"},"key":{"enum":["ICLOUD_VERSION","DATA_PROTECTION_PERMISSION_LEVEL","APPLE_ID_AUTH_APP_CONSENT"],"type":"string"},"minInstances":{"type":"integer"},"name":{"type":"string"},"options":{"items":{"properties":{"description":{"type":"string"},"enabled":{"type":"boolean"},"enabledByDefault":{"type":"boolean"},"key":{"enum":["XCODE_5","XCODE_6","COMPLETE_PROTECTION","PROTECTED_UNLESS_OPEN","PROTECTED_UNTIL_FIRST_USER_AUTH","PRIMARY_APP_CONSENT"],"type":"string"},"name":{"type":"string"},"supportsWildcard":{"type":"boolean"}},"type":"object"},"type":"array"},"visible":{"type":"boolean"}},"type":"object"},"nullable":true,"type":"array"}},"required":["capabilityType"],"type":"object"},"relationships":{"properties":{"bundleId":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["bundleIds"],"type":"string"}},"required":["id","type"],"type":"object"}},"required":["data"],"type":"object"}},"required":["bundleId"],"type":"object"},"type":{"enum":["bundleIdCapabilities"],"type":"string"}},"required":["relationships","attributes","type"],"type":"object"}},"required":["data"],"title":"BundleIdCapabilityCreateRequest","type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"capabilityType":{"enum":["ICLOUD","IN_APP_PURCHASE","GAME_CENTER","PUSH_NOTIFICATIONS","WALLET","INTER_APP_AUDIO","MAPS","ASSOCIATED_DOMAINS","PERSONAL_VPN","APP_GROUPS","HEALTHKIT","HOMEKIT","WIRELESS_ACCESSORY_CONFIGURATION","APPLE_PAY","DATA_PROTECTION","SIRIKIT","NETWORK_EXTENSIONS","MULTIPATH","HOT_SPOT","NFC_TAG_READING","CLASSKIT","AUTOFILL_CREDENTIAL_PROVIDER","ACCESS_WIFI_INFORMATION","NETWORK_CUSTOM_PROTOCOL","COREMEDIA_HLS_LOW_LATENCY","SYSTEM_EXTENSION_INSTALL","USER_MANAGEMENT","APPLE_ID_AUTH"],"type":"string"},"settings":{"items":{"properties":{"allowedInstances":{"enum":["ENTRY","SINGLE","MULTIPLE"],"type":"string"},"description":{"type":"string"},"enabledByDefault":{"type":"boolean"},"key":{"enum":["ICLOUD_VERSION","DATA_PROTECTION_PERMISSION_LEVEL","APPLE_ID_AUTH_APP_CONSENT"],"type":"string"},"minInstances":{"type":"integer"},"name":{"type":"string"},"options":{"items":{"properties":{"description":{"type":"string"},"enabled":{"type":"boolean"},"enabledByDefault":{"type":"boolean"},"key":{"enum":["XCODE_5","XCODE_6","COMPLETE_PROTECTION","PROTECTED_UNLESS_OPEN","PROTECTED_UNTIL_FIRST_USER_AUTH","PRIMARY_APP_CONSENT"],"type":"string"},"name":{"type":"string"},"supportsWildcard":{"type":"boolean"}},"type":"object"},"type":"array"},"visible":{"type":"boolean"}},"type":"object"},"type":["array","null"]}},"required":["capabilityType"],"type":"object"},"relationships":{"properties":{"bundleId":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["bundleIds"],"type":"string"}},"required":["id","type"],"type":"object"}},"required":["data"],"type":"object"}},"required":["bundleId"],"type":"object"},"type":{"enum":["bundleIdCapabilities"],"type":"string"}},"required":["relationships","attributes","type"],"type":"object"}},"required":["data"],"title":"BundleIdCapabilityCreateRequest","type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "POST".to_string(),
@@ -4249,11 +5554,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_97() -> ToolSpec {
+    ToolSpec {
             name: "bundleIdCapabilities_updateInstance".to_string(),
             description: "Update attributes or relationships of one `bundleIdCapabilities` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"capabilityType":{"enum":["ICLOUD","IN_APP_PURCHASE","GAME_CENTER","PUSH_NOTIFICATIONS","WALLET","INTER_APP_AUDIO","MAPS","ASSOCIATED_DOMAINS","PERSONAL_VPN","APP_GROUPS","HEALTHKIT","HOMEKIT","WIRELESS_ACCESSORY_CONFIGURATION","APPLE_PAY","DATA_PROTECTION","SIRIKIT","NETWORK_EXTENSIONS","MULTIPATH","HOT_SPOT","NFC_TAG_READING","CLASSKIT","AUTOFILL_CREDENTIAL_PROVIDER","ACCESS_WIFI_INFORMATION","NETWORK_CUSTOM_PROTOCOL","COREMEDIA_HLS_LOW_LATENCY","SYSTEM_EXTENSION_INSTALL","USER_MANAGEMENT","APPLE_ID_AUTH"],"type":"string"},"settings":{"items":{"properties":{"allowedInstances":{"enum":["ENTRY","SINGLE","MULTIPLE"],"type":"string"},"description":{"type":"string"},"enabledByDefault":{"type":"boolean"},"key":{"enum":["ICLOUD_VERSION","DATA_PROTECTION_PERMISSION_LEVEL","APPLE_ID_AUTH_APP_CONSENT"],"type":"string"},"minInstances":{"type":"integer"},"name":{"type":"string"},"options":{"items":{"properties":{"description":{"type":"string"},"enabled":{"type":"boolean"},"enabledByDefault":{"type":"boolean"},"key":{"enum":["XCODE_5","XCODE_6","COMPLETE_PROTECTION","PROTECTED_UNLESS_OPEN","PROTECTED_UNTIL_FIRST_USER_AUTH","PRIMARY_APP_CONSENT"],"type":"string"},"name":{"type":"string"},"supportsWildcard":{"type":"boolean"}},"type":"object"},"type":"array"},"visible":{"type":"boolean"}},"type":"object"},"nullable":true,"type":"array"}},"type":"object"},"id":{"type":"string"},"type":{"enum":["bundleIdCapabilities"],"type":"string"}},"required":["id","type"],"type":"object"},"id":{"type":"string"}},"required":["id","data"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"capabilityType":{"enum":["ICLOUD","IN_APP_PURCHASE","GAME_CENTER","PUSH_NOTIFICATIONS","WALLET","INTER_APP_AUDIO","MAPS","ASSOCIATED_DOMAINS","PERSONAL_VPN","APP_GROUPS","HEALTHKIT","HOMEKIT","WIRELESS_ACCESSORY_CONFIGURATION","APPLE_PAY","DATA_PROTECTION","SIRIKIT","NETWORK_EXTENSIONS","MULTIPATH","HOT_SPOT","NFC_TAG_READING","CLASSKIT","AUTOFILL_CREDENTIAL_PROVIDER","ACCESS_WIFI_INFORMATION","NETWORK_CUSTOM_PROTOCOL","COREMEDIA_HLS_LOW_LATENCY","SYSTEM_EXTENSION_INSTALL","USER_MANAGEMENT","APPLE_ID_AUTH"],"type":"string"},"settings":{"items":{"properties":{"allowedInstances":{"enum":["ENTRY","SINGLE","MULTIPLE"],"type":"string"},"description":{"type":"string"},"enabledByDefault":{"type":"boolean"},"key":{"enum":["ICLOUD_VERSION","DATA_PROTECTION_PERMISSION_LEVEL","APPLE_ID_AUTH_APP_CONSENT"],"type":"string"},"minInstances":{"type":"integer"},"name":{"type":"string"},"options":{"items":{"properties":{"description":{"type":"string"},"enabled":{"type":"boolean"},"enabledByDefault":{"type":"boolean"},"key":{"enum":["XCODE_5","XCODE_6","COMPLETE_PROTECTION","PROTECTED_UNLESS_OPEN","PROTECTED_UNTIL_FIRST_USER_AUTH","PRIMARY_APP_CONSENT"],"type":"string"},"name":{"type":"string"},"supportsWildcard":{"type":"boolean"}},"type":"object"},"type":"array"},"visible":{"type":"boolean"}},"type":"object"},"type":["array","null"]}},"type":"object"},"id":{"type":"string"},"type":{"enum":["bundleIdCapabilities"],"type":"string"}},"required":["id","type"],"type":"object"},"id":{"type":"string"}},"required":["id","data"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "PATCH".to_string(),
@@ -4279,40 +5586,44 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
-            name: "bundleIdCapabilities_deleteInstance".to_string(),
-            description: "Delete one `bundleIdCapabilities` resource. This cannot be undone.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"id":{"type":"string"}},"required":["id"],"type":"object"}"#)
-                .expect("generated input schema must be valid JSON"),
-            execution: ExecutionKind::Rest(RestOperation {
-                method: "DELETE".to_string(),
-                path_template: "/v1/bundleIdCapabilities/{id}".to_string(),
-                params: vec![
-                    ParamBinding {
-                        name: "id".to_string(),
-                        location: ParamLocation::Path,
-                    },
-                ],
-                body_fields: vec![
-                ],
+        }
+}
+fn build_operation_98() -> ToolSpec {
+    ToolSpec {
+        name: "bundleIdCapabilities_deleteInstance".to_string(),
+        description: "Delete one `bundleIdCapabilities` resource. This cannot be undone."
+            .to_string(),
+        input_schema: serde_json::from_str(
+            r#"{"properties":{"id":{"type":"string"}},"required":["id"],"type":"object"}"#,
+        )
+        .expect("generated input schema must be valid JSON"),
+        execution: ExecutionKind::Rest(RestOperation {
+            method: "DELETE".to_string(),
+            path_template: "/v1/bundleIdCapabilities/{id}".to_string(),
+            params: vec![ParamBinding {
+                name: "id".to_string(),
+                location: ParamLocation::Path,
+            }],
+            body_fields: vec![],
             content_type: None,
             raw_body: false,
             media: None,
         }),
-            hints: ToolHints {
-                title: None,
-                output_schema: None,
-                read_only: Some(false),
-                destructive: Some(true),
-                idempotent: Some(true),
-                open_world: Some(true),
-            },
+        hints: ToolHints {
+            title: None,
+            output_schema: None,
+            read_only: Some(false),
+            destructive: Some(true),
+            idempotent: Some(true),
+            open_world: Some(true),
         },
-        ToolSpec {
+    }
+}
+fn build_operation_99() -> ToolSpec {
+    ToolSpec {
             name: "bundleIds_getCollection".to_string(),
             description: "List `bundleIds` resources; supports the filters and pagination parameters below.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[apps]":{"items":{"type":"string"},"type":"array"},"fields[bundleIdCapabilities]":{"items":{"type":"string"},"type":"array"},"fields[bundleIds]":{"items":{"type":"string"},"type":"array"},"fields[profiles]":{"items":{"type":"string"},"type":"array"},"filter[id]":{"items":{"type":"string"},"type":"array"},"filter[identifier]":{"items":{"type":"string"},"type":"array"},"filter[name]":{"items":{"type":"string"},"type":"array"},"filter[platform]":{"items":{"enum":["IOS","MAC_OS","UNIVERSAL"],"type":"string"},"type":"array"},"filter[seedId]":{"items":{"type":"string"},"type":"array"},"include":{"items":{"enum":["profiles","bundleIdCapabilities","app"],"type":"string"},"type":"array"},"limit":{"maximum":200,"type":"integer"},"limit[bundleIdCapabilities]":{"maximum":50,"type":"integer"},"limit[profiles]":{"maximum":50,"type":"integer"},"sort":{"items":{"enum":["name","-name","platform","-platform","identifier","-identifier","seedId","-seedId","id","-id"],"type":"string"},"type":"array"}},"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[apps]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[bundleIdCapabilities]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[bundleIds]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[profiles]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[id]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[identifier]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[name]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[platform]":{"items":{"enum":["IOS","MAC_OS","UNIVERSAL"],"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[seedId]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"include":{"items":{"enum":["profiles","bundleIdCapabilities","app"],"type":"string"},"type":"array","x-mcp-query-explode":false},"limit":{"maximum":200,"type":"integer"},"limit[bundleIdCapabilities]":{"maximum":50,"type":"integer"},"limit[profiles]":{"maximum":50,"type":"integer"},"sort":{"items":{"enum":["name","-name","platform","-platform","identifier","-identifier","seedId","-seedId","id","-id"],"type":"string"},"type":"array","x-mcp-query-explode":false}},"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -4393,11 +5704,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_100() -> ToolSpec {
+    ToolSpec {
             name: "bundleIds_createInstance".to_string(),
             description: "Create one `bundleIds` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"identifier":{"type":"string"},"name":{"type":"string"},"platform":{"enum":["IOS","MAC_OS","UNIVERSAL"],"type":"string"},"seedId":{"nullable":true,"type":"string"}},"required":["identifier","name","platform"],"type":"object"},"type":{"enum":["bundleIds"],"type":"string"}},"required":["attributes","type"],"type":"object"}},"required":["data"],"title":"BundleIdCreateRequest","type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"identifier":{"type":"string"},"name":{"type":"string"},"platform":{"enum":["IOS","MAC_OS","UNIVERSAL"],"type":"string"},"seedId":{"type":["string","null"]}},"required":["identifier","name","platform"],"type":"object"},"type":{"enum":["bundleIds"],"type":"string"}},"required":["attributes","type"],"type":"object"}},"required":["data"],"title":"BundleIdCreateRequest","type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "POST".to_string(),
@@ -4419,11 +5732,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_101() -> ToolSpec {
+    ToolSpec {
             name: "bundleIds_getInstance".to_string(),
             description: "Get one `bundleIds` resource by id.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"fields[apps]":{"items":{"type":"string"},"type":"array"},"fields[bundleIdCapabilities]":{"items":{"type":"string"},"type":"array"},"fields[bundleIds]":{"items":{"type":"string"},"type":"array"},"fields[profiles]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["profiles","bundleIdCapabilities","app"],"type":"string"},"type":"array"},"limit[bundleIdCapabilities]":{"maximum":50,"type":"integer"},"limit[profiles]":{"maximum":50,"type":"integer"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"fields[apps]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[bundleIdCapabilities]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[bundleIds]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[profiles]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["profiles","bundleIdCapabilities","app"],"type":"string"},"type":"array","x-mcp-query-explode":false},"limit[bundleIdCapabilities]":{"maximum":50,"type":"integer"},"limit[profiles]":{"maximum":50,"type":"integer"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -4476,11 +5791,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_102() -> ToolSpec {
+    ToolSpec {
             name: "bundleIds_updateInstance".to_string(),
             description: "Update attributes or relationships of one `bundleIds` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"name":{"nullable":true,"type":"string"}},"type":"object"},"id":{"type":"string"},"type":{"enum":["bundleIds"],"type":"string"}},"required":["id","type"],"type":"object"},"id":{"type":"string"}},"required":["id","data"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"name":{"type":["string","null"]}},"type":"object"},"id":{"type":"string"},"type":{"enum":["bundleIds"],"type":"string"}},"required":["id","type"],"type":"object"},"id":{"type":"string"}},"required":["id","data"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "PATCH".to_string(),
@@ -4506,40 +5823,43 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
-            name: "bundleIds_deleteInstance".to_string(),
-            description: "Delete one `bundleIds` resource. This cannot be undone.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"id":{"type":"string"}},"required":["id"],"type":"object"}"#)
-                .expect("generated input schema must be valid JSON"),
-            execution: ExecutionKind::Rest(RestOperation {
-                method: "DELETE".to_string(),
-                path_template: "/v1/bundleIds/{id}".to_string(),
-                params: vec![
-                    ParamBinding {
-                        name: "id".to_string(),
-                        location: ParamLocation::Path,
-                    },
-                ],
-                body_fields: vec![
-                ],
+        }
+}
+fn build_operation_103() -> ToolSpec {
+    ToolSpec {
+        name: "bundleIds_deleteInstance".to_string(),
+        description: "Delete one `bundleIds` resource. This cannot be undone.".to_string(),
+        input_schema: serde_json::from_str(
+            r#"{"properties":{"id":{"type":"string"}},"required":["id"],"type":"object"}"#,
+        )
+        .expect("generated input schema must be valid JSON"),
+        execution: ExecutionKind::Rest(RestOperation {
+            method: "DELETE".to_string(),
+            path_template: "/v1/bundleIds/{id}".to_string(),
+            params: vec![ParamBinding {
+                name: "id".to_string(),
+                location: ParamLocation::Path,
+            }],
+            body_fields: vec![],
             content_type: None,
             raw_body: false,
             media: None,
         }),
-            hints: ToolHints {
-                title: None,
-                output_schema: None,
-                read_only: Some(false),
-                destructive: Some(true),
-                idempotent: Some(true),
-                open_world: Some(true),
-            },
+        hints: ToolHints {
+            title: None,
+            output_schema: None,
+            read_only: Some(false),
+            destructive: Some(true),
+            idempotent: Some(true),
+            open_world: Some(true),
         },
-        ToolSpec {
+    }
+}
+fn build_operation_104() -> ToolSpec {
+    ToolSpec {
             name: "certificates_getCollection".to_string(),
             description: "List `certificates` resources; supports the filters and pagination parameters below.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[certificates]":{"items":{"type":"string"},"type":"array"},"fields[passTypeIds]":{"items":{"type":"string"},"type":"array"},"filter[certificateType]":{"items":{"enum":["APPLE_PAY","APPLE_PAY_MERCHANT_IDENTITY","APPLE_PAY_PSP_IDENTITY","APPLE_PAY_RSA","DEVELOPER_ID_KEXT","DEVELOPER_ID_KEXT_G2","DEVELOPER_ID_APPLICATION","DEVELOPER_ID_APPLICATION_G2","DEVELOPMENT","DISTRIBUTION","IDENTITY_ACCESS","IOS_DEVELOPMENT","IOS_DISTRIBUTION","MAC_APP_DISTRIBUTION","MAC_INSTALLER_DISTRIBUTION","MAC_APP_DEVELOPMENT","PASS_TYPE_ID","PASS_TYPE_ID_WITH_NFC"],"type":"string"},"type":"array"},"filter[displayName]":{"items":{"type":"string"},"type":"array"},"filter[id]":{"items":{"type":"string"},"type":"array"},"filter[serialNumber]":{"items":{"type":"string"},"type":"array"},"include":{"items":{"enum":["passTypeId"],"type":"string"},"type":"array"},"limit":{"maximum":200,"type":"integer"},"sort":{"items":{"enum":["displayName","-displayName","certificateType","-certificateType","serialNumber","-serialNumber","id","-id"],"type":"string"},"type":"array"}},"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[certificates]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[passTypeIds]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[certificateType]":{"items":{"enum":["APPLE_PAY","APPLE_PAY_MERCHANT_IDENTITY","APPLE_PAY_PSP_IDENTITY","APPLE_PAY_RSA","DEVELOPER_ID_KEXT","DEVELOPER_ID_KEXT_G2","DEVELOPER_ID_APPLICATION","DEVELOPER_ID_APPLICATION_G2","DEVELOPMENT","DISTRIBUTION","IDENTITY_ACCESS","IOS_DEVELOPMENT","IOS_DISTRIBUTION","MAC_APP_DISTRIBUTION","MAC_INSTALLER_DISTRIBUTION","MAC_APP_DEVELOPMENT","PASS_TYPE_ID","PASS_TYPE_ID_WITH_NFC"],"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[displayName]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[id]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[serialNumber]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"include":{"items":{"enum":["passTypeId"],"type":"string"},"type":"array","x-mcp-query-explode":false},"limit":{"maximum":200,"type":"integer"},"sort":{"items":{"enum":["displayName","-displayName","certificateType","-certificateType","serialNumber","-serialNumber","id","-id"],"type":"string"},"type":"array","x-mcp-query-explode":false}},"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -4600,8 +5920,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_105() -> ToolSpec {
+    ToolSpec {
             name: "certificates_createInstance".to_string(),
             description: "Create a signing certificate from a certificate signing request (`csrContent`, `certificateType`).".to_string(),
             input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"certificateType":{"enum":["APPLE_PAY","APPLE_PAY_MERCHANT_IDENTITY","APPLE_PAY_PSP_IDENTITY","APPLE_PAY_RSA","DEVELOPER_ID_KEXT","DEVELOPER_ID_KEXT_G2","DEVELOPER_ID_APPLICATION","DEVELOPER_ID_APPLICATION_G2","DEVELOPMENT","DISTRIBUTION","IDENTITY_ACCESS","IOS_DEVELOPMENT","IOS_DISTRIBUTION","MAC_APP_DISTRIBUTION","MAC_INSTALLER_DISTRIBUTION","MAC_APP_DEVELOPMENT","PASS_TYPE_ID","PASS_TYPE_ID_WITH_NFC"],"type":"string"},"csrContent":{"type":"string"}},"required":["csrContent","certificateType"],"type":"object"},"relationships":{"properties":{"merchantId":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["merchantIds"],"type":"string"}},"required":["id","type"],"type":"object"}},"type":"object"},"passTypeId":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["passTypeIds"],"type":"string"}},"required":["id","type"],"type":"object"}},"type":"object"}},"type":"object"},"type":{"enum":["certificates"],"type":"string"}},"required":["attributes","type"],"type":"object"}},"required":["data"],"title":"CertificateCreateRequest","type":"object"}"#)
@@ -4626,11 +5948,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_106() -> ToolSpec {
+    ToolSpec {
             name: "certificates_getInstance".to_string(),
             description: "Get one `certificates` resource by id.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"fields[certificates]":{"items":{"type":"string"},"type":"array"},"fields[passTypeIds]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["passTypeId"],"type":"string"},"type":"array"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"fields[certificates]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[passTypeIds]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["passTypeId"],"type":"string"},"type":"array","x-mcp-query-explode":false}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -4667,11 +5991,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_107() -> ToolSpec {
+    ToolSpec {
             name: "certificates_updateInstance".to_string(),
             description: "Update attributes or relationships of one `certificates` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"activated":{"nullable":true,"type":"boolean"}},"type":"object"},"id":{"type":"string"},"type":{"enum":["certificates"],"type":"string"}},"required":["id","type"],"type":"object"},"id":{"type":"string"}},"required":["id","data"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"activated":{"type":["boolean","null"]}},"type":"object"},"id":{"type":"string"},"type":{"enum":["certificates"],"type":"string"}},"required":["id","type"],"type":"object"},"id":{"type":"string"}},"required":["id","data"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "PATCH".to_string(),
@@ -4697,8 +6023,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_108() -> ToolSpec {
+    ToolSpec {
             name: "certificates_deleteInstance".to_string(),
             description: "Revoke a signing certificate. Apps and profiles that use it stop working. This cannot be undone.".to_string(),
             input_schema: serde_json::from_str(r#"{"properties":{"id":{"type":"string"}},"required":["id"],"type":"object"}"#)
@@ -4726,8 +6054,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_109() -> ToolSpec {
+    ToolSpec {
             name: "customerReviewResponses_createInstance".to_string(),
             description: "Publish a developer response to a customer review. If a response exists it is replaced.".to_string(),
             input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"responseBody":{"type":"string"}},"required":["responseBody"],"type":"object"},"relationships":{"properties":{"review":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["customerReviews"],"type":"string"}},"required":["id","type"],"type":"object"}},"required":["data"],"type":"object"}},"required":["review"],"type":"object"},"type":{"enum":["customerReviewResponses"],"type":"string"}},"required":["relationships","attributes","type"],"type":"object"}},"required":["data"],"title":"CustomerReviewResponseV1CreateRequest","type":"object"}"#)
@@ -4752,11 +6082,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_110() -> ToolSpec {
+    ToolSpec {
             name: "customerReviewResponses_getInstance".to_string(),
             description: "Get one `customerReviewResponses` resource by id.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"fields[customerReviewResponses]":{"items":{"type":"string"},"type":"array"},"fields[customerReviews]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["review"],"type":"string"},"type":"array"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"fields[customerReviewResponses]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[customerReviews]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["review"],"type":"string"},"type":"array","x-mcp-query-explode":false}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -4793,40 +6125,44 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
-            name: "customerReviewResponses_deleteInstance".to_string(),
-            description: "Delete the developer response to a customer review. This cannot be undone.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"id":{"type":"string"}},"required":["id"],"type":"object"}"#)
-                .expect("generated input schema must be valid JSON"),
-            execution: ExecutionKind::Rest(RestOperation {
-                method: "DELETE".to_string(),
-                path_template: "/v1/customerReviewResponses/{id}".to_string(),
-                params: vec![
-                    ParamBinding {
-                        name: "id".to_string(),
-                        location: ParamLocation::Path,
-                    },
-                ],
-                body_fields: vec![
-                ],
+        }
+}
+fn build_operation_111() -> ToolSpec {
+    ToolSpec {
+        name: "customerReviewResponses_deleteInstance".to_string(),
+        description: "Delete the developer response to a customer review. This cannot be undone."
+            .to_string(),
+        input_schema: serde_json::from_str(
+            r#"{"properties":{"id":{"type":"string"}},"required":["id"],"type":"object"}"#,
+        )
+        .expect("generated input schema must be valid JSON"),
+        execution: ExecutionKind::Rest(RestOperation {
+            method: "DELETE".to_string(),
+            path_template: "/v1/customerReviewResponses/{id}".to_string(),
+            params: vec![ParamBinding {
+                name: "id".to_string(),
+                location: ParamLocation::Path,
+            }],
+            body_fields: vec![],
             content_type: None,
             raw_body: false,
             media: None,
         }),
-            hints: ToolHints {
-                title: None,
-                output_schema: None,
-                read_only: Some(false),
-                destructive: Some(true),
-                idempotent: Some(true),
-                open_world: Some(true),
-            },
+        hints: ToolHints {
+            title: None,
+            output_schema: None,
+            read_only: Some(false),
+            destructive: Some(true),
+            idempotent: Some(true),
+            open_world: Some(true),
         },
-        ToolSpec {
+    }
+}
+fn build_operation_112() -> ToolSpec {
+    ToolSpec {
             name: "customerReviews_getInstance".to_string(),
             description: "Get one `customerReviews` resource by id.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"fields[customerReviewResponses]":{"items":{"type":"string"},"type":"array"},"fields[customerReviews]":{"items":{"type":"string"},"type":"array"},"fields[territories]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["response","reviewTerritory"],"type":"string"},"type":"array"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"fields[customerReviewResponses]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[customerReviews]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[territories]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["response","reviewTerritory"],"type":"string"},"type":"array","x-mcp-query-explode":false}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -4867,11 +6203,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_113() -> ToolSpec {
+    ToolSpec {
             name: "devices_getCollection".to_string(),
             description: "List `devices` resources; supports the filters and pagination parameters below.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[devices]":{"items":{"type":"string"},"type":"array"},"filter[id]":{"items":{"type":"string"},"type":"array"},"filter[name]":{"items":{"type":"string"},"type":"array"},"filter[platform]":{"items":{"enum":["IOS","MAC_OS","UNIVERSAL"],"type":"string"},"type":"array"},"filter[status]":{"items":{"enum":["ENABLED","DISABLED"],"type":"string"},"type":"array"},"filter[udid]":{"items":{"type":"string"},"type":"array"},"limit":{"maximum":200,"type":"integer"},"sort":{"items":{"enum":["name","-name","platform","-platform","udid","-udid","status","-status","id","-id"],"type":"string"},"type":"array"}},"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[devices]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[id]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[name]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[platform]":{"items":{"enum":["IOS","MAC_OS","UNIVERSAL"],"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[status]":{"items":{"enum":["ENABLED","DISABLED"],"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[udid]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"limit":{"maximum":200,"type":"integer"},"sort":{"items":{"enum":["name","-name","platform","-platform","udid","-udid","status","-status","id","-id"],"type":"string"},"type":"array","x-mcp-query-explode":false}},"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -4928,8 +6266,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_114() -> ToolSpec {
+    ToolSpec {
             name: "devices_createInstance".to_string(),
             description: "Register a device UDID for development/ad hoc provisioning. Registrations count against the yearly device limit.".to_string(),
             input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"name":{"type":"string"},"platform":{"enum":["IOS","MAC_OS","UNIVERSAL"],"type":"string"},"udid":{"type":"string"}},"required":["name","udid","platform"],"type":"object"},"type":{"enum":["devices"],"type":"string"}},"required":["attributes","type"],"type":"object"}},"required":["data"],"title":"DeviceCreateRequest","type":"object"}"#)
@@ -4954,11 +6294,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_115() -> ToolSpec {
+    ToolSpec {
             name: "devices_getInstance".to_string(),
             description: "Get one `devices` resource by id.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"fields[devices]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"fields[devices]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -4987,11 +6329,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_116() -> ToolSpec {
+    ToolSpec {
             name: "devices_updateInstance".to_string(),
             description: "Update attributes or relationships of one `devices` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"name":{"nullable":true,"type":"string"},"status":{"enum":["ENABLED","DISABLED"],"nullable":true,"type":"string"}},"type":"object"},"id":{"type":"string"},"type":{"enum":["devices"],"type":"string"}},"required":["id","type"],"type":"object"},"id":{"type":"string"}},"required":["id","data"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"name":{"type":["string","null"]},"status":{"enum":["ENABLED","DISABLED",null],"type":["string","null"]}},"type":"object"},"id":{"type":"string"},"type":{"enum":["devices"],"type":"string"}},"required":["id","type"],"type":"object"},"id":{"type":"string"}},"required":["id","data"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "PATCH".to_string(),
@@ -5017,11 +6361,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_117() -> ToolSpec {
+    ToolSpec {
             name: "financeReports_getCollection".to_string(),
             description: "Download a finance report (gzip TSV, returned as text). Requires `filter[vendorNumber]`, `filter[reportType]`, `filter[regionCode]`, `filter[reportDate]`.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"filter[regionCode]":{"items":{"type":"string"},"type":"array"},"filter[reportDate]":{"items":{"type":"string"},"type":"array"},"filter[reportType]":{"items":{"enum":["FINANCIAL","FINANCE_DETAIL"],"type":"string"},"type":"array"},"filter[vendorNumber]":{"items":{"type":"string"},"type":"array"}},"required":["filter[vendorNumber]","filter[reportType]","filter[regionCode]","filter[reportDate]"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"filter[regionCode]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[reportDate]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[reportType]":{"items":{"enum":["FINANCIAL","FINANCE_DETAIL"],"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[vendorNumber]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false}},"required":["filter[vendorNumber]","filter[reportType]","filter[regionCode]","filter[reportDate]"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -5058,8 +6404,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_118() -> ToolSpec {
+    ToolSpec {
             name: "inAppPurchaseAppStoreReviewScreenshots_createInstance".to_string(),
             description: "Create one `inAppPurchaseAppStoreReviewScreenshots` resource.".to_string(),
             input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"fileName":{"type":"string"},"fileSize":{"type":"integer"}},"required":["fileName","fileSize"],"type":"object"},"relationships":{"properties":{"inAppPurchaseV2":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["inAppPurchases"],"type":"string"}},"required":["id","type"],"type":"object"}},"required":["data"],"type":"object"}},"required":["inAppPurchaseV2"],"type":"object"},"type":{"enum":["inAppPurchaseAppStoreReviewScreenshots"],"type":"string"}},"required":["relationships","attributes","type"],"type":"object"}},"required":["data"],"title":"InAppPurchaseAppStoreReviewScreenshotCreateRequest","type":"object"}"#)
@@ -5084,11 +6432,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_119() -> ToolSpec {
+    ToolSpec {
             name: "inAppPurchaseAppStoreReviewScreenshots_getInstance".to_string(),
             description: "Get one `inAppPurchaseAppStoreReviewScreenshots` resource by id.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"fields[inAppPurchaseAppStoreReviewScreenshots]":{"items":{"type":"string"},"type":"array"},"fields[inAppPurchases]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["inAppPurchaseV2"],"type":"string"},"type":"array"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"fields[inAppPurchaseAppStoreReviewScreenshots]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[inAppPurchases]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["inAppPurchaseV2"],"type":"string"},"type":"array","x-mcp-query-explode":false}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -5125,11 +6475,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_120() -> ToolSpec {
+    ToolSpec {
             name: "inAppPurchaseAppStoreReviewScreenshots_updateInstance".to_string(),
             description: "Update attributes or relationships of one `inAppPurchaseAppStoreReviewScreenshots` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"sourceFileChecksum":{"nullable":true,"type":"string"},"uploaded":{"nullable":true,"type":"boolean"}},"type":"object"},"id":{"type":"string"},"type":{"enum":["inAppPurchaseAppStoreReviewScreenshots"],"type":"string"}},"required":["id","type"],"type":"object"},"id":{"type":"string"}},"required":["id","data"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"sourceFileChecksum":{"type":["string","null"]},"uploaded":{"type":["boolean","null"]}},"type":"object"},"id":{"type":"string"},"type":{"enum":["inAppPurchaseAppStoreReviewScreenshots"],"type":"string"}},"required":["id","type"],"type":"object"},"id":{"type":"string"}},"required":["id","data"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "PATCH".to_string(),
@@ -5155,37 +6507,42 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
-            name: "inAppPurchaseAppStoreReviewScreenshots_deleteInstance".to_string(),
-            description: "Delete one `inAppPurchaseAppStoreReviewScreenshots` resource. This cannot be undone.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"id":{"type":"string"}},"required":["id"],"type":"object"}"#)
-                .expect("generated input schema must be valid JSON"),
-            execution: ExecutionKind::Rest(RestOperation {
-                method: "DELETE".to_string(),
-                path_template: "/v1/inAppPurchaseAppStoreReviewScreenshots/{id}".to_string(),
-                params: vec![
-                    ParamBinding {
-                        name: "id".to_string(),
-                        location: ParamLocation::Path,
-                    },
-                ],
-                body_fields: vec![
-                ],
+        }
+}
+fn build_operation_121() -> ToolSpec {
+    ToolSpec {
+        name: "inAppPurchaseAppStoreReviewScreenshots_deleteInstance".to_string(),
+        description:
+            "Delete one `inAppPurchaseAppStoreReviewScreenshots` resource. This cannot be undone."
+                .to_string(),
+        input_schema: serde_json::from_str(
+            r#"{"properties":{"id":{"type":"string"}},"required":["id"],"type":"object"}"#,
+        )
+        .expect("generated input schema must be valid JSON"),
+        execution: ExecutionKind::Rest(RestOperation {
+            method: "DELETE".to_string(),
+            path_template: "/v1/inAppPurchaseAppStoreReviewScreenshots/{id}".to_string(),
+            params: vec![ParamBinding {
+                name: "id".to_string(),
+                location: ParamLocation::Path,
+            }],
+            body_fields: vec![],
             content_type: None,
             raw_body: false,
             media: None,
         }),
-            hints: ToolHints {
-                title: None,
-                output_schema: None,
-                read_only: Some(false),
-                destructive: Some(true),
-                idempotent: Some(true),
-                open_world: Some(true),
-            },
+        hints: ToolHints {
+            title: None,
+            output_schema: None,
+            read_only: Some(false),
+            destructive: Some(true),
+            idempotent: Some(true),
+            open_world: Some(true),
         },
-        ToolSpec {
+    }
+}
+fn build_operation_122() -> ToolSpec {
+    ToolSpec {
             name: "inAppPurchaseAvailabilities_createInstance".to_string(),
             description: "Create one `inAppPurchaseAvailabilities` resource.".to_string(),
             input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"availableInNewTerritories":{"type":"boolean"}},"required":["availableInNewTerritories"],"type":"object"},"relationships":{"properties":{"availableTerritories":{"properties":{"data":{"items":{"properties":{"id":{"type":"string"},"type":{"enum":["territories"],"type":"string"}},"required":["id","type"],"type":"object"},"type":"array"}},"required":["data"],"type":"object"},"inAppPurchase":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["inAppPurchases"],"type":"string"}},"required":["id","type"],"type":"object"}},"required":["data"],"type":"object"}},"required":["inAppPurchase","availableTerritories"],"type":"object"},"type":{"enum":["inAppPurchaseAvailabilities"],"type":"string"}},"required":["relationships","attributes","type"],"type":"object"}},"required":["data"],"title":"InAppPurchaseAvailabilityCreateRequest","type":"object"}"#)
@@ -5210,11 +6567,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_123() -> ToolSpec {
+    ToolSpec {
             name: "inAppPurchaseAvailabilities_getInstance".to_string(),
             description: "Get one `inAppPurchaseAvailabilities` resource by id.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"fields[inAppPurchaseAvailabilities]":{"items":{"type":"string"},"type":"array"},"fields[territories]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["availableTerritories"],"type":"string"},"type":"array"},"limit[availableTerritories]":{"maximum":50,"type":"integer"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"fields[inAppPurchaseAvailabilities]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[territories]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["availableTerritories"],"type":"string"},"type":"array","x-mcp-query-explode":false},"limit[availableTerritories]":{"maximum":50,"type":"integer"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -5255,11 +6614,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_124() -> ToolSpec {
+    ToolSpec {
             name: "inAppPurchaseLocalizations_createInstance".to_string(),
             description: "Create one `inAppPurchaseLocalizations` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"description":{"nullable":true,"type":"string"},"locale":{"type":"string"},"name":{"type":"string"}},"required":["name","locale"],"type":"object"},"relationships":{"properties":{"inAppPurchaseV2":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["inAppPurchases"],"type":"string"}},"required":["id","type"],"type":"object"}},"required":["data"],"type":"object"}},"required":["inAppPurchaseV2"],"type":"object"},"type":{"enum":["inAppPurchaseLocalizations"],"type":"string"}},"required":["relationships","attributes","type"],"type":"object"}},"required":["data"],"title":"InAppPurchaseLocalizationCreateRequest","type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"description":{"type":["string","null"]},"locale":{"type":"string"},"name":{"type":"string"}},"required":["name","locale"],"type":"object"},"relationships":{"properties":{"inAppPurchaseV2":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["inAppPurchases"],"type":"string"}},"required":["id","type"],"type":"object"}},"required":["data"],"type":"object"}},"required":["inAppPurchaseV2"],"type":"object"},"type":{"enum":["inAppPurchaseLocalizations"],"type":"string"}},"required":["relationships","attributes","type"],"type":"object"}},"required":["data"],"title":"InAppPurchaseLocalizationCreateRequest","type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "POST".to_string(),
@@ -5281,11 +6642,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_125() -> ToolSpec {
+    ToolSpec {
             name: "inAppPurchaseLocalizations_getInstance".to_string(),
             description: "Get one `inAppPurchaseLocalizations` resource by id.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"fields[inAppPurchaseLocalizations]":{"items":{"type":"string"},"type":"array"},"fields[inAppPurchases]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["inAppPurchaseV2"],"type":"string"},"type":"array"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"fields[inAppPurchaseLocalizations]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[inAppPurchases]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["inAppPurchaseV2"],"type":"string"},"type":"array","x-mcp-query-explode":false}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -5322,11 +6685,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_126() -> ToolSpec {
+    ToolSpec {
             name: "inAppPurchaseLocalizations_updateInstance".to_string(),
             description: "Update attributes or relationships of one `inAppPurchaseLocalizations` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"description":{"nullable":true,"type":"string"},"name":{"nullable":true,"type":"string"}},"type":"object"},"id":{"type":"string"},"type":{"enum":["inAppPurchaseLocalizations"],"type":"string"}},"required":["id","type"],"type":"object"},"id":{"type":"string"}},"required":["id","data"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"description":{"type":["string","null"]},"name":{"type":["string","null"]}},"type":"object"},"id":{"type":"string"},"type":{"enum":["inAppPurchaseLocalizations"],"type":"string"}},"required":["id","type"],"type":"object"},"id":{"type":"string"}},"required":["id","data"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "PATCH".to_string(),
@@ -5352,40 +6717,44 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
-            name: "inAppPurchaseLocalizations_deleteInstance".to_string(),
-            description: "Delete one `inAppPurchaseLocalizations` resource. This cannot be undone.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"id":{"type":"string"}},"required":["id"],"type":"object"}"#)
-                .expect("generated input schema must be valid JSON"),
-            execution: ExecutionKind::Rest(RestOperation {
-                method: "DELETE".to_string(),
-                path_template: "/v1/inAppPurchaseLocalizations/{id}".to_string(),
-                params: vec![
-                    ParamBinding {
-                        name: "id".to_string(),
-                        location: ParamLocation::Path,
-                    },
-                ],
-                body_fields: vec![
-                ],
+        }
+}
+fn build_operation_127() -> ToolSpec {
+    ToolSpec {
+        name: "inAppPurchaseLocalizations_deleteInstance".to_string(),
+        description: "Delete one `inAppPurchaseLocalizations` resource. This cannot be undone."
+            .to_string(),
+        input_schema: serde_json::from_str(
+            r#"{"properties":{"id":{"type":"string"}},"required":["id"],"type":"object"}"#,
+        )
+        .expect("generated input schema must be valid JSON"),
+        execution: ExecutionKind::Rest(RestOperation {
+            method: "DELETE".to_string(),
+            path_template: "/v1/inAppPurchaseLocalizations/{id}".to_string(),
+            params: vec![ParamBinding {
+                name: "id".to_string(),
+                location: ParamLocation::Path,
+            }],
+            body_fields: vec![],
             content_type: None,
             raw_body: false,
             media: None,
         }),
-            hints: ToolHints {
-                title: None,
-                output_schema: None,
-                read_only: Some(false),
-                destructive: Some(true),
-                idempotent: Some(true),
-                open_world: Some(true),
-            },
+        hints: ToolHints {
+            title: None,
+            output_schema: None,
+            read_only: Some(false),
+            destructive: Some(true),
+            idempotent: Some(true),
+            open_world: Some(true),
         },
-        ToolSpec {
+    }
+}
+fn build_operation_128() -> ToolSpec {
+    ToolSpec {
             name: "inAppPurchasePriceSchedules_createInstance".to_string(),
             description: "Create one `inAppPurchasePriceSchedules` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"relationships":{"properties":{"baseTerritory":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["territories"],"type":"string"}},"required":["id","type"],"type":"object"}},"required":["data"],"type":"object"},"inAppPurchase":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["inAppPurchases"],"type":"string"}},"required":["id","type"],"type":"object"}},"required":["data"],"type":"object"},"manualPrices":{"properties":{"data":{"items":{"properties":{"id":{"type":"string"},"type":{"enum":["inAppPurchasePrices"],"type":"string"}},"required":["id","type"],"type":"object"},"type":"array"}},"required":["data"],"type":"object"}},"required":["inAppPurchase","manualPrices","baseTerritory"],"type":"object"},"type":{"enum":["inAppPurchasePriceSchedules"],"type":"string"}},"required":["relationships","type"],"type":"object"},"included":{"items":{"oneOf":[{"properties":{"attributes":{"properties":{"endDate":{"format":"date","nullable":true,"type":"string"},"startDate":{"format":"date","nullable":true,"type":"string"}},"type":"object"},"id":{"type":"string"},"relationships":{"properties":{"inAppPurchasePricePoint":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["inAppPurchasePricePoints"],"type":"string"}},"required":["id","type"],"type":"object"}},"type":"object"},"inAppPurchaseV2":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["inAppPurchases"],"type":"string"}},"required":["id","type"],"type":"object"}},"type":"object"}},"type":"object"},"type":{"enum":["inAppPurchasePrices"],"type":"string"}},"required":["type"],"type":"object"},{"properties":{"id":{"type":"string"},"type":{"enum":["territories"],"type":"string"}},"required":["type"],"type":"object"}]},"type":"array"}},"required":["data"],"title":"InAppPurchasePriceScheduleCreateRequest","type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"relationships":{"properties":{"baseTerritory":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["territories"],"type":"string"}},"required":["id","type"],"type":"object"}},"required":["data"],"type":"object"},"inAppPurchase":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["inAppPurchases"],"type":"string"}},"required":["id","type"],"type":"object"}},"required":["data"],"type":"object"},"manualPrices":{"properties":{"data":{"items":{"properties":{"id":{"type":"string"},"type":{"enum":["inAppPurchasePrices"],"type":"string"}},"required":["id","type"],"type":"object"},"type":"array"}},"required":["data"],"type":"object"}},"required":["inAppPurchase","manualPrices","baseTerritory"],"type":"object"},"type":{"enum":["inAppPurchasePriceSchedules"],"type":"string"}},"required":["relationships","type"],"type":"object"},"included":{"items":{"oneOf":[{"properties":{"attributes":{"properties":{"endDate":{"format":"date","type":["string","null"]},"startDate":{"format":"date","type":["string","null"]}},"type":"object"},"id":{"type":"string"},"relationships":{"properties":{"inAppPurchasePricePoint":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["inAppPurchasePricePoints"],"type":"string"}},"required":["id","type"],"type":"object"}},"type":"object"},"inAppPurchaseV2":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["inAppPurchases"],"type":"string"}},"required":["id","type"],"type":"object"}},"type":"object"}},"type":"object"},"type":{"enum":["inAppPurchasePrices"],"type":"string"}},"required":["type"],"type":"object"},{"properties":{"id":{"type":"string"},"type":{"enum":["territories"],"type":"string"}},"required":["type"],"type":"object"}]},"type":"array"}},"required":["data"],"title":"InAppPurchasePriceScheduleCreateRequest","type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "POST".to_string(),
@@ -5408,11 +6777,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_129() -> ToolSpec {
+    ToolSpec {
             name: "inAppPurchasePriceSchedules_getInstance".to_string(),
             description: "Get one `inAppPurchasePriceSchedules` resource by id.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"fields[inAppPurchasePriceSchedules]":{"items":{"type":"string"},"type":"array"},"fields[inAppPurchasePrices]":{"items":{"type":"string"},"type":"array"},"fields[territories]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["baseTerritory","manualPrices","automaticPrices"],"type":"string"},"type":"array"},"limit[automaticPrices]":{"maximum":50,"type":"integer"},"limit[manualPrices]":{"maximum":50,"type":"integer"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"fields[inAppPurchasePriceSchedules]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[inAppPurchasePrices]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[territories]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["baseTerritory","manualPrices","automaticPrices"],"type":"string"},"type":"array","x-mcp-query-explode":false},"limit[automaticPrices]":{"maximum":50,"type":"integer"},"limit[manualPrices]":{"maximum":50,"type":"integer"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -5461,8 +6832,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_130() -> ToolSpec {
+    ToolSpec {
             name: "inAppPurchaseSubmissions_createInstance".to_string(),
             description: "Create one `inAppPurchaseSubmissions` resource.".to_string(),
             input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"relationships":{"properties":{"inAppPurchaseV2":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["inAppPurchases"],"type":"string"}},"required":["id","type"],"type":"object"}},"required":["data"],"type":"object"}},"required":["inAppPurchaseV2"],"type":"object"},"type":{"enum":["inAppPurchaseSubmissions"],"type":"string"}},"required":["relationships","type"],"type":"object"}},"required":["data"],"title":"InAppPurchaseSubmissionCreateRequest","type":"object"}"#)
@@ -5487,11 +6860,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_131() -> ToolSpec {
+    ToolSpec {
             name: "inAppPurchasesV2_createInstance".to_string(),
             description: "Create one `inAppPurchases` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"familySharable":{"nullable":true,"type":"boolean"},"inAppPurchaseType":{"enum":["CONSUMABLE","NON_CONSUMABLE","NON_RENEWING_SUBSCRIPTION"],"type":"string"},"name":{"type":"string"},"productId":{"type":"string"},"reviewNote":{"nullable":true,"type":"string"}},"required":["productId","name","inAppPurchaseType"],"type":"object"},"relationships":{"properties":{"app":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["apps"],"type":"string"}},"required":["id","type"],"type":"object"}},"required":["data"],"type":"object"}},"required":["app"],"type":"object"},"type":{"enum":["inAppPurchases"],"type":"string"}},"required":["relationships","attributes","type"],"type":"object"}},"required":["data"],"title":"InAppPurchaseV2CreateRequest","type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"familySharable":{"type":["boolean","null"]},"inAppPurchaseType":{"enum":["CONSUMABLE","NON_CONSUMABLE","NON_RENEWING_SUBSCRIPTION"],"type":"string"},"name":{"type":"string"},"productId":{"type":"string"},"reviewNote":{"type":["string","null"]}},"required":["productId","name","inAppPurchaseType"],"type":"object"},"relationships":{"properties":{"app":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["apps"],"type":"string"}},"required":["id","type"],"type":"object"}},"required":["data"],"type":"object"}},"required":["app"],"type":"object"},"type":{"enum":["inAppPurchases"],"type":"string"}},"required":["relationships","attributes","type"],"type":"object"}},"required":["data"],"title":"InAppPurchaseV2CreateRequest","type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "POST".to_string(),
@@ -5513,11 +6888,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_132() -> ToolSpec {
+    ToolSpec {
             name: "inAppPurchasesV2_getInstance".to_string(),
             description: "Get one `inAppPurchases` resource by id.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"fields[inAppPurchaseAppStoreReviewScreenshots]":{"items":{"type":"string"},"type":"array"},"fields[inAppPurchaseAvailabilities]":{"items":{"type":"string"},"type":"array"},"fields[inAppPurchaseContents]":{"items":{"type":"string"},"type":"array"},"fields[inAppPurchaseImages]":{"items":{"type":"string"},"type":"array"},"fields[inAppPurchaseLocalizations]":{"items":{"type":"string"},"type":"array"},"fields[inAppPurchaseOfferCodes]":{"items":{"type":"string"},"type":"array"},"fields[inAppPurchasePricePoints]":{"items":{"type":"string"},"type":"array"},"fields[inAppPurchasePriceSchedules]":{"items":{"type":"string"},"type":"array"},"fields[inAppPurchaseVersions]":{"items":{"type":"string"},"type":"array"},"fields[inAppPurchases]":{"items":{"type":"string"},"type":"array"},"fields[promotedPurchases]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["inAppPurchaseLocalizations","pricePoints","content","appStoreReviewScreenshot","promotedPurchase","iapPriceSchedule","inAppPurchaseAvailability","images","offerCodes","versions"],"type":"string"},"type":"array"},"limit[images]":{"maximum":50,"type":"integer"},"limit[inAppPurchaseLocalizations]":{"maximum":50,"type":"integer"},"limit[offerCodes]":{"maximum":50,"type":"integer"},"limit[pricePoints]":{"maximum":8000,"type":"integer"},"limit[versions]":{"maximum":50,"type":"integer"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"fields[inAppPurchaseAppStoreReviewScreenshots]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[inAppPurchaseAvailabilities]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[inAppPurchaseContents]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[inAppPurchaseImages]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[inAppPurchaseLocalizations]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[inAppPurchaseOfferCodes]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[inAppPurchasePricePoints]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[inAppPurchasePriceSchedules]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[inAppPurchaseVersions]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[inAppPurchases]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[promotedPurchases]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["inAppPurchaseLocalizations","pricePoints","content","appStoreReviewScreenshot","promotedPurchase","iapPriceSchedule","inAppPurchaseAvailability","images","offerCodes","versions"],"type":"string"},"type":"array","x-mcp-query-explode":false},"limit[images]":{"maximum":50,"type":"integer"},"limit[inAppPurchaseLocalizations]":{"maximum":50,"type":"integer"},"limit[offerCodes]":{"maximum":50,"type":"integer"},"limit[pricePoints]":{"maximum":8000,"type":"integer"},"limit[versions]":{"maximum":50,"type":"integer"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -5610,11 +6987,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_133() -> ToolSpec {
+    ToolSpec {
             name: "inAppPurchasesV2_updateInstance".to_string(),
             description: "Update attributes or relationships of one `inAppPurchases` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"familySharable":{"nullable":true,"type":"boolean"},"name":{"nullable":true,"type":"string"},"reviewNote":{"nullable":true,"type":"string"}},"type":"object"},"id":{"type":"string"},"type":{"enum":["inAppPurchases"],"type":"string"}},"required":["id","type"],"type":"object"},"id":{"type":"string"}},"required":["id","data"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"familySharable":{"type":["boolean","null"]},"name":{"type":["string","null"]},"reviewNote":{"type":["string","null"]}},"type":"object"},"id":{"type":"string"},"type":{"enum":["inAppPurchases"],"type":"string"}},"required":["id","type"],"type":"object"},"id":{"type":"string"}},"required":["id","data"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "PATCH".to_string(),
@@ -5640,40 +7019,43 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
-            name: "inAppPurchasesV2_deleteInstance".to_string(),
-            description: "Delete one `inAppPurchases` resource. This cannot be undone.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"id":{"type":"string"}},"required":["id"],"type":"object"}"#)
-                .expect("generated input schema must be valid JSON"),
-            execution: ExecutionKind::Rest(RestOperation {
-                method: "DELETE".to_string(),
-                path_template: "/v2/inAppPurchases/{id}".to_string(),
-                params: vec![
-                    ParamBinding {
-                        name: "id".to_string(),
-                        location: ParamLocation::Path,
-                    },
-                ],
-                body_fields: vec![
-                ],
+        }
+}
+fn build_operation_134() -> ToolSpec {
+    ToolSpec {
+        name: "inAppPurchasesV2_deleteInstance".to_string(),
+        description: "Delete one `inAppPurchases` resource. This cannot be undone.".to_string(),
+        input_schema: serde_json::from_str(
+            r#"{"properties":{"id":{"type":"string"}},"required":["id"],"type":"object"}"#,
+        )
+        .expect("generated input schema must be valid JSON"),
+        execution: ExecutionKind::Rest(RestOperation {
+            method: "DELETE".to_string(),
+            path_template: "/v2/inAppPurchases/{id}".to_string(),
+            params: vec![ParamBinding {
+                name: "id".to_string(),
+                location: ParamLocation::Path,
+            }],
+            body_fields: vec![],
             content_type: None,
             raw_body: false,
             media: None,
         }),
-            hints: ToolHints {
-                title: None,
-                output_schema: None,
-                read_only: Some(false),
-                destructive: Some(true),
-                idempotent: Some(true),
-                open_world: Some(true),
-            },
+        hints: ToolHints {
+            title: None,
+            output_schema: None,
+            read_only: Some(false),
+            destructive: Some(true),
+            idempotent: Some(true),
+            open_world: Some(true),
         },
-        ToolSpec {
+    }
+}
+fn build_operation_135() -> ToolSpec {
+    ToolSpec {
             name: "preReleaseVersions_getCollection".to_string(),
             description: "List `preReleaseVersions` resources; supports the filters and pagination parameters below.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[apps]":{"items":{"type":"string"},"type":"array"},"fields[builds]":{"items":{"type":"string"},"type":"array"},"fields[preReleaseVersions]":{"items":{"type":"string"},"type":"array"},"filter[app]":{"items":{"type":"string"},"type":"array"},"filter[builds.buildAudienceType]":{"items":{"enum":["INTERNAL_ONLY","APP_STORE_ELIGIBLE"],"type":"string"},"type":"array"},"filter[builds.expired]":{"items":{"type":"string"},"type":"array"},"filter[builds.processingState]":{"items":{"enum":["PROCESSING","FAILED","INVALID","VALID"],"type":"string"},"type":"array"},"filter[builds.version]":{"items":{"type":"string"},"type":"array"},"filter[builds]":{"items":{"type":"string"},"type":"array"},"filter[platform]":{"items":{"enum":["IOS","MAC_OS","TV_OS","VISION_OS"],"type":"string"},"type":"array"},"filter[version]":{"items":{"type":"string"},"type":"array"},"include":{"items":{"enum":["builds","app"],"type":"string"},"type":"array"},"limit":{"maximum":200,"type":"integer"},"limit[builds]":{"maximum":50,"type":"integer"},"sort":{"items":{"enum":["version","-version"],"type":"string"},"type":"array"}},"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[apps]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[builds]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[preReleaseVersions]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[app]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[builds.buildAudienceType]":{"items":{"enum":["INTERNAL_ONLY","APP_STORE_ELIGIBLE"],"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[builds.expired]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[builds.processingState]":{"items":{"enum":["PROCESSING","FAILED","INVALID","VALID"],"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[builds.version]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[builds]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[platform]":{"items":{"enum":["IOS","MAC_OS","TV_OS","VISION_OS"],"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[version]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"include":{"items":{"enum":["builds","app"],"type":"string"},"type":"array","x-mcp-query-explode":false},"limit":{"maximum":200,"type":"integer"},"limit[builds]":{"maximum":50,"type":"integer"},"sort":{"items":{"enum":["version","-version"],"type":"string"},"type":"array","x-mcp-query-explode":false}},"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -5758,11 +7140,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_136() -> ToolSpec {
+    ToolSpec {
             name: "profiles_getCollection".to_string(),
             description: "List `profiles` resources; supports the filters and pagination parameters below.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[bundleIds]":{"items":{"type":"string"},"type":"array"},"fields[certificates]":{"items":{"type":"string"},"type":"array"},"fields[devices]":{"items":{"type":"string"},"type":"array"},"fields[profiles]":{"items":{"type":"string"},"type":"array"},"filter[id]":{"items":{"type":"string"},"type":"array"},"filter[name]":{"items":{"type":"string"},"type":"array"},"filter[profileState]":{"items":{"enum":["ACTIVE","INVALID"],"type":"string"},"type":"array"},"filter[profileType]":{"items":{"enum":["IOS_APP_DEVELOPMENT","IOS_APP_STORE","IOS_APP_ADHOC","IOS_APP_INHOUSE","MAC_APP_DEVELOPMENT","MAC_APP_STORE","MAC_APP_DIRECT","TVOS_APP_DEVELOPMENT","TVOS_APP_STORE","TVOS_APP_ADHOC","TVOS_APP_INHOUSE","MAC_CATALYST_APP_DEVELOPMENT","MAC_CATALYST_APP_STORE","MAC_CATALYST_APP_DIRECT"],"type":"string"},"type":"array"},"include":{"items":{"enum":["bundleId","devices","certificates"],"type":"string"},"type":"array"},"limit":{"maximum":200,"type":"integer"},"limit[certificates]":{"maximum":50,"type":"integer"},"limit[devices]":{"maximum":50,"type":"integer"},"sort":{"items":{"enum":["name","-name","profileType","-profileType","profileState","-profileState","id","-id"],"type":"string"},"type":"array"}},"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[bundleIds]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[certificates]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[devices]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[profiles]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[id]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[name]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[profileState]":{"items":{"enum":["ACTIVE","INVALID"],"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[profileType]":{"items":{"enum":["IOS_APP_DEVELOPMENT","IOS_APP_STORE","IOS_APP_ADHOC","IOS_APP_INHOUSE","MAC_APP_DEVELOPMENT","MAC_APP_STORE","MAC_APP_DIRECT","TVOS_APP_DEVELOPMENT","TVOS_APP_STORE","TVOS_APP_ADHOC","TVOS_APP_INHOUSE","MAC_CATALYST_APP_DEVELOPMENT","MAC_CATALYST_APP_STORE","MAC_CATALYST_APP_DIRECT"],"type":"string"},"type":"array","x-mcp-query-explode":false},"include":{"items":{"enum":["bundleId","devices","certificates"],"type":"string"},"type":"array","x-mcp-query-explode":false},"limit":{"maximum":200,"type":"integer"},"limit[certificates]":{"maximum":50,"type":"integer"},"limit[devices]":{"maximum":50,"type":"integer"},"sort":{"items":{"enum":["name","-name","profileType","-profileType","profileState","-profileState","id","-id"],"type":"string"},"type":"array","x-mcp-query-explode":false}},"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -5839,8 +7223,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_137() -> ToolSpec {
+    ToolSpec {
             name: "profiles_createInstance".to_string(),
             description: "Create a provisioning profile for a bundle ID, certificates and (for development/ad hoc) devices. The response includes `profileContent` (base64).".to_string(),
             input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"name":{"type":"string"},"profileType":{"enum":["IOS_APP_DEVELOPMENT","IOS_APP_STORE","IOS_APP_ADHOC","IOS_APP_INHOUSE","MAC_APP_DEVELOPMENT","MAC_APP_STORE","MAC_APP_DIRECT","TVOS_APP_DEVELOPMENT","TVOS_APP_STORE","TVOS_APP_ADHOC","TVOS_APP_INHOUSE","MAC_CATALYST_APP_DEVELOPMENT","MAC_CATALYST_APP_STORE","MAC_CATALYST_APP_DIRECT"],"type":"string"}},"required":["profileType","name"],"type":"object"},"relationships":{"properties":{"bundleId":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["bundleIds"],"type":"string"}},"required":["id","type"],"type":"object"}},"required":["data"],"type":"object"},"certificates":{"properties":{"data":{"items":{"properties":{"id":{"type":"string"},"type":{"enum":["certificates"],"type":"string"}},"required":["id","type"],"type":"object"},"type":"array"}},"required":["data"],"type":"object"},"devices":{"properties":{"data":{"items":{"properties":{"id":{"type":"string"},"type":{"enum":["devices"],"type":"string"}},"required":["id","type"],"type":"object"},"type":"array"}},"type":"object"}},"required":["certificates","bundleId"],"type":"object"},"type":{"enum":["profiles"],"type":"string"}},"required":["relationships","attributes","type"],"type":"object"}},"required":["data"],"title":"ProfileCreateRequest","type":"object"}"#)
@@ -5865,11 +7251,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_138() -> ToolSpec {
+    ToolSpec {
             name: "profiles_getInstance".to_string(),
             description: "Get one `profiles` resource by id.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"fields[bundleIds]":{"items":{"type":"string"},"type":"array"},"fields[certificates]":{"items":{"type":"string"},"type":"array"},"fields[devices]":{"items":{"type":"string"},"type":"array"},"fields[profiles]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["bundleId","devices","certificates"],"type":"string"},"type":"array"},"limit[certificates]":{"maximum":50,"type":"integer"},"limit[devices]":{"maximum":50,"type":"integer"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"fields[bundleIds]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[certificates]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[devices]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[profiles]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["bundleId","devices","certificates"],"type":"string"},"type":"array","x-mcp-query-explode":false},"limit[certificates]":{"maximum":50,"type":"integer"},"limit[devices]":{"maximum":50,"type":"integer"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -5922,37 +7310,40 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
-            name: "profiles_deleteInstance".to_string(),
-            description: "Delete a provisioning profile. This cannot be undone.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"id":{"type":"string"}},"required":["id"],"type":"object"}"#)
-                .expect("generated input schema must be valid JSON"),
-            execution: ExecutionKind::Rest(RestOperation {
-                method: "DELETE".to_string(),
-                path_template: "/v1/profiles/{id}".to_string(),
-                params: vec![
-                    ParamBinding {
-                        name: "id".to_string(),
-                        location: ParamLocation::Path,
-                    },
-                ],
-                body_fields: vec![
-                ],
+        }
+}
+fn build_operation_139() -> ToolSpec {
+    ToolSpec {
+        name: "profiles_deleteInstance".to_string(),
+        description: "Delete a provisioning profile. This cannot be undone.".to_string(),
+        input_schema: serde_json::from_str(
+            r#"{"properties":{"id":{"type":"string"}},"required":["id"],"type":"object"}"#,
+        )
+        .expect("generated input schema must be valid JSON"),
+        execution: ExecutionKind::Rest(RestOperation {
+            method: "DELETE".to_string(),
+            path_template: "/v1/profiles/{id}".to_string(),
+            params: vec![ParamBinding {
+                name: "id".to_string(),
+                location: ParamLocation::Path,
+            }],
+            body_fields: vec![],
             content_type: None,
             raw_body: false,
             media: None,
         }),
-            hints: ToolHints {
-                title: None,
-                output_schema: None,
-                read_only: Some(false),
-                destructive: Some(true),
-                idempotent: Some(true),
-                open_world: Some(true),
-            },
+        hints: ToolHints {
+            title: None,
+            output_schema: None,
+            read_only: Some(false),
+            destructive: Some(true),
+            idempotent: Some(true),
+            open_world: Some(true),
         },
-        ToolSpec {
+    }
+}
+fn build_operation_140() -> ToolSpec {
+    ToolSpec {
             name: "reviewSubmissionItems_createInstance".to_string(),
             description: "Add an item (e.g. an `appStoreVersion`) to a review submission that has not been submitted yet.".to_string(),
             input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"relationships":{"properties":{"appCustomProductPageVersion":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["appCustomProductPageVersions"],"type":"string"}},"required":["id","type"],"type":"object"}},"type":"object"},"appEvent":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["appEvents"],"type":"string"}},"required":["id","type"],"type":"object"}},"type":"object"},"appStoreVersion":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["appStoreVersions"],"type":"string"}},"required":["id","type"],"type":"object"}},"type":"object"},"appStoreVersionExperiment":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["appStoreVersionExperiments"],"type":"string"}},"required":["id","type"],"type":"object"}},"type":"object"},"appStoreVersionExperimentV2":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["appStoreVersionExperiments"],"type":"string"}},"required":["id","type"],"type":"object"}},"type":"object"},"backgroundAssetVersion":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["backgroundAssetVersions"],"type":"string"}},"required":["id","type"],"type":"object"}},"type":"object"},"gameCenterAchievementVersion":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["gameCenterAchievementVersions"],"type":"string"}},"required":["id","type"],"type":"object"}},"type":"object"},"gameCenterActivityVersion":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["gameCenterActivityVersions"],"type":"string"}},"required":["id","type"],"type":"object"}},"type":"object"},"gameCenterChallengeVersion":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["gameCenterChallengeVersions"],"type":"string"}},"required":["id","type"],"type":"object"}},"type":"object"},"gameCenterLeaderboardSetVersion":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["gameCenterLeaderboardSetVersions"],"type":"string"}},"required":["id","type"],"type":"object"}},"type":"object"},"gameCenterLeaderboardVersion":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["gameCenterLeaderboardVersions"],"type":"string"}},"required":["id","type"],"type":"object"}},"type":"object"},"inAppPurchaseVersion":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["inAppPurchaseVersions"],"type":"string"}},"required":["id","type"],"type":"object"}},"type":"object"},"reviewSubmission":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["reviewSubmissions"],"type":"string"}},"required":["id","type"],"type":"object"}},"required":["data"],"type":"object"},"subscriptionGroupVersion":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["subscriptionGroupVersions"],"type":"string"}},"required":["id","type"],"type":"object"}},"type":"object"},"subscriptionVersion":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["subscriptionVersions"],"type":"string"}},"required":["id","type"],"type":"object"}},"type":"object"}},"required":["reviewSubmission"],"type":"object"},"type":{"enum":["reviewSubmissionItems"],"type":"string"}},"required":["relationships","type"],"type":"object"}},"required":["data"],"title":"ReviewSubmissionItemCreateRequest","type":"object"}"#)
@@ -5977,11 +7368,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_141() -> ToolSpec {
+    ToolSpec {
             name: "reviewSubmissionItems_updateInstance".to_string(),
             description: "Update attributes or relationships of one `reviewSubmissionItems` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"removed":{"nullable":true,"type":"boolean"},"resolved":{"nullable":true,"type":"boolean"}},"type":"object"},"id":{"type":"string"},"type":{"enum":["reviewSubmissionItems"],"type":"string"}},"required":["id","type"],"type":"object"},"id":{"type":"string"}},"required":["id","data"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"removed":{"type":["boolean","null"]},"resolved":{"type":["boolean","null"]}},"type":"object"},"id":{"type":"string"},"type":{"enum":["reviewSubmissionItems"],"type":"string"}},"required":["id","type"],"type":"object"},"id":{"type":"string"}},"required":["id","data"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "PATCH".to_string(),
@@ -6007,40 +7400,44 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
-            name: "reviewSubmissionItems_deleteInstance".to_string(),
-            description: "Delete one `reviewSubmissionItems` resource. This cannot be undone.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"id":{"type":"string"}},"required":["id"],"type":"object"}"#)
-                .expect("generated input schema must be valid JSON"),
-            execution: ExecutionKind::Rest(RestOperation {
-                method: "DELETE".to_string(),
-                path_template: "/v1/reviewSubmissionItems/{id}".to_string(),
-                params: vec![
-                    ParamBinding {
-                        name: "id".to_string(),
-                        location: ParamLocation::Path,
-                    },
-                ],
-                body_fields: vec![
-                ],
+        }
+}
+fn build_operation_142() -> ToolSpec {
+    ToolSpec {
+        name: "reviewSubmissionItems_deleteInstance".to_string(),
+        description: "Delete one `reviewSubmissionItems` resource. This cannot be undone."
+            .to_string(),
+        input_schema: serde_json::from_str(
+            r#"{"properties":{"id":{"type":"string"}},"required":["id"],"type":"object"}"#,
+        )
+        .expect("generated input schema must be valid JSON"),
+        execution: ExecutionKind::Rest(RestOperation {
+            method: "DELETE".to_string(),
+            path_template: "/v1/reviewSubmissionItems/{id}".to_string(),
+            params: vec![ParamBinding {
+                name: "id".to_string(),
+                location: ParamLocation::Path,
+            }],
+            body_fields: vec![],
             content_type: None,
             raw_body: false,
             media: None,
         }),
-            hints: ToolHints {
-                title: None,
-                output_schema: None,
-                read_only: Some(false),
-                destructive: Some(true),
-                idempotent: Some(true),
-                open_world: Some(true),
-            },
+        hints: ToolHints {
+            title: None,
+            output_schema: None,
+            read_only: Some(false),
+            destructive: Some(true),
+            idempotent: Some(true),
+            open_world: Some(true),
         },
-        ToolSpec {
+    }
+}
+fn build_operation_143() -> ToolSpec {
+    ToolSpec {
             name: "reviewSubmissions_getCollection".to_string(),
             description: "List review submissions. Filter by `filter[app]` and `filter[state]` (READY_FOR_REVIEW, WAITING_FOR_REVIEW, IN_REVIEW, UNRESOLVED_ISSUES, COMPLETING, COMPLETE, CANCELING) to inspect review status.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[actors]":{"items":{"type":"string"},"type":"array"},"fields[appStoreVersions]":{"items":{"type":"string"},"type":"array"},"fields[apps]":{"items":{"type":"string"},"type":"array"},"fields[reviewSubmissionItems]":{"items":{"type":"string"},"type":"array"},"fields[reviewSubmissions]":{"items":{"type":"string"},"type":"array"},"filter[app]":{"items":{"type":"string"},"type":"array"},"filter[platform]":{"items":{"enum":["IOS","MAC_OS","TV_OS","VISION_OS"],"type":"string"},"type":"array"},"filter[state]":{"items":{"enum":["READY_FOR_REVIEW","WAITING_FOR_REVIEW","IN_REVIEW","UNRESOLVED_ISSUES","CANCELING","COMPLETING","COMPLETE"],"type":"string"},"type":"array"},"include":{"items":{"enum":["app","items","appStoreVersionForReview","submittedByActor","lastUpdatedByActor"],"type":"string"},"type":"array"},"limit":{"maximum":200,"type":"integer"},"limit[items]":{"maximum":50,"type":"integer"}},"required":["filter[app]"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[actors]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[appStoreVersions]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[apps]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[reviewSubmissionItems]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[reviewSubmissions]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[app]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[platform]":{"items":{"enum":["IOS","MAC_OS","TV_OS","VISION_OS"],"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[state]":{"items":{"enum":["READY_FOR_REVIEW","WAITING_FOR_REVIEW","IN_REVIEW","UNRESOLVED_ISSUES","CANCELING","COMPLETING","COMPLETE"],"type":"string"},"type":"array","x-mcp-query-explode":false},"include":{"items":{"enum":["app","items","appStoreVersionForReview","submittedByActor","lastUpdatedByActor"],"type":"string"},"type":"array","x-mcp-query-explode":false},"limit":{"maximum":200,"type":"integer"},"limit[items]":{"maximum":50,"type":"integer"}},"required":["filter[app]"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -6109,8 +7506,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_144() -> ToolSpec {
+    ToolSpec {
             name: "reviewSubmissions_createInstance".to_string(),
             description: "Start a review submission for an app and platform. Then add items with `reviewSubmissionItems_createInstance` and submit with `reviewSubmissions_updateInstance`.".to_string(),
             input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"platform":{"enum":["IOS","MAC_OS","TV_OS","VISION_OS"],"type":"string"}},"type":"object"},"relationships":{"properties":{"app":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["apps"],"type":"string"}},"required":["id","type"],"type":"object"}},"required":["data"],"type":"object"}},"required":["app"],"type":"object"},"type":{"enum":["reviewSubmissions"],"type":"string"}},"required":["relationships","type"],"type":"object"}},"required":["data"],"title":"ReviewSubmissionCreateRequest","type":"object"}"#)
@@ -6135,11 +7534,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_145() -> ToolSpec {
+    ToolSpec {
             name: "reviewSubmissions_getInstance".to_string(),
             description: "Get one `reviewSubmissions` resource by id.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"fields[actors]":{"items":{"type":"string"},"type":"array"},"fields[appStoreVersions]":{"items":{"type":"string"},"type":"array"},"fields[apps]":{"items":{"type":"string"},"type":"array"},"fields[reviewSubmissionItems]":{"items":{"type":"string"},"type":"array"},"fields[reviewSubmissions]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["app","items","appStoreVersionForReview","submittedByActor","lastUpdatedByActor"],"type":"string"},"type":"array"},"limit[items]":{"maximum":50,"type":"integer"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"fields[actors]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[appStoreVersions]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[apps]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[reviewSubmissionItems]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[reviewSubmissions]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["app","items","appStoreVersionForReview","submittedByActor","lastUpdatedByActor"],"type":"string"},"type":"array","x-mcp-query-explode":false},"limit[items]":{"maximum":50,"type":"integer"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -6192,11 +7593,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_146() -> ToolSpec {
+    ToolSpec {
             name: "reviewSubmissions_updateInstance".to_string(),
             description: "Submit a review submission to App Review (`submitted: true`) or cancel it (`canceled: true`).".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"canceled":{"nullable":true,"type":"boolean"},"platform":{"enum":["IOS","MAC_OS","TV_OS","VISION_OS"],"type":"string"},"submitted":{"nullable":true,"type":"boolean"}},"type":"object"},"id":{"type":"string"},"type":{"enum":["reviewSubmissions"],"type":"string"}},"required":["id","type"],"type":"object"},"id":{"type":"string"}},"required":["id","data"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"canceled":{"type":["boolean","null"]},"platform":{"enum":["IOS","MAC_OS","TV_OS","VISION_OS"],"type":"string"},"submitted":{"type":["boolean","null"]}},"type":"object"},"id":{"type":"string"},"type":{"enum":["reviewSubmissions"],"type":"string"}},"required":["id","type"],"type":"object"},"id":{"type":"string"}},"required":["id","data"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "PATCH".to_string(),
@@ -6222,11 +7625,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_147() -> ToolSpec {
+    ToolSpec {
             name: "salesReports_getCollection".to_string(),
             description: "Download a sales report (gzip TSV, returned as text). Requires `filter[vendorNumber]`, `filter[reportType]`, `filter[reportSubType]`, `filter[frequency]`.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"filter[frequency]":{"items":{"enum":["DAILY","WEEKLY","MONTHLY","YEARLY"],"type":"string"},"type":"array"},"filter[reportDate]":{"items":{"type":"string"},"type":"array"},"filter[reportSubType]":{"items":{"enum":["SUMMARY","DETAILED","SUMMARY_INSTALL_TYPE","SUMMARY_TERRITORY","SUMMARY_CHANNEL"],"type":"string"},"type":"array"},"filter[reportType]":{"items":{"enum":["SALES","PRE_ORDER","NEWSSTAND","SUBSCRIPTION","SUBSCRIPTION_EVENT","SUBSCRIBER","SUBSCRIPTION_OFFER_CODE_REDEMPTION","INSTALLS","FIRST_ANNUAL","WIN_BACK_ELIGIBILITY"],"type":"string"},"type":"array"},"filter[vendorNumber]":{"items":{"type":"string"},"type":"array"},"filter[version]":{"items":{"type":"string"},"type":"array"}},"required":["filter[vendorNumber]","filter[reportType]","filter[reportSubType]","filter[frequency]"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"filter[frequency]":{"items":{"enum":["DAILY","WEEKLY","MONTHLY","YEARLY"],"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[reportDate]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[reportSubType]":{"items":{"enum":["SUMMARY","DETAILED","SUMMARY_INSTALL_TYPE","SUMMARY_TERRITORY","SUMMARY_CHANNEL"],"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[reportType]":{"items":{"enum":["SALES","PRE_ORDER","NEWSSTAND","SUBSCRIPTION","SUBSCRIPTION_EVENT","SUBSCRIBER","SUBSCRIPTION_OFFER_CODE_REDEMPTION","INSTALLS","FIRST_ANNUAL","WIN_BACK_ELIGIBILITY"],"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[vendorNumber]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[version]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false}},"required":["filter[vendorNumber]","filter[reportType]","filter[reportSubType]","filter[frequency]"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -6271,8 +7676,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_148() -> ToolSpec {
+    ToolSpec {
             name: "subscriptionAppStoreReviewScreenshots_createInstance".to_string(),
             description: "Create one `subscriptionAppStoreReviewScreenshots` resource.".to_string(),
             input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"fileName":{"type":"string"},"fileSize":{"type":"integer"}},"required":["fileName","fileSize"],"type":"object"},"relationships":{"properties":{"subscription":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["subscriptions"],"type":"string"}},"required":["id","type"],"type":"object"}},"required":["data"],"type":"object"}},"required":["subscription"],"type":"object"},"type":{"enum":["subscriptionAppStoreReviewScreenshots"],"type":"string"}},"required":["relationships","attributes","type"],"type":"object"}},"required":["data"],"title":"SubscriptionAppStoreReviewScreenshotCreateRequest","type":"object"}"#)
@@ -6297,11 +7704,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_149() -> ToolSpec {
+    ToolSpec {
             name: "subscriptionAppStoreReviewScreenshots_getInstance".to_string(),
             description: "Get one `subscriptionAppStoreReviewScreenshots` resource by id.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"fields[subscriptionAppStoreReviewScreenshots]":{"items":{"type":"string"},"type":"array"},"fields[subscriptions]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["subscription"],"type":"string"},"type":"array"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"fields[subscriptionAppStoreReviewScreenshots]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[subscriptions]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["subscription"],"type":"string"},"type":"array","x-mcp-query-explode":false}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -6338,11 +7747,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_150() -> ToolSpec {
+    ToolSpec {
             name: "subscriptionAppStoreReviewScreenshots_updateInstance".to_string(),
             description: "Update attributes or relationships of one `subscriptionAppStoreReviewScreenshots` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"sourceFileChecksum":{"nullable":true,"type":"string"},"uploaded":{"nullable":true,"type":"boolean"}},"type":"object"},"id":{"type":"string"},"type":{"enum":["subscriptionAppStoreReviewScreenshots"],"type":"string"}},"required":["id","type"],"type":"object"},"id":{"type":"string"}},"required":["id","data"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"sourceFileChecksum":{"type":["string","null"]},"uploaded":{"type":["boolean","null"]}},"type":"object"},"id":{"type":"string"},"type":{"enum":["subscriptionAppStoreReviewScreenshots"],"type":"string"}},"required":["id","type"],"type":"object"},"id":{"type":"string"}},"required":["id","data"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "PATCH".to_string(),
@@ -6368,40 +7779,45 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
-            name: "subscriptionAppStoreReviewScreenshots_deleteInstance".to_string(),
-            description: "Delete one `subscriptionAppStoreReviewScreenshots` resource. This cannot be undone.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"id":{"type":"string"}},"required":["id"],"type":"object"}"#)
-                .expect("generated input schema must be valid JSON"),
-            execution: ExecutionKind::Rest(RestOperation {
-                method: "DELETE".to_string(),
-                path_template: "/v1/subscriptionAppStoreReviewScreenshots/{id}".to_string(),
-                params: vec![
-                    ParamBinding {
-                        name: "id".to_string(),
-                        location: ParamLocation::Path,
-                    },
-                ],
-                body_fields: vec![
-                ],
+        }
+}
+fn build_operation_151() -> ToolSpec {
+    ToolSpec {
+        name: "subscriptionAppStoreReviewScreenshots_deleteInstance".to_string(),
+        description:
+            "Delete one `subscriptionAppStoreReviewScreenshots` resource. This cannot be undone."
+                .to_string(),
+        input_schema: serde_json::from_str(
+            r#"{"properties":{"id":{"type":"string"}},"required":["id"],"type":"object"}"#,
+        )
+        .expect("generated input schema must be valid JSON"),
+        execution: ExecutionKind::Rest(RestOperation {
+            method: "DELETE".to_string(),
+            path_template: "/v1/subscriptionAppStoreReviewScreenshots/{id}".to_string(),
+            params: vec![ParamBinding {
+                name: "id".to_string(),
+                location: ParamLocation::Path,
+            }],
+            body_fields: vec![],
             content_type: None,
             raw_body: false,
             media: None,
         }),
-            hints: ToolHints {
-                title: None,
-                output_schema: None,
-                read_only: Some(false),
-                destructive: Some(true),
-                idempotent: Some(true),
-                open_world: Some(true),
-            },
+        hints: ToolHints {
+            title: None,
+            output_schema: None,
+            read_only: Some(false),
+            destructive: Some(true),
+            idempotent: Some(true),
+            open_world: Some(true),
         },
-        ToolSpec {
+    }
+}
+fn build_operation_152() -> ToolSpec {
+    ToolSpec {
             name: "subscriptionGroupLocalizations_createInstance".to_string(),
             description: "Create one `subscriptionGroupLocalizations` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"customAppName":{"nullable":true,"type":"string"},"locale":{"type":"string"},"name":{"type":"string"}},"required":["name","locale"],"type":"object"},"relationships":{"properties":{"subscriptionGroup":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["subscriptionGroups"],"type":"string"}},"required":["id","type"],"type":"object"}},"required":["data"],"type":"object"}},"required":["subscriptionGroup"],"type":"object"},"type":{"enum":["subscriptionGroupLocalizations"],"type":"string"}},"required":["relationships","attributes","type"],"type":"object"}},"required":["data"],"title":"SubscriptionGroupLocalizationCreateRequest","type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"customAppName":{"type":["string","null"]},"locale":{"type":"string"},"name":{"type":"string"}},"required":["name","locale"],"type":"object"},"relationships":{"properties":{"subscriptionGroup":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["subscriptionGroups"],"type":"string"}},"required":["id","type"],"type":"object"}},"required":["data"],"type":"object"}},"required":["subscriptionGroup"],"type":"object"},"type":{"enum":["subscriptionGroupLocalizations"],"type":"string"}},"required":["relationships","attributes","type"],"type":"object"}},"required":["data"],"title":"SubscriptionGroupLocalizationCreateRequest","type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "POST".to_string(),
@@ -6423,11 +7839,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_153() -> ToolSpec {
+    ToolSpec {
             name: "subscriptionGroupLocalizations_getInstance".to_string(),
             description: "Get one `subscriptionGroupLocalizations` resource by id.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"fields[subscriptionGroupLocalizations]":{"items":{"type":"string"},"type":"array"},"fields[subscriptionGroups]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["subscriptionGroup"],"type":"string"},"type":"array"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"fields[subscriptionGroupLocalizations]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[subscriptionGroups]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["subscriptionGroup"],"type":"string"},"type":"array","x-mcp-query-explode":false}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -6464,11 +7882,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_154() -> ToolSpec {
+    ToolSpec {
             name: "subscriptionGroupLocalizations_updateInstance".to_string(),
             description: "Update attributes or relationships of one `subscriptionGroupLocalizations` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"customAppName":{"nullable":true,"type":"string"},"name":{"nullable":true,"type":"string"}},"type":"object"},"id":{"type":"string"},"type":{"enum":["subscriptionGroupLocalizations"],"type":"string"}},"required":["id","type"],"type":"object"},"id":{"type":"string"}},"required":["id","data"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"customAppName":{"type":["string","null"]},"name":{"type":["string","null"]}},"type":"object"},"id":{"type":"string"},"type":{"enum":["subscriptionGroupLocalizations"],"type":"string"}},"required":["id","type"],"type":"object"},"id":{"type":"string"}},"required":["id","data"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "PATCH".to_string(),
@@ -6494,37 +7914,41 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
-            name: "subscriptionGroupLocalizations_deleteInstance".to_string(),
-            description: "Delete one `subscriptionGroupLocalizations` resource. This cannot be undone.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"id":{"type":"string"}},"required":["id"],"type":"object"}"#)
-                .expect("generated input schema must be valid JSON"),
-            execution: ExecutionKind::Rest(RestOperation {
-                method: "DELETE".to_string(),
-                path_template: "/v1/subscriptionGroupLocalizations/{id}".to_string(),
-                params: vec![
-                    ParamBinding {
-                        name: "id".to_string(),
-                        location: ParamLocation::Path,
-                    },
-                ],
-                body_fields: vec![
-                ],
+        }
+}
+fn build_operation_155() -> ToolSpec {
+    ToolSpec {
+        name: "subscriptionGroupLocalizations_deleteInstance".to_string(),
+        description: "Delete one `subscriptionGroupLocalizations` resource. This cannot be undone."
+            .to_string(),
+        input_schema: serde_json::from_str(
+            r#"{"properties":{"id":{"type":"string"}},"required":["id"],"type":"object"}"#,
+        )
+        .expect("generated input schema must be valid JSON"),
+        execution: ExecutionKind::Rest(RestOperation {
+            method: "DELETE".to_string(),
+            path_template: "/v1/subscriptionGroupLocalizations/{id}".to_string(),
+            params: vec![ParamBinding {
+                name: "id".to_string(),
+                location: ParamLocation::Path,
+            }],
+            body_fields: vec![],
             content_type: None,
             raw_body: false,
             media: None,
         }),
-            hints: ToolHints {
-                title: None,
-                output_schema: None,
-                read_only: Some(false),
-                destructive: Some(true),
-                idempotent: Some(true),
-                open_world: Some(true),
-            },
+        hints: ToolHints {
+            title: None,
+            output_schema: None,
+            read_only: Some(false),
+            destructive: Some(true),
+            idempotent: Some(true),
+            open_world: Some(true),
         },
-        ToolSpec {
+    }
+}
+fn build_operation_156() -> ToolSpec {
+    ToolSpec {
             name: "subscriptionGroups_createInstance".to_string(),
             description: "Create one `subscriptionGroups` resource.".to_string(),
             input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"referenceName":{"type":"string"}},"required":["referenceName"],"type":"object"},"relationships":{"properties":{"app":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["apps"],"type":"string"}},"required":["id","type"],"type":"object"}},"required":["data"],"type":"object"}},"required":["app"],"type":"object"},"type":{"enum":["subscriptionGroups"],"type":"string"}},"required":["relationships","attributes","type"],"type":"object"}},"required":["data"],"title":"SubscriptionGroupCreateRequest","type":"object"}"#)
@@ -6549,11 +7973,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_157() -> ToolSpec {
+    ToolSpec {
             name: "subscriptionGroups_getInstance".to_string(),
             description: "Get one `subscriptionGroups` resource by id.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"fields[subscriptionGroupLocalizations]":{"items":{"type":"string"},"type":"array"},"fields[subscriptionGroupVersions]":{"items":{"type":"string"},"type":"array"},"fields[subscriptionGroups]":{"items":{"type":"string"},"type":"array"},"fields[subscriptions]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["subscriptions","subscriptionGroupLocalizations","versions"],"type":"string"},"type":"array"},"limit[subscriptionGroupLocalizations]":{"maximum":50,"type":"integer"},"limit[subscriptions]":{"maximum":50,"type":"integer"},"limit[versions]":{"maximum":50,"type":"integer"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"fields[subscriptionGroupLocalizations]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[subscriptionGroupVersions]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[subscriptionGroups]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[subscriptions]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["subscriptions","subscriptionGroupLocalizations","versions"],"type":"string"},"type":"array","x-mcp-query-explode":false},"limit[subscriptionGroupLocalizations]":{"maximum":50,"type":"integer"},"limit[subscriptions]":{"maximum":50,"type":"integer"},"limit[versions]":{"maximum":50,"type":"integer"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -6610,11 +8036,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_158() -> ToolSpec {
+    ToolSpec {
             name: "subscriptionGroups_updateInstance".to_string(),
             description: "Update attributes or relationships of one `subscriptionGroups` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"referenceName":{"nullable":true,"type":"string"}},"type":"object"},"id":{"type":"string"},"type":{"enum":["subscriptionGroups"],"type":"string"}},"required":["id","type"],"type":"object"},"id":{"type":"string"}},"required":["id","data"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"referenceName":{"type":["string","null"]}},"type":"object"},"id":{"type":"string"},"type":{"enum":["subscriptionGroups"],"type":"string"}},"required":["id","type"],"type":"object"},"id":{"type":"string"}},"required":["id","data"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "PATCH".to_string(),
@@ -6640,40 +8068,43 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
-            name: "subscriptionGroups_deleteInstance".to_string(),
-            description: "Delete one `subscriptionGroups` resource. This cannot be undone.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"id":{"type":"string"}},"required":["id"],"type":"object"}"#)
-                .expect("generated input schema must be valid JSON"),
-            execution: ExecutionKind::Rest(RestOperation {
-                method: "DELETE".to_string(),
-                path_template: "/v1/subscriptionGroups/{id}".to_string(),
-                params: vec![
-                    ParamBinding {
-                        name: "id".to_string(),
-                        location: ParamLocation::Path,
-                    },
-                ],
-                body_fields: vec![
-                ],
+        }
+}
+fn build_operation_159() -> ToolSpec {
+    ToolSpec {
+        name: "subscriptionGroups_deleteInstance".to_string(),
+        description: "Delete one `subscriptionGroups` resource. This cannot be undone.".to_string(),
+        input_schema: serde_json::from_str(
+            r#"{"properties":{"id":{"type":"string"}},"required":["id"],"type":"object"}"#,
+        )
+        .expect("generated input schema must be valid JSON"),
+        execution: ExecutionKind::Rest(RestOperation {
+            method: "DELETE".to_string(),
+            path_template: "/v1/subscriptionGroups/{id}".to_string(),
+            params: vec![ParamBinding {
+                name: "id".to_string(),
+                location: ParamLocation::Path,
+            }],
+            body_fields: vec![],
             content_type: None,
             raw_body: false,
             media: None,
         }),
-            hints: ToolHints {
-                title: None,
-                output_schema: None,
-                read_only: Some(false),
-                destructive: Some(true),
-                idempotent: Some(true),
-                open_world: Some(true),
-            },
+        hints: ToolHints {
+            title: None,
+            output_schema: None,
+            read_only: Some(false),
+            destructive: Some(true),
+            idempotent: Some(true),
+            open_world: Some(true),
         },
-        ToolSpec {
+    }
+}
+fn build_operation_160() -> ToolSpec {
+    ToolSpec {
             name: "subscriptionIntroductoryOffers_createInstance".to_string(),
             description: "Create one `subscriptionIntroductoryOffers` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"duration":{"enum":["THREE_DAYS","ONE_WEEK","TWO_WEEKS","ONE_MONTH","TWO_MONTHS","THREE_MONTHS","SIX_MONTHS","ONE_YEAR"],"type":"string"},"endDate":{"format":"date","nullable":true,"type":"string"},"numberOfPeriods":{"type":"integer"},"offerMode":{"enum":["PAY_AS_YOU_GO","PAY_UP_FRONT","FREE_TRIAL"],"type":"string"},"startDate":{"format":"date","nullable":true,"type":"string"},"targetSubscriptionPlanType":{"enum":["MONTHLY","UPFRONT"],"type":"string"}},"required":["duration","numberOfPeriods","offerMode"],"type":"object"},"relationships":{"properties":{"subscription":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["subscriptions"],"type":"string"}},"required":["id","type"],"type":"object"}},"required":["data"],"type":"object"},"subscriptionPricePoint":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["subscriptionPricePoints"],"type":"string"}},"required":["id","type"],"type":"object"}},"type":"object"},"territory":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["territories"],"type":"string"}},"required":["id","type"],"type":"object"}},"type":"object"}},"required":["subscription"],"type":"object"},"type":{"enum":["subscriptionIntroductoryOffers"],"type":"string"}},"required":["relationships","attributes","type"],"type":"object"},"included":{"items":{"properties":{"id":{"type":"string"},"type":{"enum":["subscriptionPricePoints"],"type":"string"}},"required":["type"],"type":"object"},"type":"array"}},"required":["data"],"title":"SubscriptionIntroductoryOfferCreateRequest","type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"duration":{"enum":["THREE_DAYS","ONE_WEEK","TWO_WEEKS","ONE_MONTH","TWO_MONTHS","THREE_MONTHS","SIX_MONTHS","ONE_YEAR"],"type":"string"},"endDate":{"format":"date","type":["string","null"]},"numberOfPeriods":{"type":"integer"},"offerMode":{"enum":["PAY_AS_YOU_GO","PAY_UP_FRONT","FREE_TRIAL"],"type":"string"},"startDate":{"format":"date","type":["string","null"]},"targetSubscriptionPlanType":{"enum":["MONTHLY","UPFRONT"],"type":"string"}},"required":["duration","numberOfPeriods","offerMode"],"type":"object"},"relationships":{"properties":{"subscription":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["subscriptions"],"type":"string"}},"required":["id","type"],"type":"object"}},"required":["data"],"type":"object"},"subscriptionPricePoint":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["subscriptionPricePoints"],"type":"string"}},"required":["id","type"],"type":"object"}},"type":"object"},"territory":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["territories"],"type":"string"}},"required":["id","type"],"type":"object"}},"type":"object"}},"required":["subscription"],"type":"object"},"type":{"enum":["subscriptionIntroductoryOffers"],"type":"string"}},"required":["relationships","attributes","type"],"type":"object"},"included":{"items":{"properties":{"id":{"type":"string"},"type":{"enum":["subscriptionPricePoints"],"type":"string"}},"required":["type"],"type":"object"},"type":"array"}},"required":["data"],"title":"SubscriptionIntroductoryOfferCreateRequest","type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "POST".to_string(),
@@ -6696,11 +8127,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_161() -> ToolSpec {
+    ToolSpec {
             name: "subscriptionIntroductoryOffers_updateInstance".to_string(),
             description: "Update attributes or relationships of one `subscriptionIntroductoryOffers` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"endDate":{"format":"date","nullable":true,"type":"string"}},"type":"object"},"id":{"type":"string"},"type":{"enum":["subscriptionIntroductoryOffers"],"type":"string"}},"required":["id","type"],"type":"object"},"id":{"type":"string"}},"required":["id","data"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"endDate":{"format":"date","type":["string","null"]}},"type":"object"},"id":{"type":"string"},"type":{"enum":["subscriptionIntroductoryOffers"],"type":"string"}},"required":["id","type"],"type":"object"},"id":{"type":"string"}},"required":["id","data"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "PATCH".to_string(),
@@ -6726,40 +8159,44 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
-            name: "subscriptionIntroductoryOffers_deleteInstance".to_string(),
-            description: "Delete one `subscriptionIntroductoryOffers` resource. This cannot be undone.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"id":{"type":"string"}},"required":["id"],"type":"object"}"#)
-                .expect("generated input schema must be valid JSON"),
-            execution: ExecutionKind::Rest(RestOperation {
-                method: "DELETE".to_string(),
-                path_template: "/v1/subscriptionIntroductoryOffers/{id}".to_string(),
-                params: vec![
-                    ParamBinding {
-                        name: "id".to_string(),
-                        location: ParamLocation::Path,
-                    },
-                ],
-                body_fields: vec![
-                ],
+        }
+}
+fn build_operation_162() -> ToolSpec {
+    ToolSpec {
+        name: "subscriptionIntroductoryOffers_deleteInstance".to_string(),
+        description: "Delete one `subscriptionIntroductoryOffers` resource. This cannot be undone."
+            .to_string(),
+        input_schema: serde_json::from_str(
+            r#"{"properties":{"id":{"type":"string"}},"required":["id"],"type":"object"}"#,
+        )
+        .expect("generated input schema must be valid JSON"),
+        execution: ExecutionKind::Rest(RestOperation {
+            method: "DELETE".to_string(),
+            path_template: "/v1/subscriptionIntroductoryOffers/{id}".to_string(),
+            params: vec![ParamBinding {
+                name: "id".to_string(),
+                location: ParamLocation::Path,
+            }],
+            body_fields: vec![],
             content_type: None,
             raw_body: false,
             media: None,
         }),
-            hints: ToolHints {
-                title: None,
-                output_schema: None,
-                read_only: Some(false),
-                destructive: Some(true),
-                idempotent: Some(true),
-                open_world: Some(true),
-            },
+        hints: ToolHints {
+            title: None,
+            output_schema: None,
+            read_only: Some(false),
+            destructive: Some(true),
+            idempotent: Some(true),
+            open_world: Some(true),
         },
-        ToolSpec {
+    }
+}
+fn build_operation_163() -> ToolSpec {
+    ToolSpec {
             name: "subscriptionLocalizations_createInstance".to_string(),
             description: "Create one `subscriptionLocalizations` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"description":{"nullable":true,"type":"string"},"locale":{"type":"string"},"name":{"type":"string"}},"required":["name","locale"],"type":"object"},"relationships":{"properties":{"subscription":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["subscriptions"],"type":"string"}},"required":["id","type"],"type":"object"}},"required":["data"],"type":"object"}},"required":["subscription"],"type":"object"},"type":{"enum":["subscriptionLocalizations"],"type":"string"}},"required":["relationships","attributes","type"],"type":"object"}},"required":["data"],"title":"SubscriptionLocalizationCreateRequest","type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"description":{"type":["string","null"]},"locale":{"type":"string"},"name":{"type":"string"}},"required":["name","locale"],"type":"object"},"relationships":{"properties":{"subscription":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["subscriptions"],"type":"string"}},"required":["id","type"],"type":"object"}},"required":["data"],"type":"object"}},"required":["subscription"],"type":"object"},"type":{"enum":["subscriptionLocalizations"],"type":"string"}},"required":["relationships","attributes","type"],"type":"object"}},"required":["data"],"title":"SubscriptionLocalizationCreateRequest","type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "POST".to_string(),
@@ -6781,11 +8218,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_164() -> ToolSpec {
+    ToolSpec {
             name: "subscriptionLocalizations_getInstance".to_string(),
             description: "Get one `subscriptionLocalizations` resource by id.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"fields[subscriptionLocalizations]":{"items":{"type":"string"},"type":"array"},"fields[subscriptions]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["subscription"],"type":"string"},"type":"array"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"fields[subscriptionLocalizations]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[subscriptions]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["subscription"],"type":"string"},"type":"array","x-mcp-query-explode":false}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -6822,11 +8261,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_165() -> ToolSpec {
+    ToolSpec {
             name: "subscriptionLocalizations_updateInstance".to_string(),
             description: "Update attributes or relationships of one `subscriptionLocalizations` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"description":{"nullable":true,"type":"string"},"name":{"nullable":true,"type":"string"}},"type":"object"},"id":{"type":"string"},"type":{"enum":["subscriptionLocalizations"],"type":"string"}},"required":["id","type"],"type":"object"},"id":{"type":"string"}},"required":["id","data"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"description":{"type":["string","null"]},"name":{"type":["string","null"]}},"type":"object"},"id":{"type":"string"},"type":{"enum":["subscriptionLocalizations"],"type":"string"}},"required":["id","type"],"type":"object"},"id":{"type":"string"}},"required":["id","data"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "PATCH".to_string(),
@@ -6852,40 +8293,44 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
-            name: "subscriptionLocalizations_deleteInstance".to_string(),
-            description: "Delete one `subscriptionLocalizations` resource. This cannot be undone.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"id":{"type":"string"}},"required":["id"],"type":"object"}"#)
-                .expect("generated input schema must be valid JSON"),
-            execution: ExecutionKind::Rest(RestOperation {
-                method: "DELETE".to_string(),
-                path_template: "/v1/subscriptionLocalizations/{id}".to_string(),
-                params: vec![
-                    ParamBinding {
-                        name: "id".to_string(),
-                        location: ParamLocation::Path,
-                    },
-                ],
-                body_fields: vec![
-                ],
+        }
+}
+fn build_operation_166() -> ToolSpec {
+    ToolSpec {
+        name: "subscriptionLocalizations_deleteInstance".to_string(),
+        description: "Delete one `subscriptionLocalizations` resource. This cannot be undone."
+            .to_string(),
+        input_schema: serde_json::from_str(
+            r#"{"properties":{"id":{"type":"string"}},"required":["id"],"type":"object"}"#,
+        )
+        .expect("generated input schema must be valid JSON"),
+        execution: ExecutionKind::Rest(RestOperation {
+            method: "DELETE".to_string(),
+            path_template: "/v1/subscriptionLocalizations/{id}".to_string(),
+            params: vec![ParamBinding {
+                name: "id".to_string(),
+                location: ParamLocation::Path,
+            }],
+            body_fields: vec![],
             content_type: None,
             raw_body: false,
             media: None,
         }),
-            hints: ToolHints {
-                title: None,
-                output_schema: None,
-                read_only: Some(false),
-                destructive: Some(true),
-                idempotent: Some(true),
-                open_world: Some(true),
-            },
+        hints: ToolHints {
+            title: None,
+            output_schema: None,
+            read_only: Some(false),
+            destructive: Some(true),
+            idempotent: Some(true),
+            open_world: Some(true),
         },
-        ToolSpec {
+    }
+}
+fn build_operation_167() -> ToolSpec {
+    ToolSpec {
             name: "subscriptionPlanAvailabilities_createInstance".to_string(),
             description: "Create one `subscriptionPlanAvailabilities` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"availableInNewTerritories":{"nullable":true,"type":"boolean"},"planType":{"enum":["MONTHLY","UPFRONT"],"type":"string"}},"required":["planType"],"type":"object"},"relationships":{"properties":{"availableTerritories":{"properties":{"data":{"items":{"properties":{"id":{"type":"string"},"type":{"enum":["territories"],"type":"string"}},"required":["id","type"],"type":"object"},"type":"array"}},"required":["data"],"type":"object"},"subscription":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["subscriptions"],"type":"string"}},"required":["id","type"],"type":"object"}},"required":["data"],"type":"object"}},"required":["availableTerritories","subscription"],"type":"object"},"type":{"enum":["subscriptionPlanAvailabilities"],"type":"string"}},"required":["relationships","attributes","type"],"type":"object"}},"required":["data"],"title":"SubscriptionPlanAvailabilityCreateRequest","type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"availableInNewTerritories":{"type":["boolean","null"]},"planType":{"enum":["MONTHLY","UPFRONT"],"type":"string"}},"required":["planType"],"type":"object"},"relationships":{"properties":{"availableTerritories":{"properties":{"data":{"items":{"properties":{"id":{"type":"string"},"type":{"enum":["territories"],"type":"string"}},"required":["id","type"],"type":"object"},"type":"array"}},"required":["data"],"type":"object"},"subscription":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["subscriptions"],"type":"string"}},"required":["id","type"],"type":"object"}},"required":["data"],"type":"object"}},"required":["availableTerritories","subscription"],"type":"object"},"type":{"enum":["subscriptionPlanAvailabilities"],"type":"string"}},"required":["relationships","attributes","type"],"type":"object"}},"required":["data"],"title":"SubscriptionPlanAvailabilityCreateRequest","type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "POST".to_string(),
@@ -6907,11 +8352,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_168() -> ToolSpec {
+    ToolSpec {
             name: "subscriptionPlanAvailabilities_getInstance".to_string(),
             description: "Get one `subscriptionPlanAvailabilities` resource by id.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"fields[subscriptionPlanAvailabilities]":{"items":{"type":"string"},"type":"array"},"fields[territories]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["availableTerritories"],"type":"string"},"type":"array"},"limit[availableTerritories]":{"maximum":50,"type":"integer"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"fields[subscriptionPlanAvailabilities]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[territories]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["availableTerritories"],"type":"string"},"type":"array","x-mcp-query-explode":false},"limit[availableTerritories]":{"maximum":50,"type":"integer"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -6952,11 +8399,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_169() -> ToolSpec {
+    ToolSpec {
             name: "subscriptionPlanAvailabilities_updateInstance".to_string(),
             description: "Update attributes or relationships of one `subscriptionPlanAvailabilities` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"availableInNewTerritories":{"nullable":true,"type":"boolean"}},"type":"object"},"id":{"type":"string"},"relationships":{"properties":{"availableTerritories":{"properties":{"data":{"items":{"properties":{"id":{"type":"string"},"type":{"enum":["territories"],"type":"string"}},"required":["id","type"],"type":"object"},"type":"array"}},"type":"object"}},"type":"object"},"type":{"enum":["subscriptionPlanAvailabilities"],"type":"string"}},"required":["id","type"],"type":"object"},"id":{"type":"string"}},"required":["id","data"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"availableInNewTerritories":{"type":["boolean","null"]}},"type":"object"},"id":{"type":"string"},"relationships":{"properties":{"availableTerritories":{"properties":{"data":{"items":{"properties":{"id":{"type":"string"},"type":{"enum":["territories"],"type":"string"}},"required":["id","type"],"type":"object"},"type":"array"}},"type":"object"}},"type":"object"},"type":{"enum":["subscriptionPlanAvailabilities"],"type":"string"}},"required":["id","type"],"type":"object"},"id":{"type":"string"}},"required":["id","data"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "PATCH".to_string(),
@@ -6982,11 +8431,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_170() -> ToolSpec {
+    ToolSpec {
             name: "subscriptionPricePoints_getInstance".to_string(),
             description: "Get one `subscriptionPricePoints` resource by id.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"fields[subscriptionPricePoints]":{"items":{"type":"string"},"type":"array"},"fields[territories]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["territory"],"type":"string"},"type":"array"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"fields[subscriptionPricePoints]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[territories]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["territory"],"type":"string"},"type":"array","x-mcp-query-explode":false}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -7023,11 +8474,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_171() -> ToolSpec {
+    ToolSpec {
             name: "subscriptionPrices_createInstance".to_string(),
             description: "Create one `subscriptionPrices` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"planType":{"enum":["MONTHLY","UPFRONT"],"type":"string"},"preserveCurrentPrice":{"nullable":true,"type":"boolean"},"startDate":{"format":"date","nullable":true,"type":"string"}},"type":"object"},"relationships":{"properties":{"subscription":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["subscriptions"],"type":"string"}},"required":["id","type"],"type":"object"}},"required":["data"],"type":"object"},"subscriptionPricePoint":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["subscriptionPricePoints"],"type":"string"}},"required":["id","type"],"type":"object"}},"required":["data"],"type":"object"},"territory":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["territories"],"type":"string"}},"required":["id","type"],"type":"object"}},"type":"object"}},"required":["subscription","subscriptionPricePoint"],"type":"object"},"type":{"enum":["subscriptionPrices"],"type":"string"}},"required":["relationships","type"],"type":"object"}},"required":["data"],"title":"SubscriptionPriceCreateRequest","type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"planType":{"enum":["MONTHLY","UPFRONT"],"type":"string"},"preserveCurrentPrice":{"type":["boolean","null"]},"startDate":{"format":"date","type":["string","null"]}},"type":"object"},"relationships":{"properties":{"subscription":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["subscriptions"],"type":"string"}},"required":["id","type"],"type":"object"}},"required":["data"],"type":"object"},"subscriptionPricePoint":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["subscriptionPricePoints"],"type":"string"}},"required":["id","type"],"type":"object"}},"required":["data"],"type":"object"},"territory":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["territories"],"type":"string"}},"required":["id","type"],"type":"object"}},"type":"object"}},"required":["subscription","subscriptionPricePoint"],"type":"object"},"type":{"enum":["subscriptionPrices"],"type":"string"}},"required":["relationships","type"],"type":"object"}},"required":["data"],"title":"SubscriptionPriceCreateRequest","type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "POST".to_string(),
@@ -7049,37 +8502,40 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
-            name: "subscriptionPrices_deleteInstance".to_string(),
-            description: "Delete one `subscriptionPrices` resource. This cannot be undone.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"id":{"type":"string"}},"required":["id"],"type":"object"}"#)
-                .expect("generated input schema must be valid JSON"),
-            execution: ExecutionKind::Rest(RestOperation {
-                method: "DELETE".to_string(),
-                path_template: "/v1/subscriptionPrices/{id}".to_string(),
-                params: vec![
-                    ParamBinding {
-                        name: "id".to_string(),
-                        location: ParamLocation::Path,
-                    },
-                ],
-                body_fields: vec![
-                ],
+        }
+}
+fn build_operation_172() -> ToolSpec {
+    ToolSpec {
+        name: "subscriptionPrices_deleteInstance".to_string(),
+        description: "Delete one `subscriptionPrices` resource. This cannot be undone.".to_string(),
+        input_schema: serde_json::from_str(
+            r#"{"properties":{"id":{"type":"string"}},"required":["id"],"type":"object"}"#,
+        )
+        .expect("generated input schema must be valid JSON"),
+        execution: ExecutionKind::Rest(RestOperation {
+            method: "DELETE".to_string(),
+            path_template: "/v1/subscriptionPrices/{id}".to_string(),
+            params: vec![ParamBinding {
+                name: "id".to_string(),
+                location: ParamLocation::Path,
+            }],
+            body_fields: vec![],
             content_type: None,
             raw_body: false,
             media: None,
         }),
-            hints: ToolHints {
-                title: None,
-                output_schema: None,
-                read_only: Some(false),
-                destructive: Some(true),
-                idempotent: Some(true),
-                open_world: Some(true),
-            },
+        hints: ToolHints {
+            title: None,
+            output_schema: None,
+            read_only: Some(false),
+            destructive: Some(true),
+            idempotent: Some(true),
+            open_world: Some(true),
         },
-        ToolSpec {
+    }
+}
+fn build_operation_173() -> ToolSpec {
+    ToolSpec {
             name: "subscriptionPromotionalOffers_createInstance".to_string(),
             description: "Create one `subscriptionPromotionalOffers` resource.".to_string(),
             input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"duration":{"enum":["THREE_DAYS","ONE_WEEK","TWO_WEEKS","ONE_MONTH","TWO_MONTHS","THREE_MONTHS","SIX_MONTHS","ONE_YEAR"],"type":"string"},"name":{"type":"string"},"numberOfPeriods":{"type":"integer"},"offerCode":{"type":"string"},"offerMode":{"enum":["PAY_AS_YOU_GO","PAY_UP_FRONT","FREE_TRIAL"],"type":"string"},"targetSubscriptionPlanType":{"enum":["MONTHLY","UPFRONT"],"type":"string"}},"required":["duration","offerCode","name","numberOfPeriods","offerMode"],"type":"object"},"relationships":{"properties":{"prices":{"properties":{"data":{"items":{"properties":{"id":{"type":"string"},"type":{"enum":["subscriptionPromotionalOfferPrices"],"type":"string"}},"required":["id","type"],"type":"object"},"type":"array"}},"required":["data"],"type":"object"},"subscription":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["subscriptions"],"type":"string"}},"required":["id","type"],"type":"object"}},"required":["data"],"type":"object"}},"required":["subscription","prices"],"type":"object"},"type":{"enum":["subscriptionPromotionalOffers"],"type":"string"}},"required":["relationships","attributes","type"],"type":"object"},"included":{"items":{"properties":{"id":{"type":"string"},"relationships":{"properties":{"subscriptionPricePoint":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["subscriptionPricePoints"],"type":"string"}},"required":["id","type"],"type":"object"}},"type":"object"},"territory":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["territories"],"type":"string"}},"required":["id","type"],"type":"object"}},"type":"object"}},"type":"object"},"type":{"enum":["subscriptionPromotionalOfferPrices"],"type":"string"}},"required":["type"],"type":"object"},"type":"array"}},"required":["data"],"title":"SubscriptionPromotionalOfferCreateRequest","type":"object"}"#)
@@ -7105,11 +8561,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_174() -> ToolSpec {
+    ToolSpec {
             name: "subscriptionPromotionalOffers_getInstance".to_string(),
             description: "Get one `subscriptionPromotionalOffers` resource by id.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"fields[subscriptionPromotionalOfferPrices]":{"items":{"type":"string"},"type":"array"},"fields[subscriptionPromotionalOffers]":{"items":{"type":"string"},"type":"array"},"fields[subscriptions]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["subscription","prices"],"type":"string"},"type":"array"},"limit[prices]":{"maximum":50,"type":"integer"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"fields[subscriptionPromotionalOfferPrices]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[subscriptionPromotionalOffers]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[subscriptions]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["subscription","prices"],"type":"string"},"type":"array","x-mcp-query-explode":false},"limit[prices]":{"maximum":50,"type":"integer"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -7154,8 +8612,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_175() -> ToolSpec {
+    ToolSpec {
             name: "subscriptionPromotionalOffers_updateInstance".to_string(),
             description: "Update attributes or relationships of one `subscriptionPromotionalOffers` resource.".to_string(),
             input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"id":{"type":"string"},"relationships":{"properties":{"prices":{"properties":{"data":{"items":{"properties":{"id":{"type":"string"},"type":{"enum":["subscriptionPromotionalOfferPrices"],"type":"string"}},"required":["id","type"],"type":"object"},"type":"array"}},"type":"object"}},"type":"object"},"type":{"enum":["subscriptionPromotionalOffers"],"type":"string"}},"required":["id","type"],"type":"object"},"id":{"type":"string"},"included":{"items":{"properties":{"id":{"type":"string"},"relationships":{"properties":{"subscriptionPricePoint":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["subscriptionPricePoints"],"type":"string"}},"required":["id","type"],"type":"object"}},"type":"object"},"territory":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["territories"],"type":"string"}},"required":["id","type"],"type":"object"}},"type":"object"}},"type":"object"},"type":{"enum":["subscriptionPromotionalOfferPrices"],"type":"string"}},"required":["type"],"type":"object"},"type":"array"}},"required":["id","data"],"type":"object"}"#)
@@ -7185,37 +8645,41 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
-            name: "subscriptionPromotionalOffers_deleteInstance".to_string(),
-            description: "Delete one `subscriptionPromotionalOffers` resource. This cannot be undone.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"id":{"type":"string"}},"required":["id"],"type":"object"}"#)
-                .expect("generated input schema must be valid JSON"),
-            execution: ExecutionKind::Rest(RestOperation {
-                method: "DELETE".to_string(),
-                path_template: "/v1/subscriptionPromotionalOffers/{id}".to_string(),
-                params: vec![
-                    ParamBinding {
-                        name: "id".to_string(),
-                        location: ParamLocation::Path,
-                    },
-                ],
-                body_fields: vec![
-                ],
+        }
+}
+fn build_operation_176() -> ToolSpec {
+    ToolSpec {
+        name: "subscriptionPromotionalOffers_deleteInstance".to_string(),
+        description: "Delete one `subscriptionPromotionalOffers` resource. This cannot be undone."
+            .to_string(),
+        input_schema: serde_json::from_str(
+            r#"{"properties":{"id":{"type":"string"}},"required":["id"],"type":"object"}"#,
+        )
+        .expect("generated input schema must be valid JSON"),
+        execution: ExecutionKind::Rest(RestOperation {
+            method: "DELETE".to_string(),
+            path_template: "/v1/subscriptionPromotionalOffers/{id}".to_string(),
+            params: vec![ParamBinding {
+                name: "id".to_string(),
+                location: ParamLocation::Path,
+            }],
+            body_fields: vec![],
             content_type: None,
             raw_body: false,
             media: None,
         }),
-            hints: ToolHints {
-                title: None,
-                output_schema: None,
-                read_only: Some(false),
-                destructive: Some(true),
-                idempotent: Some(true),
-                open_world: Some(true),
-            },
+        hints: ToolHints {
+            title: None,
+            output_schema: None,
+            read_only: Some(false),
+            destructive: Some(true),
+            idempotent: Some(true),
+            open_world: Some(true),
         },
-        ToolSpec {
+    }
+}
+fn build_operation_177() -> ToolSpec {
+    ToolSpec {
             name: "subscriptionSubmissions_createInstance".to_string(),
             description: "Create one `subscriptionSubmissions` resource.".to_string(),
             input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"relationships":{"properties":{"subscription":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["subscriptions"],"type":"string"}},"required":["id","type"],"type":"object"}},"required":["data"],"type":"object"}},"required":["subscription"],"type":"object"},"type":{"enum":["subscriptionSubmissions"],"type":"string"}},"required":["relationships","type"],"type":"object"}},"required":["data"],"title":"SubscriptionSubmissionCreateRequest","type":"object"}"#)
@@ -7240,11 +8704,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_178() -> ToolSpec {
+    ToolSpec {
             name: "subscriptions_createInstance".to_string(),
             description: "Create one `subscriptions` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"familySharable":{"nullable":true,"type":"boolean"},"groupLevel":{"nullable":true,"type":"integer"},"name":{"type":"string"},"productId":{"type":"string"},"reviewNote":{"nullable":true,"type":"string"},"subscriptionPeriod":{"enum":["ONE_WEEK","ONE_MONTH","TWO_MONTHS","THREE_MONTHS","SIX_MONTHS","ONE_YEAR"],"nullable":true,"type":"string"}},"required":["productId","name"],"type":"object"},"relationships":{"properties":{"group":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["subscriptionGroups"],"type":"string"}},"required":["id","type"],"type":"object"}},"required":["data"],"type":"object"}},"required":["group"],"type":"object"},"type":{"enum":["subscriptions"],"type":"string"}},"required":["relationships","attributes","type"],"type":"object"}},"required":["data"],"title":"SubscriptionCreateRequest","type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"familySharable":{"type":["boolean","null"]},"groupLevel":{"type":["integer","null"]},"name":{"type":"string"},"productId":{"type":"string"},"reviewNote":{"type":["string","null"]},"subscriptionPeriod":{"enum":["ONE_WEEK","ONE_MONTH","TWO_MONTHS","THREE_MONTHS","SIX_MONTHS","ONE_YEAR",null],"type":["string","null"]}},"required":["productId","name"],"type":"object"},"relationships":{"properties":{"group":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["subscriptionGroups"],"type":"string"}},"required":["id","type"],"type":"object"}},"required":["data"],"type":"object"}},"required":["group"],"type":"object"},"type":{"enum":["subscriptions"],"type":"string"}},"required":["relationships","attributes","type"],"type":"object"}},"required":["data"],"title":"SubscriptionCreateRequest","type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "POST".to_string(),
@@ -7266,11 +8732,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_179() -> ToolSpec {
+    ToolSpec {
             name: "subscriptions_getInstance".to_string(),
             description: "Get one `subscriptions` resource by id.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"fields[promotedPurchases]":{"items":{"type":"string"},"type":"array"},"fields[subscriptionAppStoreReviewScreenshots]":{"items":{"type":"string"},"type":"array"},"fields[subscriptionAvailabilities]":{"items":{"type":"string"},"type":"array"},"fields[subscriptionGroups]":{"items":{"type":"string"},"type":"array"},"fields[subscriptionImages]":{"items":{"type":"string"},"type":"array"},"fields[subscriptionIntroductoryOffers]":{"items":{"type":"string"},"type":"array"},"fields[subscriptionLocalizations]":{"items":{"type":"string"},"type":"array"},"fields[subscriptionOfferCodes]":{"items":{"type":"string"},"type":"array"},"fields[subscriptionPlanAvailabilities]":{"items":{"type":"string"},"type":"array"},"fields[subscriptionPrices]":{"items":{"type":"string"},"type":"array"},"fields[subscriptionPromotionalOffers]":{"items":{"type":"string"},"type":"array"},"fields[subscriptionVersions]":{"items":{"type":"string"},"type":"array"},"fields[subscriptions]":{"items":{"type":"string"},"type":"array"},"fields[winBackOffers]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["subscriptionLocalizations","appStoreReviewScreenshot","group","introductoryOffers","promotionalOffers","offerCodes","prices","promotedPurchase","subscriptionAvailability","winBackOffers","images","planAvailabilities","versions"],"type":"string"},"type":"array"},"limit[images]":{"maximum":50,"type":"integer"},"limit[introductoryOffers]":{"maximum":50,"type":"integer"},"limit[offerCodes]":{"maximum":50,"type":"integer"},"limit[planAvailabilities]":{"maximum":50,"type":"integer"},"limit[prices]":{"maximum":50,"type":"integer"},"limit[promotionalOffers]":{"maximum":50,"type":"integer"},"limit[subscriptionLocalizations]":{"maximum":50,"type":"integer"},"limit[versions]":{"maximum":50,"type":"integer"},"limit[winBackOffers]":{"maximum":50,"type":"integer"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"fields[promotedPurchases]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[subscriptionAppStoreReviewScreenshots]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[subscriptionAvailabilities]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[subscriptionGroups]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[subscriptionImages]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[subscriptionIntroductoryOffers]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[subscriptionLocalizations]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[subscriptionOfferCodes]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[subscriptionPlanAvailabilities]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[subscriptionPrices]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[subscriptionPromotionalOffers]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[subscriptionVersions]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[subscriptions]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[winBackOffers]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["subscriptionLocalizations","appStoreReviewScreenshot","group","introductoryOffers","promotionalOffers","offerCodes","prices","promotedPurchase","subscriptionAvailability","winBackOffers","images","planAvailabilities","versions"],"type":"string"},"type":"array","x-mcp-query-explode":false},"limit[images]":{"maximum":50,"type":"integer"},"limit[introductoryOffers]":{"maximum":50,"type":"integer"},"limit[offerCodes]":{"maximum":50,"type":"integer"},"limit[planAvailabilities]":{"maximum":50,"type":"integer"},"limit[prices]":{"maximum":50,"type":"integer"},"limit[promotionalOffers]":{"maximum":50,"type":"integer"},"limit[subscriptionLocalizations]":{"maximum":50,"type":"integer"},"limit[versions]":{"maximum":50,"type":"integer"},"limit[winBackOffers]":{"maximum":50,"type":"integer"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -7391,11 +8859,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_180() -> ToolSpec {
+    ToolSpec {
             name: "subscriptions_updateInstance".to_string(),
             description: "Update attributes or relationships of one `subscriptions` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"familySharable":{"nullable":true,"type":"boolean"},"groupLevel":{"nullable":true,"type":"integer"},"marketSettings":{"items":{"enum":["APPLE_SCHOOL","APP_STORE","APPLE_BUSINESS"],"type":"string"},"nullable":true,"type":"array"},"multiSeatStatus":{"enum":["ENABLED","DISABLED"],"nullable":true,"type":"string"},"name":{"nullable":true,"type":"string"},"reviewNote":{"nullable":true,"type":"string"},"subscriptionPeriod":{"enum":["ONE_WEEK","ONE_MONTH","TWO_MONTHS","THREE_MONTHS","SIX_MONTHS","ONE_YEAR"],"nullable":true,"type":"string"}},"type":"object"},"id":{"type":"string"},"relationships":{"properties":{"introductoryOffers":{"properties":{"data":{"items":{"properties":{"id":{"type":"string"},"type":{"enum":["subscriptionIntroductoryOffers"],"type":"string"}},"required":["id","type"],"type":"object"},"type":"array"}},"type":"object"},"prices":{"properties":{"data":{"items":{"properties":{"id":{"type":"string"},"type":{"enum":["subscriptionPrices"],"type":"string"}},"required":["id","type"],"type":"object"},"type":"array"}},"type":"object"},"promotionalOffers":{"properties":{"data":{"items":{"properties":{"id":{"type":"string"},"type":{"enum":["subscriptionPromotionalOffers"],"type":"string"}},"required":["id","type"],"type":"object"},"type":"array"}},"type":"object"}},"type":"object"},"type":{"enum":["subscriptions"],"type":"string"}},"required":["id","type"],"type":"object"},"id":{"type":"string"},"included":{"items":{"oneOf":[{"properties":{"attributes":{"properties":{"duration":{"enum":["THREE_DAYS","ONE_WEEK","TWO_WEEKS","ONE_MONTH","TWO_MONTHS","THREE_MONTHS","SIX_MONTHS","ONE_YEAR"],"type":"string"},"name":{"type":"string"},"numberOfPeriods":{"type":"integer"},"offerCode":{"type":"string"},"offerMode":{"enum":["PAY_AS_YOU_GO","PAY_UP_FRONT","FREE_TRIAL"],"type":"string"},"targetSubscriptionPlanType":{"enum":["MONTHLY","UPFRONT"],"type":"string"}},"required":["duration","offerCode","name","numberOfPeriods","offerMode"],"type":"object"},"id":{"type":"string"},"relationships":{"properties":{"prices":{"properties":{"data":{"items":{"properties":{"id":{"type":"string"},"type":{"enum":["subscriptionPromotionalOfferPrices"],"type":"string"}},"required":["id","type"],"type":"object"},"type":"array"}},"type":"object"},"subscription":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["subscriptions"],"type":"string"}},"required":["id","type"],"type":"object"}},"type":"object"}},"type":"object"},"type":{"enum":["subscriptionPromotionalOffers"],"type":"string"}},"required":["attributes","type"],"type":"object"},{"properties":{"attributes":{"properties":{"planType":{"enum":["MONTHLY","UPFRONT"],"type":"string"},"preserveCurrentPrice":{"nullable":true,"type":"boolean"},"startDate":{"format":"date","nullable":true,"type":"string"}},"type":"object"},"id":{"type":"string"},"relationships":{"properties":{"subscription":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["subscriptions"],"type":"string"}},"required":["id","type"],"type":"object"}},"type":"object"},"subscriptionPricePoint":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["subscriptionPricePoints"],"type":"string"}},"required":["id","type"],"type":"object"}},"type":"object"},"territory":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["territories"],"type":"string"}},"required":["id","type"],"type":"object"}},"type":"object"}},"type":"object"},"type":{"enum":["subscriptionPrices"],"type":"string"}},"required":["type"],"type":"object"},{"properties":{"attributes":{"properties":{"duration":{"enum":["THREE_DAYS","ONE_WEEK","TWO_WEEKS","ONE_MONTH","TWO_MONTHS","THREE_MONTHS","SIX_MONTHS","ONE_YEAR"],"type":"string"},"endDate":{"format":"date","nullable":true,"type":"string"},"numberOfPeriods":{"type":"integer"},"offerMode":{"enum":["PAY_AS_YOU_GO","PAY_UP_FRONT","FREE_TRIAL"],"type":"string"},"startDate":{"format":"date","nullable":true,"type":"string"},"targetSubscriptionPlanType":{"enum":["MONTHLY","UPFRONT"],"type":"string"}},"required":["duration","numberOfPeriods","offerMode"],"type":"object"},"id":{"type":"string"},"relationships":{"properties":{"subscription":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["subscriptions"],"type":"string"}},"required":["id","type"],"type":"object"}},"type":"object"},"subscriptionPricePoint":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["subscriptionPricePoints"],"type":"string"}},"required":["id","type"],"type":"object"}},"type":"object"},"territory":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["territories"],"type":"string"}},"required":["id","type"],"type":"object"}},"type":"object"}},"type":"object"},"type":{"enum":["subscriptionIntroductoryOffers"],"type":"string"}},"required":["attributes","type"],"type":"object"}]},"type":"array"}},"required":["id","data"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"familySharable":{"type":["boolean","null"]},"groupLevel":{"type":["integer","null"]},"marketSettings":{"items":{"enum":["APPLE_SCHOOL","APP_STORE","APPLE_BUSINESS"],"type":"string"},"type":["array","null"]},"multiSeatStatus":{"enum":["ENABLED","DISABLED",null],"type":["string","null"]},"name":{"type":["string","null"]},"reviewNote":{"type":["string","null"]},"subscriptionPeriod":{"enum":["ONE_WEEK","ONE_MONTH","TWO_MONTHS","THREE_MONTHS","SIX_MONTHS","ONE_YEAR",null],"type":["string","null"]}},"type":"object"},"id":{"type":"string"},"relationships":{"properties":{"introductoryOffers":{"properties":{"data":{"items":{"properties":{"id":{"type":"string"},"type":{"enum":["subscriptionIntroductoryOffers"],"type":"string"}},"required":["id","type"],"type":"object"},"type":"array"}},"type":"object"},"prices":{"properties":{"data":{"items":{"properties":{"id":{"type":"string"},"type":{"enum":["subscriptionPrices"],"type":"string"}},"required":["id","type"],"type":"object"},"type":"array"}},"type":"object"},"promotionalOffers":{"properties":{"data":{"items":{"properties":{"id":{"type":"string"},"type":{"enum":["subscriptionPromotionalOffers"],"type":"string"}},"required":["id","type"],"type":"object"},"type":"array"}},"type":"object"}},"type":"object"},"type":{"enum":["subscriptions"],"type":"string"}},"required":["id","type"],"type":"object"},"id":{"type":"string"},"included":{"items":{"oneOf":[{"properties":{"attributes":{"properties":{"duration":{"enum":["THREE_DAYS","ONE_WEEK","TWO_WEEKS","ONE_MONTH","TWO_MONTHS","THREE_MONTHS","SIX_MONTHS","ONE_YEAR"],"type":"string"},"name":{"type":"string"},"numberOfPeriods":{"type":"integer"},"offerCode":{"type":"string"},"offerMode":{"enum":["PAY_AS_YOU_GO","PAY_UP_FRONT","FREE_TRIAL"],"type":"string"},"targetSubscriptionPlanType":{"enum":["MONTHLY","UPFRONT"],"type":"string"}},"required":["duration","offerCode","name","numberOfPeriods","offerMode"],"type":"object"},"id":{"type":"string"},"relationships":{"properties":{"prices":{"properties":{"data":{"items":{"properties":{"id":{"type":"string"},"type":{"enum":["subscriptionPromotionalOfferPrices"],"type":"string"}},"required":["id","type"],"type":"object"},"type":"array"}},"type":"object"},"subscription":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["subscriptions"],"type":"string"}},"required":["id","type"],"type":"object"}},"type":"object"}},"type":"object"},"type":{"enum":["subscriptionPromotionalOffers"],"type":"string"}},"required":["attributes","type"],"type":"object"},{"properties":{"attributes":{"properties":{"planType":{"enum":["MONTHLY","UPFRONT"],"type":"string"},"preserveCurrentPrice":{"type":["boolean","null"]},"startDate":{"format":"date","type":["string","null"]}},"type":"object"},"id":{"type":"string"},"relationships":{"properties":{"subscription":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["subscriptions"],"type":"string"}},"required":["id","type"],"type":"object"}},"type":"object"},"subscriptionPricePoint":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["subscriptionPricePoints"],"type":"string"}},"required":["id","type"],"type":"object"}},"type":"object"},"territory":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["territories"],"type":"string"}},"required":["id","type"],"type":"object"}},"type":"object"}},"type":"object"},"type":{"enum":["subscriptionPrices"],"type":"string"}},"required":["type"],"type":"object"},{"properties":{"attributes":{"properties":{"duration":{"enum":["THREE_DAYS","ONE_WEEK","TWO_WEEKS","ONE_MONTH","TWO_MONTHS","THREE_MONTHS","SIX_MONTHS","ONE_YEAR"],"type":"string"},"endDate":{"format":"date","type":["string","null"]},"numberOfPeriods":{"type":"integer"},"offerMode":{"enum":["PAY_AS_YOU_GO","PAY_UP_FRONT","FREE_TRIAL"],"type":"string"},"startDate":{"format":"date","type":["string","null"]},"targetSubscriptionPlanType":{"enum":["MONTHLY","UPFRONT"],"type":"string"}},"required":["duration","numberOfPeriods","offerMode"],"type":"object"},"id":{"type":"string"},"relationships":{"properties":{"subscription":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["subscriptions"],"type":"string"}},"required":["id","type"],"type":"object"}},"type":"object"},"subscriptionPricePoint":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["subscriptionPricePoints"],"type":"string"}},"required":["id","type"],"type":"object"}},"type":"object"},"territory":{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["territories"],"type":"string"}},"required":["id","type"],"type":"object"}},"type":"object"}},"type":"object"},"type":{"enum":["subscriptionIntroductoryOffers"],"type":"string"}},"required":["attributes","type"],"type":"object"}]},"type":"array"}},"required":["id","data"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "PATCH".to_string(),
@@ -7422,40 +8892,43 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
-            name: "subscriptions_deleteInstance".to_string(),
-            description: "Delete one `subscriptions` resource. This cannot be undone.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"id":{"type":"string"}},"required":["id"],"type":"object"}"#)
-                .expect("generated input schema must be valid JSON"),
-            execution: ExecutionKind::Rest(RestOperation {
-                method: "DELETE".to_string(),
-                path_template: "/v1/subscriptions/{id}".to_string(),
-                params: vec![
-                    ParamBinding {
-                        name: "id".to_string(),
-                        location: ParamLocation::Path,
-                    },
-                ],
-                body_fields: vec![
-                ],
+        }
+}
+fn build_operation_181() -> ToolSpec {
+    ToolSpec {
+        name: "subscriptions_deleteInstance".to_string(),
+        description: "Delete one `subscriptions` resource. This cannot be undone.".to_string(),
+        input_schema: serde_json::from_str(
+            r#"{"properties":{"id":{"type":"string"}},"required":["id"],"type":"object"}"#,
+        )
+        .expect("generated input schema must be valid JSON"),
+        execution: ExecutionKind::Rest(RestOperation {
+            method: "DELETE".to_string(),
+            path_template: "/v1/subscriptions/{id}".to_string(),
+            params: vec![ParamBinding {
+                name: "id".to_string(),
+                location: ParamLocation::Path,
+            }],
+            body_fields: vec![],
             content_type: None,
             raw_body: false,
             media: None,
         }),
-            hints: ToolHints {
-                title: None,
-                output_schema: None,
-                read_only: Some(false),
-                destructive: Some(true),
-                idempotent: Some(true),
-                open_world: Some(true),
-            },
+        hints: ToolHints {
+            title: None,
+            output_schema: None,
+            read_only: Some(false),
+            destructive: Some(true),
+            idempotent: Some(true),
+            open_world: Some(true),
         },
-        ToolSpec {
+    }
+}
+fn build_operation_182() -> ToolSpec {
+    ToolSpec {
             name: "territories_getCollection".to_string(),
             description: "List App Store territories and their currencies; use these IDs instead of guessing territory codes.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[territories]":{"items":{"type":"string"},"type":"array"},"limit":{"maximum":200,"type":"integer"}},"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[territories]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"limit":{"maximum":200,"type":"integer"}},"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -7488,11 +8961,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_183() -> ToolSpec {
+    ToolSpec {
             name: "territoryAvailabilities_updateInstance".to_string(),
             description: "Update attributes or relationships of one `territoryAvailabilities` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"available":{"nullable":true,"type":"boolean"},"preOrderEnabled":{"nullable":true,"type":"boolean"},"releaseDate":{"format":"date","nullable":true,"type":"string"}},"type":"object"},"id":{"type":"string"},"type":{"enum":["territoryAvailabilities"],"type":"string"}},"required":["id","type"],"type":"object"},"id":{"type":"string"}},"required":["id","data"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"attributes":{"properties":{"available":{"type":["boolean","null"]},"preOrderEnabled":{"type":["boolean","null"]},"releaseDate":{"format":"date","type":["string","null"]}},"type":"object"},"id":{"type":"string"},"type":{"enum":["territoryAvailabilities"],"type":"string"}},"required":["id","type"],"type":"object"},"id":{"type":"string"}},"required":["id","data"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "PATCH".to_string(),
@@ -7518,11 +8993,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_184() -> ToolSpec {
+    ToolSpec {
             name: "analyticsReportInstances_segments_getToManyRelated".to_string(),
             description: "List the `segments` related to one `analyticsReportInstances` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[analyticsReportSegments]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"limit":{"maximum":200,"type":"integer"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[analyticsReportSegments]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"limit":{"maximum":200,"type":"integer"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -7559,11 +9036,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_185() -> ToolSpec {
+    ToolSpec {
             name: "analyticsReportRequests_reports_getToManyRelated".to_string(),
             description: "List the `reports` related to one `analyticsReportRequests` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[analyticsReports]":{"items":{"type":"string"},"type":"array"},"filter[category]":{"items":{"enum":["APP_USAGE","APP_STORE_ENGAGEMENT","COMMERCE","FRAMEWORK_USAGE","PERFORMANCE"],"type":"string"},"type":"array"},"filter[name]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"limit":{"maximum":200,"type":"integer"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[analyticsReports]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[category]":{"items":{"enum":["APP_USAGE","APP_STORE_ENGAGEMENT","COMMERCE","FRAMEWORK_USAGE","PERFORMANCE"],"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[name]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"limit":{"maximum":200,"type":"integer"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -7608,11 +9087,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_186() -> ToolSpec {
+    ToolSpec {
             name: "analyticsReports_instances_getToManyRelated".to_string(),
             description: "List the `instances` related to one `analyticsReports` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[analyticsReportInstances]":{"items":{"type":"string"},"type":"array"},"filter[granularity]":{"items":{"enum":["DAILY","WEEKLY","MONTHLY"],"type":"string"},"type":"array"},"filter[processingDate]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"limit":{"maximum":200,"type":"integer"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[analyticsReportInstances]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[granularity]":{"items":{"enum":["DAILY","WEEKLY","MONTHLY"],"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[processingDate]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"limit":{"maximum":200,"type":"integer"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -7657,8 +9138,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_187() -> ToolSpec {
+    ToolSpec {
             name: "appAvailabilitiesV2_territoryAvailabilities_getToManyRelationship".to_string(),
             description: "Get the IDs of the `territoryAvailabilities` linked to one `appAvailabilities` resource (linkage only).".to_string(),
             input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"id":{"type":"string"},"limit":{"maximum":200,"type":"integer"}},"required":["id"],"type":"object"}"#)
@@ -7694,11 +9177,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_188() -> ToolSpec {
+    ToolSpec {
             name: "appAvailabilitiesV2_territoryAvailabilities_getToManyRelated".to_string(),
             description: "List the `territoryAvailabilities` related to one `appAvailabilities` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[territories]":{"items":{"type":"string"},"type":"array"},"fields[territoryAvailabilities]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["territory"],"type":"string"},"type":"array"},"limit":{"maximum":200,"type":"integer"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[territories]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[territoryAvailabilities]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["territory"],"type":"string"},"type":"array","x-mcp-query-explode":false},"limit":{"maximum":200,"type":"integer"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -7743,11 +9228,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_189() -> ToolSpec {
+    ToolSpec {
             name: "appCategories_subcategories_getToManyRelated".to_string(),
             description: "List the `subcategories` related to one `appCategories` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[appCategories]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"limit":{"maximum":200,"type":"integer"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[appCategories]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"limit":{"maximum":200,"type":"integer"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -7784,11 +9271,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_190() -> ToolSpec {
+    ToolSpec {
             name: "appInfos_ageRatingDeclaration_getToOneRelated".to_string(),
             description: "List the `ageRatingDeclaration` related to one `appInfos` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"fields[ageRatingDeclarations]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"fields[ageRatingDeclarations]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -7817,11 +9306,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_191() -> ToolSpec {
+    ToolSpec {
             name: "appInfos_appInfoLocalizations_getToManyRelated".to_string(),
             description: "List the `appInfoLocalizations` related to one `appInfos` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[appInfoLocalizations]":{"items":{"type":"string"},"type":"array"},"fields[appInfos]":{"items":{"type":"string"},"type":"array"},"filter[locale]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["appInfo"],"type":"string"},"type":"array"},"limit":{"maximum":200,"type":"integer"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[appInfoLocalizations]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[appInfos]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[locale]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["appInfo"],"type":"string"},"type":"array","x-mcp-query-explode":false},"limit":{"maximum":200,"type":"integer"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -7870,8 +9361,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_192() -> ToolSpec {
+    ToolSpec {
             name: "appPreviewSets_appPreviews_replaceToManyRelationship".to_string(),
             description: "Reorder the previews in a set: send every preview ID in the desired order.".to_string(),
             input_schema: serde_json::from_str(r#"{"properties":{"data":{"items":{"properties":{"id":{"type":"string"},"type":{"enum":["appPreviews"],"type":"string"}},"required":["id","type"],"type":"object"},"type":"array"},"id":{"type":"string"}},"required":["id","data"],"type":"object"}"#)
@@ -7900,11 +9393,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_193() -> ToolSpec {
+    ToolSpec {
             name: "appPreviewSets_appPreviews_getToManyRelated".to_string(),
             description: "List the `appPreviews` related to one `appPreviewSets` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[appPreviewSets]":{"items":{"type":"string"},"type":"array"},"fields[appPreviews]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["appPreviewSet"],"type":"string"},"type":"array"},"limit":{"maximum":200,"type":"integer"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[appPreviewSets]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[appPreviews]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["appPreviewSet"],"type":"string"},"type":"array","x-mcp-query-explode":false},"limit":{"maximum":200,"type":"integer"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -7949,11 +9444,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_194() -> ToolSpec {
+    ToolSpec {
             name: "appPricePointsV3_equalizations_getToManyRelated".to_string(),
             description: "List the `equalizations` related to one `appPricePoints` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[appPricePoints]":{"items":{"type":"string"},"type":"array"},"fields[apps]":{"items":{"type":"string"},"type":"array"},"fields[territories]":{"items":{"type":"string"},"type":"array"},"filter[territory]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["app","territory"],"type":"string"},"type":"array"},"limit":{"maximum":200,"type":"integer"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[appPricePoints]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[apps]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[territories]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[territory]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["app","territory"],"type":"string"},"type":"array","x-mcp-query-explode":false},"limit":{"maximum":200,"type":"integer"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -8006,11 +9503,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_195() -> ToolSpec {
+    ToolSpec {
             name: "appPriceSchedules_automaticPrices_getToManyRelated".to_string(),
             description: "List the `automaticPrices` related to one `appPriceSchedules` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[appPricePoints]":{"items":{"type":"string"},"type":"array"},"fields[appPrices]":{"items":{"type":"string"},"type":"array"},"fields[territories]":{"items":{"type":"string"},"type":"array"},"filter[endDate]":{"items":{"type":"string"},"type":"array"},"filter[startDate]":{"items":{"type":"string"},"type":"array"},"filter[territory]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["appPricePoint","territory"],"type":"string"},"type":"array"},"limit":{"maximum":200,"type":"integer"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[appPricePoints]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[appPrices]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[territories]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[endDate]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[startDate]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[territory]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["appPricePoint","territory"],"type":"string"},"type":"array","x-mcp-query-explode":false},"limit":{"maximum":200,"type":"integer"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -8071,11 +9570,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_196() -> ToolSpec {
+    ToolSpec {
             name: "appPriceSchedules_baseTerritory_getToOneRelated".to_string(),
             description: "List the `baseTerritory` related to one `appPriceSchedules` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"fields[territories]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"fields[territories]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -8104,11 +9605,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_197() -> ToolSpec {
+    ToolSpec {
             name: "appPriceSchedules_manualPrices_getToManyRelated".to_string(),
             description: "List the `manualPrices` related to one `appPriceSchedules` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[appPricePoints]":{"items":{"type":"string"},"type":"array"},"fields[appPrices]":{"items":{"type":"string"},"type":"array"},"fields[territories]":{"items":{"type":"string"},"type":"array"},"filter[endDate]":{"items":{"type":"string"},"type":"array"},"filter[startDate]":{"items":{"type":"string"},"type":"array"},"filter[territory]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["appPricePoint","territory"],"type":"string"},"type":"array"},"limit":{"maximum":200,"type":"integer"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[appPricePoints]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[appPrices]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[territories]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[endDate]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[startDate]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[territory]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["appPricePoint","territory"],"type":"string"},"type":"array","x-mcp-query-explode":false},"limit":{"maximum":200,"type":"integer"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -8169,8 +9672,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_198() -> ToolSpec {
+    ToolSpec {
             name: "appScreenshotSets_appScreenshots_replaceToManyRelationship".to_string(),
             description: "Reorder the screenshots in a set: send every screenshot ID in the desired order.".to_string(),
             input_schema: serde_json::from_str(r#"{"properties":{"data":{"items":{"properties":{"id":{"type":"string"},"type":{"enum":["appScreenshots"],"type":"string"}},"required":["id","type"],"type":"object"},"type":"array"},"id":{"type":"string"}},"required":["id","data"],"type":"object"}"#)
@@ -8199,11 +9704,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_199() -> ToolSpec {
+    ToolSpec {
             name: "appScreenshotSets_appScreenshots_getToManyRelated".to_string(),
             description: "List the `appScreenshots` related to one `appScreenshotSets` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[appScreenshotSets]":{"items":{"type":"string"},"type":"array"},"fields[appScreenshots]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["appScreenshotSet"],"type":"string"},"type":"array"},"limit":{"maximum":200,"type":"integer"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[appScreenshotSets]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[appScreenshots]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["appScreenshotSet"],"type":"string"},"type":"array","x-mcp-query-explode":false},"limit":{"maximum":200,"type":"integer"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -8248,11 +9755,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_200() -> ToolSpec {
+    ToolSpec {
             name: "appStoreReviewDetails_appStoreReviewAttachments_getToManyRelated".to_string(),
             description: "List the `appStoreReviewAttachments` related to one `appStoreReviewDetails` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[appStoreReviewAttachments]":{"items":{"type":"string"},"type":"array"},"fields[appStoreReviewDetails]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["appStoreReviewDetail"],"type":"string"},"type":"array"},"limit":{"maximum":200,"type":"integer"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[appStoreReviewAttachments]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[appStoreReviewDetails]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["appStoreReviewDetail"],"type":"string"},"type":"array","x-mcp-query-explode":false},"limit":{"maximum":200,"type":"integer"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -8297,11 +9806,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_201() -> ToolSpec {
+    ToolSpec {
             name: "appStoreVersionLocalizations_appPreviewSets_getToManyRelated".to_string(),
             description: "List the `appPreviewSets` related to one `appStoreVersionLocalizations` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[appCustomProductPageLocalizations]":{"items":{"type":"string"},"type":"array"},"fields[appPreviewSets]":{"items":{"type":"string"},"type":"array"},"fields[appPreviews]":{"items":{"type":"string"},"type":"array"},"fields[appStoreVersionExperimentTreatmentLocalizations]":{"items":{"type":"string"},"type":"array"},"fields[appStoreVersionLocalizations]":{"items":{"type":"string"},"type":"array"},"filter[appCustomProductPageLocalization]":{"items":{"type":"string"},"type":"array"},"filter[appStoreVersionExperimentTreatmentLocalization]":{"items":{"type":"string"},"type":"array"},"filter[previewType]":{"items":{"enum":["IPHONE_67","IPHONE_61","IPHONE_65","IPHONE_58","IPHONE_55","IPHONE_47","IPHONE_40","IPHONE_35","IPAD_PRO_3GEN_129","IPAD_PRO_3GEN_11","IPAD_PRO_129","IPAD_105","IPAD_97","DESKTOP","APPLE_TV","APPLE_VISION_PRO"],"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["appStoreVersionLocalization","appCustomProductPageLocalization","appStoreVersionExperimentTreatmentLocalization","appPreviews"],"type":"string"},"type":"array"},"limit":{"maximum":200,"type":"integer"},"limit[appPreviews]":{"maximum":50,"type":"integer"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[appCustomProductPageLocalizations]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[appPreviewSets]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[appPreviews]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[appStoreVersionExperimentTreatmentLocalizations]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[appStoreVersionLocalizations]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[appCustomProductPageLocalization]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[appStoreVersionExperimentTreatmentLocalization]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[previewType]":{"items":{"enum":["IPHONE_67","IPHONE_61","IPHONE_65","IPHONE_58","IPHONE_55","IPHONE_47","IPHONE_40","IPHONE_35","IPAD_PRO_3GEN_129","IPAD_PRO_3GEN_11","IPAD_PRO_129","IPAD_105","IPAD_97","DESKTOP","APPLE_TV","APPLE_VISION_PRO"],"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["appStoreVersionLocalization","appCustomProductPageLocalization","appStoreVersionExperimentTreatmentLocalization","appPreviews"],"type":"string"},"type":"array","x-mcp-query-explode":false},"limit":{"maximum":200,"type":"integer"},"limit[appPreviews]":{"maximum":50,"type":"integer"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -8374,11 +9885,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_202() -> ToolSpec {
+    ToolSpec {
             name: "appStoreVersionLocalizations_appScreenshotSets_getToManyRelated".to_string(),
             description: "List the `appScreenshotSets` related to one `appStoreVersionLocalizations` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[appCustomProductPageLocalizations]":{"items":{"type":"string"},"type":"array"},"fields[appScreenshotSets]":{"items":{"type":"string"},"type":"array"},"fields[appScreenshots]":{"items":{"type":"string"},"type":"array"},"fields[appStoreVersionExperimentTreatmentLocalizations]":{"items":{"type":"string"},"type":"array"},"fields[appStoreVersionLocalizations]":{"items":{"type":"string"},"type":"array"},"filter[appCustomProductPageLocalization]":{"items":{"type":"string"},"type":"array"},"filter[appStoreVersionExperimentTreatmentLocalization]":{"items":{"type":"string"},"type":"array"},"filter[screenshotDisplayType]":{"items":{"enum":["APP_IPHONE_67","APP_IPHONE_61","APP_IPHONE_65","APP_IPHONE_58","APP_IPHONE_55","APP_IPHONE_47","APP_IPHONE_40","APP_IPHONE_35","APP_IPAD_PRO_3GEN_129","APP_IPAD_PRO_3GEN_11","APP_IPAD_PRO_129","APP_IPAD_105","APP_IPAD_97","APP_DESKTOP","APP_WATCH_ULTRA","APP_WATCH_SERIES_10","APP_WATCH_SERIES_7","APP_WATCH_SERIES_4","APP_WATCH_SERIES_3","APP_APPLE_TV","APP_APPLE_VISION_PRO","IMESSAGE_APP_IPHONE_67","IMESSAGE_APP_IPHONE_61","IMESSAGE_APP_IPHONE_65","IMESSAGE_APP_IPHONE_58","IMESSAGE_APP_IPHONE_55","IMESSAGE_APP_IPHONE_47","IMESSAGE_APP_IPHONE_40","IMESSAGE_APP_IPAD_PRO_3GEN_129","IMESSAGE_APP_IPAD_PRO_3GEN_11","IMESSAGE_APP_IPAD_PRO_129","IMESSAGE_APP_IPAD_105","IMESSAGE_APP_IPAD_97"],"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["appStoreVersionLocalization","appCustomProductPageLocalization","appStoreVersionExperimentTreatmentLocalization","appScreenshots"],"type":"string"},"type":"array"},"limit":{"maximum":200,"type":"integer"},"limit[appScreenshots]":{"maximum":50,"type":"integer"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[appCustomProductPageLocalizations]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[appScreenshotSets]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[appScreenshots]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[appStoreVersionExperimentTreatmentLocalizations]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[appStoreVersionLocalizations]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[appCustomProductPageLocalization]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[appStoreVersionExperimentTreatmentLocalization]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[screenshotDisplayType]":{"items":{"enum":["APP_IPHONE_67","APP_IPHONE_61","APP_IPHONE_65","APP_IPHONE_58","APP_IPHONE_55","APP_IPHONE_47","APP_IPHONE_40","APP_IPHONE_35","APP_IPAD_PRO_3GEN_129","APP_IPAD_PRO_3GEN_11","APP_IPAD_PRO_129","APP_IPAD_105","APP_IPAD_97","APP_DESKTOP","APP_WATCH_ULTRA","APP_WATCH_SERIES_10","APP_WATCH_SERIES_7","APP_WATCH_SERIES_4","APP_WATCH_SERIES_3","APP_APPLE_TV","APP_APPLE_VISION_PRO","IMESSAGE_APP_IPHONE_67","IMESSAGE_APP_IPHONE_61","IMESSAGE_APP_IPHONE_65","IMESSAGE_APP_IPHONE_58","IMESSAGE_APP_IPHONE_55","IMESSAGE_APP_IPHONE_47","IMESSAGE_APP_IPHONE_40","IMESSAGE_APP_IPAD_PRO_3GEN_129","IMESSAGE_APP_IPAD_PRO_3GEN_11","IMESSAGE_APP_IPAD_PRO_129","IMESSAGE_APP_IPAD_105","IMESSAGE_APP_IPAD_97"],"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["appStoreVersionLocalization","appCustomProductPageLocalization","appStoreVersionExperimentTreatmentLocalization","appScreenshots"],"type":"string"},"type":"array","x-mcp-query-explode":false},"limit":{"maximum":200,"type":"integer"},"limit[appScreenshots]":{"maximum":50,"type":"integer"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -8451,11 +9964,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_203() -> ToolSpec {
+    ToolSpec {
             name: "appStoreVersions_appStoreReviewDetail_getToOneRelated".to_string(),
             description: "List the `appStoreReviewDetail` related to one `appStoreVersions` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"fields[appStoreReviewAttachments]":{"items":{"type":"string"},"type":"array"},"fields[appStoreReviewDetails]":{"items":{"type":"string"},"type":"array"},"fields[appStoreVersions]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["appStoreVersion","appStoreReviewAttachments"],"type":"string"},"type":"array"},"limit[appStoreReviewAttachments]":{"maximum":50,"type":"integer"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"fields[appStoreReviewAttachments]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[appStoreReviewDetails]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[appStoreVersions]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["appStoreVersion","appStoreReviewAttachments"],"type":"string"},"type":"array","x-mcp-query-explode":false},"limit[appStoreReviewAttachments]":{"maximum":50,"type":"integer"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -8500,11 +10015,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_204() -> ToolSpec {
+    ToolSpec {
             name: "appStoreVersions_appStoreVersionLocalizations_getToManyRelated".to_string(),
             description: "List the `appStoreVersionLocalizations` related to one `appStoreVersions` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[appKeywords]":{"items":{"type":"string"},"type":"array"},"fields[appPreviewSets]":{"items":{"type":"string"},"type":"array"},"fields[appScreenshotSets]":{"items":{"type":"string"},"type":"array"},"fields[appStoreVersionLocalizations]":{"items":{"type":"string"},"type":"array"},"fields[appStoreVersions]":{"items":{"type":"string"},"type":"array"},"filter[locale]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["appStoreVersion","appScreenshotSets","appPreviewSets","searchKeywords"],"type":"string"},"type":"array"},"limit":{"maximum":200,"type":"integer"},"limit[appPreviewSets]":{"maximum":50,"type":"integer"},"limit[appScreenshotSets]":{"maximum":50,"type":"integer"},"limit[searchKeywords]":{"maximum":50,"type":"integer"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[appKeywords]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[appPreviewSets]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[appScreenshotSets]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[appStoreVersionLocalizations]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[appStoreVersions]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[locale]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["appStoreVersion","appScreenshotSets","appPreviewSets","searchKeywords"],"type":"string"},"type":"array","x-mcp-query-explode":false},"limit":{"maximum":200,"type":"integer"},"limit[appPreviewSets]":{"maximum":50,"type":"integer"},"limit[appScreenshotSets]":{"maximum":50,"type":"integer"},"limit[searchKeywords]":{"maximum":50,"type":"integer"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -8577,11 +10094,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_205() -> ToolSpec {
+    ToolSpec {
             name: "appStoreVersions_appStoreVersionPhasedRelease_getToOneRelated".to_string(),
             description: "List the `appStoreVersionPhasedRelease` related to one `appStoreVersions` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"fields[appStoreVersionPhasedReleases]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"fields[appStoreVersionPhasedReleases]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -8610,8 +10129,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_206() -> ToolSpec {
+    ToolSpec {
             name: "appStoreVersions_build_updateToOneRelationship".to_string(),
             description: "Attach a processed build to an App Store version (body: `data: {type: builds, id}`). Use a build with `processingState=VALID`.".to_string(),
             input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["builds"],"type":"string"}},"required":["id","type"],"type":"object"},"id":{"type":"string"}},"required":["id","data"],"type":"object"}"#)
@@ -8640,11 +10161,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_207() -> ToolSpec {
+    ToolSpec {
             name: "appStoreVersions_build_getToOneRelated".to_string(),
             description: "List the `build` related to one `appStoreVersions` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"fields[builds]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"fields[builds]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -8673,11 +10196,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_208() -> ToolSpec {
+    ToolSpec {
             name: "appStoreVersions_customerReviews_getToManyRelated".to_string(),
             description: "List the `customerReviews` related to one `appStoreVersions` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"exists[publishedResponse]":{"type":"boolean"},"fields[customerReviewResponses]":{"items":{"type":"string"},"type":"array"},"fields[customerReviews]":{"items":{"type":"string"},"type":"array"},"fields[territories]":{"items":{"type":"string"},"type":"array"},"filter[rating]":{"items":{"type":"string"},"type":"array"},"filter[reviewTerritory]":{"items":{"type":"string"},"type":"array"},"filter[territory]":{"items":{"enum":["ABW","AFG","AGO","AIA","ALB","AND","ANT","ARE","ARG","ARM","ASM","ATG","AUS","AUT","AZE","BDI","BEL","BEN","BES","BFA","BGD","BGR","BHR","BHS","BIH","BLR","BLZ","BMU","BOL","BRA","BRB","BRN","BTN","BWA","CAF","CAN","CHE","CHL","CHN","CIV","CMR","COD","COG","COK","COL","COM","CPV","CRI","CUB","CUW","CXR","CYM","CYP","CZE","DEU","DJI","DMA","DNK","DOM","DZA","ECU","EGY","ERI","ESP","EST","ETH","FIN","FJI","FLK","FRA","FRO","FSM","GAB","GBR","GEO","GGY","GHA","GIB","GIN","GLP","GMB","GNB","GNQ","GRC","GRD","GRL","GTM","GUF","GUM","GUY","HKG","HND","HRV","HTI","HUN","IDN","IMN","IND","IRL","IRQ","ISL","ISR","ITA","JAM","JEY","JOR","JPN","KAZ","KEN","KGZ","KHM","KIR","KNA","KOR","KWT","LAO","LBN","LBR","LBY","LCA","LIE","LKA","LSO","LTU","LUX","LVA","MAC","MAR","MCO","MDA","MDG","MDV","MEX","MHL","MKD","MLI","MLT","MMR","MNE","MNG","MNP","MOZ","MRT","MSR","MTQ","MUS","MWI","MYS","MYT","NAM","NCL","NER","NFK","NGA","NIC","NIU","NLD","NOR","NPL","NRU","NZL","OMN","PAK","PAN","PER","PHL","PLW","PNG","POL","PRI","PRT","PRY","PSE","PYF","QAT","REU","ROU","RUS","RWA","SAU","SEN","SGP","SHN","SLB","SLE","SLV","SMR","SOM","SPM","SRB","SSD","STP","SUR","SVK","SVN","SWE","SWZ","SXM","SYC","TCA","TCD","TGO","THA","TJK","TKM","TLS","TON","TTO","TUN","TUR","TUV","TWN","TZA","UGA","UKR","UMI","URY","USA","UZB","VAT","VCT","VEN","VGB","VIR","VNM","VUT","WLF","WSM","XKS","YEM","ZAF","ZMB","ZWE"],"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["response","reviewTerritory"],"type":"string"},"type":"array"},"limit":{"maximum":200,"type":"integer"},"sort":{"items":{"enum":["rating","-rating","createdDate","-createdDate"],"type":"string"},"type":"array"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"exists[publishedResponse]":{"type":"boolean"},"fields[customerReviewResponses]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[customerReviews]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[territories]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[rating]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[reviewTerritory]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[territory]":{"items":{"enum":["ABW","AFG","AGO","AIA","ALB","AND","ANT","ARE","ARG","ARM","ASM","ATG","AUS","AUT","AZE","BDI","BEL","BEN","BES","BFA","BGD","BGR","BHR","BHS","BIH","BLR","BLZ","BMU","BOL","BRA","BRB","BRN","BTN","BWA","CAF","CAN","CHE","CHL","CHN","CIV","CMR","COD","COG","COK","COL","COM","CPV","CRI","CUB","CUW","CXR","CYM","CYP","CZE","DEU","DJI","DMA","DNK","DOM","DZA","ECU","EGY","ERI","ESP","EST","ETH","FIN","FJI","FLK","FRA","FRO","FSM","GAB","GBR","GEO","GGY","GHA","GIB","GIN","GLP","GMB","GNB","GNQ","GRC","GRD","GRL","GTM","GUF","GUM","GUY","HKG","HND","HRV","HTI","HUN","IDN","IMN","IND","IRL","IRQ","ISL","ISR","ITA","JAM","JEY","JOR","JPN","KAZ","KEN","KGZ","KHM","KIR","KNA","KOR","KWT","LAO","LBN","LBR","LBY","LCA","LIE","LKA","LSO","LTU","LUX","LVA","MAC","MAR","MCO","MDA","MDG","MDV","MEX","MHL","MKD","MLI","MLT","MMR","MNE","MNG","MNP","MOZ","MRT","MSR","MTQ","MUS","MWI","MYS","MYT","NAM","NCL","NER","NFK","NGA","NIC","NIU","NLD","NOR","NPL","NRU","NZL","OMN","PAK","PAN","PER","PHL","PLW","PNG","POL","PRI","PRT","PRY","PSE","PYF","QAT","REU","ROU","RUS","RWA","SAU","SEN","SGP","SHN","SLB","SLE","SLV","SMR","SOM","SPM","SRB","SSD","STP","SUR","SVK","SVN","SWE","SWZ","SXM","SYC","TCA","TCD","TGO","THA","TJK","TKM","TLS","TON","TTO","TUN","TUR","TUV","TWN","TZA","UGA","UKR","UMI","URY","USA","UZB","VAT","VCT","VEN","VGB","VIR","VNM","VUT","WLF","WSM","XKS","YEM","ZAF","ZMB","ZWE"],"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["response","reviewTerritory"],"type":"string"},"type":"array","x-mcp-query-explode":false},"limit":{"maximum":200,"type":"integer"},"sort":{"items":{"enum":["rating","-rating","createdDate","-createdDate"],"type":"string"},"type":"array","x-mcp-query-explode":false}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -8746,11 +10271,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_209() -> ToolSpec {
+    ToolSpec {
             name: "apps_analyticsReportRequests_getToManyRelated".to_string(),
             description: "List the `analyticsReportRequests` related to one `apps` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[analyticsReportRequests]":{"items":{"type":"string"},"type":"array"},"fields[analyticsReports]":{"items":{"type":"string"},"type":"array"},"filter[accessType]":{"items":{"enum":["ONE_TIME_SNAPSHOT","ONGOING"],"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["reports"],"type":"string"},"type":"array"},"limit":{"maximum":200,"type":"integer"},"limit[reports]":{"maximum":50,"type":"integer"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[analyticsReportRequests]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[analyticsReports]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[accessType]":{"items":{"enum":["ONE_TIME_SNAPSHOT","ONGOING"],"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["reports"],"type":"string"},"type":"array","x-mcp-query-explode":false},"limit":{"maximum":200,"type":"integer"},"limit[reports]":{"maximum":50,"type":"integer"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -8803,11 +10330,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_210() -> ToolSpec {
+    ToolSpec {
             name: "apps_appAvailabilityV2_getToOneRelated".to_string(),
             description: "List the `appAvailabilityV2` related to one `apps` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"fields[appAvailabilities]":{"items":{"type":"string"},"type":"array"},"fields[territoryAvailabilities]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["territoryAvailabilities"],"type":"string"},"type":"array"},"limit[territoryAvailabilities]":{"maximum":50,"type":"integer"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"fields[appAvailabilities]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[territoryAvailabilities]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["territoryAvailabilities"],"type":"string"},"type":"array","x-mcp-query-explode":false},"limit[territoryAvailabilities]":{"maximum":50,"type":"integer"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -8848,11 +10377,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_211() -> ToolSpec {
+    ToolSpec {
             name: "apps_appEncryptionDeclarations_getToManyRelated".to_string(),
             description: "List the `appEncryptionDeclarations` related to one `apps` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[appEncryptionDeclarationDocuments]":{"items":{"type":"string"},"type":"array"},"fields[appEncryptionDeclarations]":{"items":{"type":"string"},"type":"array"},"fields[apps]":{"items":{"type":"string"},"type":"array"},"fields[builds]":{"items":{"type":"string"},"type":"array"},"filter[builds]":{"items":{"type":"string"},"type":"array"},"filter[platform]":{"items":{"enum":["IOS","MAC_OS","TV_OS","VISION_OS"],"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["app","builds","appEncryptionDeclarationDocument"],"type":"string"},"type":"array"},"limit":{"maximum":200,"type":"integer"},"limit[builds]":{"maximum":50,"type":"integer"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[appEncryptionDeclarationDocuments]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[appEncryptionDeclarations]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[apps]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[builds]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[builds]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[platform]":{"items":{"enum":["IOS","MAC_OS","TV_OS","VISION_OS"],"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["app","builds","appEncryptionDeclarationDocument"],"type":"string"},"type":"array","x-mcp-query-explode":false},"limit":{"maximum":200,"type":"integer"},"limit[builds]":{"maximum":50,"type":"integer"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -8917,11 +10448,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_212() -> ToolSpec {
+    ToolSpec {
             name: "apps_appInfos_getToManyRelated".to_string(),
             description: "List the `appInfos` related to one `apps` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[ageRatingDeclarations]":{"items":{"type":"string"},"type":"array"},"fields[appCategories]":{"items":{"type":"string"},"type":"array"},"fields[appInfoLocalizations]":{"items":{"type":"string"},"type":"array"},"fields[appInfos]":{"items":{"type":"string"},"type":"array"},"fields[apps]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["app","ageRatingDeclaration","appInfoLocalizations","primaryCategory","primarySubcategoryOne","primarySubcategoryTwo","secondaryCategory","secondarySubcategoryOne","secondarySubcategoryTwo"],"type":"string"},"type":"array"},"limit":{"maximum":200,"type":"integer"},"limit[appInfoLocalizations]":{"maximum":50,"type":"integer"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[ageRatingDeclarations]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[appCategories]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[appInfoLocalizations]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[appInfos]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[apps]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["app","ageRatingDeclaration","appInfoLocalizations","primaryCategory","primarySubcategoryOne","primarySubcategoryTwo","secondaryCategory","secondarySubcategoryOne","secondarySubcategoryTwo"],"type":"string"},"type":"array","x-mcp-query-explode":false},"limit":{"maximum":200,"type":"integer"},"limit[appInfoLocalizations]":{"maximum":50,"type":"integer"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -8982,11 +10515,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_213() -> ToolSpec {
+    ToolSpec {
             name: "apps_appPricePoints_getToManyRelated".to_string(),
             description: "List the `appPricePoints` related to one `apps` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[appPricePoints]":{"items":{"type":"string"},"type":"array"},"fields[apps]":{"items":{"type":"string"},"type":"array"},"fields[territories]":{"items":{"type":"string"},"type":"array"},"filter[territory]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["app","territory"],"type":"string"},"type":"array"},"limit":{"maximum":200,"type":"integer"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[appPricePoints]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[apps]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[territories]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[territory]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["app","territory"],"type":"string"},"type":"array","x-mcp-query-explode":false},"limit":{"maximum":200,"type":"integer"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -9039,11 +10574,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_214() -> ToolSpec {
+    ToolSpec {
             name: "apps_appPriceSchedule_getToOneRelated".to_string(),
             description: "List the `appPriceSchedule` related to one `apps` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"fields[appPriceSchedules]":{"items":{"type":"string"},"type":"array"},"fields[appPrices]":{"items":{"type":"string"},"type":"array"},"fields[apps]":{"items":{"type":"string"},"type":"array"},"fields[territories]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["app","baseTerritory","manualPrices","automaticPrices"],"type":"string"},"type":"array"},"limit[automaticPrices]":{"maximum":50,"type":"integer"},"limit[manualPrices]":{"maximum":50,"type":"integer"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"fields[appPriceSchedules]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[appPrices]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[apps]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[territories]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["app","baseTerritory","manualPrices","automaticPrices"],"type":"string"},"type":"array","x-mcp-query-explode":false},"limit[automaticPrices]":{"maximum":50,"type":"integer"},"limit[manualPrices]":{"maximum":50,"type":"integer"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -9096,11 +10633,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_215() -> ToolSpec {
+    ToolSpec {
             name: "apps_appStoreVersions_getToManyRelated".to_string(),
             description: "List the `appStoreVersions` related to one `apps` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[alternativeDistributionPackages]":{"items":{"type":"string"},"type":"array"},"fields[appClipDefaultExperiences]":{"items":{"type":"string"},"type":"array"},"fields[appStoreReviewDetails]":{"items":{"type":"string"},"type":"array"},"fields[appStoreVersionExperiments]":{"items":{"type":"string"},"type":"array"},"fields[appStoreVersionLocalizations]":{"items":{"type":"string"},"type":"array"},"fields[appStoreVersionPhasedReleases]":{"items":{"type":"string"},"type":"array"},"fields[appStoreVersionSubmissions]":{"items":{"type":"string"},"type":"array"},"fields[appStoreVersions]":{"items":{"type":"string"},"type":"array"},"fields[apps]":{"items":{"type":"string"},"type":"array"},"fields[builds]":{"items":{"type":"string"},"type":"array"},"fields[gameCenterAppVersions]":{"items":{"type":"string"},"type":"array"},"fields[routingAppCoverages]":{"items":{"type":"string"},"type":"array"},"filter[appStoreState]":{"items":{"enum":["ACCEPTED","DEVELOPER_REMOVED_FROM_SALE","DEVELOPER_REJECTED","IN_REVIEW","INVALID_BINARY","METADATA_REJECTED","PENDING_APPLE_RELEASE","PENDING_CONTRACT","PENDING_DEVELOPER_RELEASE","PREPARE_FOR_SUBMISSION","PREORDER_READY_FOR_SALE","PROCESSING_FOR_APP_STORE","READY_FOR_REVIEW","READY_FOR_SALE","REJECTED","REMOVED_FROM_SALE","WAITING_FOR_EXPORT_COMPLIANCE","WAITING_FOR_REVIEW","REPLACED_WITH_NEW_VERSION","NOT_APPLICABLE"],"type":"string"},"type":"array"},"filter[appVersionState]":{"items":{"enum":["ACCEPTED","DEVELOPER_REJECTED","IN_REVIEW","INVALID_BINARY","METADATA_REJECTED","PENDING_APPLE_RELEASE","PENDING_DEVELOPER_RELEASE","PREPARE_FOR_SUBMISSION","PROCESSING_FOR_DISTRIBUTION","READY_FOR_DISTRIBUTION","READY_FOR_REVIEW","REJECTED","REPLACED_WITH_NEW_VERSION","WAITING_FOR_EXPORT_COMPLIANCE","WAITING_FOR_REVIEW"],"type":"string"},"type":"array"},"filter[id]":{"items":{"type":"string"},"type":"array"},"filter[platform]":{"items":{"enum":["IOS","MAC_OS","TV_OS","VISION_OS"],"type":"string"},"type":"array"},"filter[versionString]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["app","appStoreVersionLocalizations","build","appStoreVersionPhasedRelease","gameCenterAppVersion","routingAppCoverage","appStoreReviewDetail","appStoreVersionSubmission","appClipDefaultExperience","appStoreVersionExperiments","appStoreVersionExperimentsV2","alternativeDistributionPackage"],"type":"string"},"type":"array"},"limit":{"maximum":200,"type":"integer"},"limit[appStoreVersionExperimentsV2]":{"maximum":50,"type":"integer"},"limit[appStoreVersionExperiments]":{"maximum":50,"type":"integer"},"limit[appStoreVersionLocalizations]":{"maximum":50,"type":"integer"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[alternativeDistributionPackages]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[appClipDefaultExperiences]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[appStoreReviewDetails]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[appStoreVersionExperiments]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[appStoreVersionLocalizations]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[appStoreVersionPhasedReleases]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[appStoreVersionSubmissions]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[appStoreVersions]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[apps]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[builds]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[gameCenterAppVersions]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[routingAppCoverages]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[appStoreState]":{"items":{"enum":["ACCEPTED","DEVELOPER_REMOVED_FROM_SALE","DEVELOPER_REJECTED","IN_REVIEW","INVALID_BINARY","METADATA_REJECTED","PENDING_APPLE_RELEASE","PENDING_CONTRACT","PENDING_DEVELOPER_RELEASE","PREPARE_FOR_SUBMISSION","PREORDER_READY_FOR_SALE","PROCESSING_FOR_APP_STORE","READY_FOR_REVIEW","READY_FOR_SALE","REJECTED","REMOVED_FROM_SALE","WAITING_FOR_EXPORT_COMPLIANCE","WAITING_FOR_REVIEW","REPLACED_WITH_NEW_VERSION","NOT_APPLICABLE"],"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[appVersionState]":{"items":{"enum":["ACCEPTED","DEVELOPER_REJECTED","IN_REVIEW","INVALID_BINARY","METADATA_REJECTED","PENDING_APPLE_RELEASE","PENDING_DEVELOPER_RELEASE","PREPARE_FOR_SUBMISSION","PROCESSING_FOR_DISTRIBUTION","READY_FOR_DISTRIBUTION","READY_FOR_REVIEW","REJECTED","REPLACED_WITH_NEW_VERSION","WAITING_FOR_EXPORT_COMPLIANCE","WAITING_FOR_REVIEW"],"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[id]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[platform]":{"items":{"enum":["IOS","MAC_OS","TV_OS","VISION_OS"],"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[versionString]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["app","appStoreVersionLocalizations","build","appStoreVersionPhasedRelease","gameCenterAppVersion","routingAppCoverage","appStoreReviewDetail","appStoreVersionSubmission","appClipDefaultExperience","appStoreVersionExperiments","appStoreVersionExperimentsV2","alternativeDistributionPackage"],"type":"string"},"type":"array","x-mcp-query-explode":false},"limit":{"maximum":200,"type":"integer"},"limit[appStoreVersionExperimentsV2]":{"maximum":50,"type":"integer"},"limit[appStoreVersionExperiments]":{"maximum":50,"type":"integer"},"limit[appStoreVersionLocalizations]":{"maximum":50,"type":"integer"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -9217,11 +10756,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_216() -> ToolSpec {
+    ToolSpec {
             name: "apps_betaAppLocalizations_getToManyRelated".to_string(),
             description: "List the `betaAppLocalizations` related to one `apps` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[betaAppLocalizations]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"limit":{"maximum":200,"type":"integer"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[betaAppLocalizations]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"limit":{"maximum":200,"type":"integer"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -9258,11 +10799,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_217() -> ToolSpec {
+    ToolSpec {
             name: "apps_betaAppReviewDetail_getToOneRelated".to_string(),
             description: "List the `betaAppReviewDetail` related to one `apps` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"fields[betaAppReviewDetails]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"fields[betaAppReviewDetails]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -9291,11 +10834,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_218() -> ToolSpec {
+    ToolSpec {
             name: "apps_betaGroups_getToManyRelated".to_string(),
             description: "List the `betaGroups` related to one `apps` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[betaGroups]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"limit":{"maximum":200,"type":"integer"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[betaGroups]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"limit":{"maximum":200,"type":"integer"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -9332,11 +10877,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_219() -> ToolSpec {
+    ToolSpec {
             name: "apps_betaLicenseAgreement_getToOneRelated".to_string(),
             description: "List the `betaLicenseAgreement` related to one `apps` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"fields[betaLicenseAgreements]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"fields[betaLicenseAgreements]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -9365,11 +10912,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_220() -> ToolSpec {
+    ToolSpec {
             name: "apps_builds_getToManyRelated".to_string(),
             description: "List the `builds` related to one `apps` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[builds]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"limit":{"maximum":200,"type":"integer"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[builds]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"limit":{"maximum":200,"type":"integer"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -9406,11 +10955,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_221() -> ToolSpec {
+    ToolSpec {
             name: "apps_customerReviews_getToManyRelated".to_string(),
             description: "List the `customerReviews` related to one `apps` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"exists[publishedResponse]":{"type":"boolean"},"fields[customerReviewResponses]":{"items":{"type":"string"},"type":"array"},"fields[customerReviews]":{"items":{"type":"string"},"type":"array"},"fields[territories]":{"items":{"type":"string"},"type":"array"},"filter[rating]":{"items":{"type":"string"},"type":"array"},"filter[reviewTerritory]":{"items":{"type":"string"},"type":"array"},"filter[territory]":{"items":{"enum":["ABW","AFG","AGO","AIA","ALB","AND","ANT","ARE","ARG","ARM","ASM","ATG","AUS","AUT","AZE","BDI","BEL","BEN","BES","BFA","BGD","BGR","BHR","BHS","BIH","BLR","BLZ","BMU","BOL","BRA","BRB","BRN","BTN","BWA","CAF","CAN","CHE","CHL","CHN","CIV","CMR","COD","COG","COK","COL","COM","CPV","CRI","CUB","CUW","CXR","CYM","CYP","CZE","DEU","DJI","DMA","DNK","DOM","DZA","ECU","EGY","ERI","ESP","EST","ETH","FIN","FJI","FLK","FRA","FRO","FSM","GAB","GBR","GEO","GGY","GHA","GIB","GIN","GLP","GMB","GNB","GNQ","GRC","GRD","GRL","GTM","GUF","GUM","GUY","HKG","HND","HRV","HTI","HUN","IDN","IMN","IND","IRL","IRQ","ISL","ISR","ITA","JAM","JEY","JOR","JPN","KAZ","KEN","KGZ","KHM","KIR","KNA","KOR","KWT","LAO","LBN","LBR","LBY","LCA","LIE","LKA","LSO","LTU","LUX","LVA","MAC","MAR","MCO","MDA","MDG","MDV","MEX","MHL","MKD","MLI","MLT","MMR","MNE","MNG","MNP","MOZ","MRT","MSR","MTQ","MUS","MWI","MYS","MYT","NAM","NCL","NER","NFK","NGA","NIC","NIU","NLD","NOR","NPL","NRU","NZL","OMN","PAK","PAN","PER","PHL","PLW","PNG","POL","PRI","PRT","PRY","PSE","PYF","QAT","REU","ROU","RUS","RWA","SAU","SEN","SGP","SHN","SLB","SLE","SLV","SMR","SOM","SPM","SRB","SSD","STP","SUR","SVK","SVN","SWE","SWZ","SXM","SYC","TCA","TCD","TGO","THA","TJK","TKM","TLS","TON","TTO","TUN","TUR","TUV","TWN","TZA","UGA","UKR","UMI","URY","USA","UZB","VAT","VCT","VEN","VGB","VIR","VNM","VUT","WLF","WSM","XKS","YEM","ZAF","ZMB","ZWE"],"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["response","reviewTerritory"],"type":"string"},"type":"array"},"limit":{"maximum":200,"type":"integer"},"sort":{"items":{"enum":["rating","-rating","createdDate","-createdDate"],"type":"string"},"type":"array"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"exists[publishedResponse]":{"type":"boolean"},"fields[customerReviewResponses]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[customerReviews]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[territories]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[rating]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[reviewTerritory]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[territory]":{"items":{"enum":["ABW","AFG","AGO","AIA","ALB","AND","ANT","ARE","ARG","ARM","ASM","ATG","AUS","AUT","AZE","BDI","BEL","BEN","BES","BFA","BGD","BGR","BHR","BHS","BIH","BLR","BLZ","BMU","BOL","BRA","BRB","BRN","BTN","BWA","CAF","CAN","CHE","CHL","CHN","CIV","CMR","COD","COG","COK","COL","COM","CPV","CRI","CUB","CUW","CXR","CYM","CYP","CZE","DEU","DJI","DMA","DNK","DOM","DZA","ECU","EGY","ERI","ESP","EST","ETH","FIN","FJI","FLK","FRA","FRO","FSM","GAB","GBR","GEO","GGY","GHA","GIB","GIN","GLP","GMB","GNB","GNQ","GRC","GRD","GRL","GTM","GUF","GUM","GUY","HKG","HND","HRV","HTI","HUN","IDN","IMN","IND","IRL","IRQ","ISL","ISR","ITA","JAM","JEY","JOR","JPN","KAZ","KEN","KGZ","KHM","KIR","KNA","KOR","KWT","LAO","LBN","LBR","LBY","LCA","LIE","LKA","LSO","LTU","LUX","LVA","MAC","MAR","MCO","MDA","MDG","MDV","MEX","MHL","MKD","MLI","MLT","MMR","MNE","MNG","MNP","MOZ","MRT","MSR","MTQ","MUS","MWI","MYS","MYT","NAM","NCL","NER","NFK","NGA","NIC","NIU","NLD","NOR","NPL","NRU","NZL","OMN","PAK","PAN","PER","PHL","PLW","PNG","POL","PRI","PRT","PRY","PSE","PYF","QAT","REU","ROU","RUS","RWA","SAU","SEN","SGP","SHN","SLB","SLE","SLV","SMR","SOM","SPM","SRB","SSD","STP","SUR","SVK","SVN","SWE","SWZ","SXM","SYC","TCA","TCD","TGO","THA","TJK","TKM","TLS","TON","TTO","TUN","TUR","TUV","TWN","TZA","UGA","UKR","UMI","URY","USA","UZB","VAT","VCT","VEN","VGB","VIR","VNM","VUT","WLF","WSM","XKS","YEM","ZAF","ZMB","ZWE"],"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["response","reviewTerritory"],"type":"string"},"type":"array","x-mcp-query-explode":false},"limit":{"maximum":200,"type":"integer"},"sort":{"items":{"enum":["rating","-rating","createdDate","-createdDate"],"type":"string"},"type":"array","x-mcp-query-explode":false}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -9479,11 +11030,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_222() -> ToolSpec {
+    ToolSpec {
             name: "apps_inAppPurchasesV2_getToManyRelated".to_string(),
             description: "List the `inAppPurchasesV2` related to one `apps` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[inAppPurchaseAppStoreReviewScreenshots]":{"items":{"type":"string"},"type":"array"},"fields[inAppPurchaseAvailabilities]":{"items":{"type":"string"},"type":"array"},"fields[inAppPurchaseContents]":{"items":{"type":"string"},"type":"array"},"fields[inAppPurchaseImages]":{"items":{"type":"string"},"type":"array"},"fields[inAppPurchaseLocalizations]":{"items":{"type":"string"},"type":"array"},"fields[inAppPurchaseOfferCodes]":{"items":{"type":"string"},"type":"array"},"fields[inAppPurchasePriceSchedules]":{"items":{"type":"string"},"type":"array"},"fields[inAppPurchaseVersions]":{"items":{"type":"string"},"type":"array"},"fields[inAppPurchases]":{"items":{"type":"string"},"type":"array"},"fields[promotedPurchases]":{"items":{"type":"string"},"type":"array"},"filter[inAppPurchaseType]":{"items":{"enum":["CONSUMABLE","NON_CONSUMABLE","NON_RENEWING_SUBSCRIPTION"],"type":"string"},"type":"array"},"filter[name]":{"items":{"type":"string"},"type":"array"},"filter[productId]":{"items":{"type":"string"},"type":"array"},"filter[state]":{"items":{"enum":["MISSING_METADATA","WAITING_FOR_UPLOAD","PROCESSING_CONTENT","READY_TO_SUBMIT","WAITING_FOR_REVIEW","IN_REVIEW","DEVELOPER_ACTION_NEEDED","PENDING_BINARY_APPROVAL","APPROVED","DEVELOPER_REMOVED_FROM_SALE","REMOVED_FROM_SALE","REJECTED"],"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["inAppPurchaseLocalizations","content","appStoreReviewScreenshot","promotedPurchase","iapPriceSchedule","inAppPurchaseAvailability","images","offerCodes","versions"],"type":"string"},"type":"array"},"limit":{"maximum":200,"type":"integer"},"limit[images]":{"maximum":50,"type":"integer"},"limit[inAppPurchaseLocalizations]":{"maximum":50,"type":"integer"},"limit[offerCodes]":{"maximum":50,"type":"integer"},"limit[versions]":{"maximum":50,"type":"integer"},"sort":{"items":{"enum":["name","-name","inAppPurchaseType","-inAppPurchaseType"],"type":"string"},"type":"array"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[inAppPurchaseAppStoreReviewScreenshots]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[inAppPurchaseAvailabilities]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[inAppPurchaseContents]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[inAppPurchaseImages]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[inAppPurchaseLocalizations]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[inAppPurchaseOfferCodes]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[inAppPurchasePriceSchedules]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[inAppPurchaseVersions]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[inAppPurchases]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[promotedPurchases]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[inAppPurchaseType]":{"items":{"enum":["CONSUMABLE","NON_CONSUMABLE","NON_RENEWING_SUBSCRIPTION"],"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[name]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[productId]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[state]":{"items":{"enum":["MISSING_METADATA","WAITING_FOR_UPLOAD","PROCESSING_CONTENT","READY_TO_SUBMIT","WAITING_FOR_REVIEW","IN_REVIEW","DEVELOPER_ACTION_NEEDED","PENDING_BINARY_APPROVAL","APPROVED","DEVELOPER_REMOVED_FROM_SALE","REMOVED_FROM_SALE","REJECTED"],"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["inAppPurchaseLocalizations","content","appStoreReviewScreenshot","promotedPurchase","iapPriceSchedule","inAppPurchaseAvailability","images","offerCodes","versions"],"type":"string"},"type":"array","x-mcp-query-explode":false},"limit":{"maximum":200,"type":"integer"},"limit[images]":{"maximum":50,"type":"integer"},"limit[inAppPurchaseLocalizations]":{"maximum":50,"type":"integer"},"limit[offerCodes]":{"maximum":50,"type":"integer"},"limit[versions]":{"maximum":50,"type":"integer"},"sort":{"items":{"enum":["name","-name","inAppPurchaseType","-inAppPurchaseType"],"type":"string"},"type":"array","x-mcp-query-explode":false}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -9596,11 +11149,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_223() -> ToolSpec {
+    ToolSpec {
             name: "apps_preReleaseVersions_getToManyRelated".to_string(),
             description: "List the `preReleaseVersions` related to one `apps` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[preReleaseVersions]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"limit":{"maximum":200,"type":"integer"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[preReleaseVersions]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"limit":{"maximum":200,"type":"integer"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -9637,11 +11192,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_224() -> ToolSpec {
+    ToolSpec {
             name: "apps_subscriptionGroups_getToManyRelated".to_string(),
             description: "List the `subscriptionGroups` related to one `apps` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[subscriptionGroupLocalizations]":{"items":{"type":"string"},"type":"array"},"fields[subscriptionGroupVersions]":{"items":{"type":"string"},"type":"array"},"fields[subscriptionGroups]":{"items":{"type":"string"},"type":"array"},"fields[subscriptions]":{"items":{"type":"string"},"type":"array"},"filter[referenceName]":{"items":{"type":"string"},"type":"array"},"filter[subscriptions.state]":{"items":{"enum":["MISSING_METADATA","READY_TO_SUBMIT","WAITING_FOR_REVIEW","IN_REVIEW","DEVELOPER_ACTION_NEEDED","PENDING_BINARY_APPROVAL","APPROVED","DEVELOPER_REMOVED_FROM_SALE","REMOVED_FROM_SALE","REJECTED"],"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["subscriptions","subscriptionGroupLocalizations","versions"],"type":"string"},"type":"array"},"limit":{"maximum":200,"type":"integer"},"limit[subscriptionGroupLocalizations]":{"maximum":50,"type":"integer"},"limit[subscriptions]":{"maximum":50,"type":"integer"},"limit[versions]":{"maximum":50,"type":"integer"},"sort":{"items":{"enum":["referenceName","-referenceName"],"type":"string"},"type":"array"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[subscriptionGroupLocalizations]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[subscriptionGroupVersions]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[subscriptionGroups]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[subscriptions]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[referenceName]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[subscriptions.state]":{"items":{"enum":["MISSING_METADATA","READY_TO_SUBMIT","WAITING_FOR_REVIEW","IN_REVIEW","DEVELOPER_ACTION_NEEDED","PENDING_BINARY_APPROVAL","APPROVED","DEVELOPER_REMOVED_FROM_SALE","REMOVED_FROM_SALE","REJECTED"],"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["subscriptions","subscriptionGroupLocalizations","versions"],"type":"string"},"type":"array","x-mcp-query-explode":false},"limit":{"maximum":200,"type":"integer"},"limit[subscriptionGroupLocalizations]":{"maximum":50,"type":"integer"},"limit[subscriptions]":{"maximum":50,"type":"integer"},"limit[versions]":{"maximum":50,"type":"integer"},"sort":{"items":{"enum":["referenceName","-referenceName"],"type":"string"},"type":"array","x-mcp-query-explode":false}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -9718,8 +11275,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_225() -> ToolSpec {
+    ToolSpec {
             name: "betaGroups_betaTesters_createToManyRelationship".to_string(),
             description: "Add existing testers to a TestFlight group.".to_string(),
             input_schema: serde_json::from_str(r#"{"properties":{"data":{"items":{"properties":{"id":{"type":"string"},"type":{"enum":["betaTesters"],"type":"string"}},"required":["id","type"],"type":"object"},"type":"array"},"id":{"type":"string"}},"required":["id","data"],"type":"object"}"#)
@@ -9748,8 +11307,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_226() -> ToolSpec {
+    ToolSpec {
             name: "betaGroups_betaTesters_deleteToManyRelationship".to_string(),
             description: "Unlink `betaTesters` from one `betaGroups` resource (linkage only).".to_string(),
             input_schema: serde_json::from_str(r#"{"properties":{"data":{"items":{"properties":{"id":{"type":"string"},"type":{"enum":["betaTesters"],"type":"string"}},"required":["id","type"],"type":"object"},"type":"array"},"id":{"type":"string"}},"required":["id","data"],"type":"object"}"#)
@@ -9778,11 +11339,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_227() -> ToolSpec {
+    ToolSpec {
             name: "betaGroups_betaTesters_getToManyRelated".to_string(),
             description: "List the `betaTesters` related to one `betaGroups` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[betaTesters]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"limit":{"maximum":200,"type":"integer"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[betaTesters]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"limit":{"maximum":200,"type":"integer"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -9819,8 +11382,49 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_228() -> ToolSpec {
+    ToolSpec {
+            name: "betaGroups_builds_getToManyRelationship".to_string(),
+            description: "Get the IDs of the `builds` linked to one `betaGroups` resource (linkage only).".to_string(),
+            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"id":{"type":"string"},"limit":{"maximum":200,"type":"integer"}},"required":["id"],"type":"object"}"#)
+                .expect("generated input schema must be valid JSON"),
+            execution: ExecutionKind::Rest(RestOperation {
+                method: "GET".to_string(),
+                path_template: "/v1/betaGroups/{id}/relationships/builds".to_string(),
+                params: vec![
+                    ParamBinding {
+                        name: "id".to_string(),
+                        location: ParamLocation::Path,
+                    },
+                    ParamBinding {
+                        name: "limit".to_string(),
+                        location: ParamLocation::Query,
+                    },
+                    ParamBinding {
+                        name: "cursor".to_string(),
+                        location: ParamLocation::Query,
+                    },
+                ],
+                body_fields: vec![
+                ],
+            content_type: None,
+            raw_body: false,
+            media: None,
+        }),
+            hints: ToolHints {
+                title: None,
+                output_schema: None,
+                read_only: Some(true),
+                destructive: Some(false),
+                idempotent: Some(true),
+                open_world: Some(true),
+            },
+        }
+}
+fn build_operation_229() -> ToolSpec {
+    ToolSpec {
             name: "betaGroups_builds_createToManyRelationship".to_string(),
             description: "Add builds to a TestFlight group (body: `data: [{type: builds, id}]`).".to_string(),
             input_schema: serde_json::from_str(r#"{"properties":{"data":{"items":{"properties":{"id":{"type":"string"},"type":{"enum":["builds"],"type":"string"}},"required":["id","type"],"type":"object"},"type":"array"},"id":{"type":"string"}},"required":["id","data"],"type":"object"}"#)
@@ -9849,8 +11453,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_230() -> ToolSpec {
+    ToolSpec {
             name: "betaGroups_builds_deleteToManyRelationship".to_string(),
             description: "Unlink `builds` from one `betaGroups` resource (linkage only).".to_string(),
             input_schema: serde_json::from_str(r#"{"properties":{"data":{"items":{"properties":{"id":{"type":"string"},"type":{"enum":["builds"],"type":"string"}},"required":["id","type"],"type":"object"},"type":"array"},"id":{"type":"string"}},"required":["id","data"],"type":"object"}"#)
@@ -9879,11 +11485,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_231() -> ToolSpec {
+    ToolSpec {
             name: "betaGroups_builds_getToManyRelated".to_string(),
             description: "List the `builds` related to one `betaGroups` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[builds]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"limit":{"maximum":200,"type":"integer"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[builds]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"limit":{"maximum":200,"type":"integer"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -9920,8 +11528,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_232() -> ToolSpec {
+    ToolSpec {
             name: "betaTesters_apps_deleteToManyRelationship".to_string(),
             description: "Unlink `apps` from one `betaTesters` resource (linkage only).".to_string(),
             input_schema: serde_json::from_str(r#"{"properties":{"data":{"items":{"properties":{"id":{"type":"string"},"type":{"enum":["apps"],"type":"string"}},"required":["id","type"],"type":"object"},"type":"array"},"id":{"type":"string"}},"required":["id","data"],"type":"object"}"#)
@@ -9950,11 +11560,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_233() -> ToolSpec {
+    ToolSpec {
             name: "betaTesters_betaGroups_getToManyRelated".to_string(),
             description: "List the `betaGroups` related to one `betaTesters` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[betaGroups]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"limit":{"maximum":200,"type":"integer"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[betaGroups]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"limit":{"maximum":200,"type":"integer"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -9991,8 +11603,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_234() -> ToolSpec {
+    ToolSpec {
             name: "builds_appEncryptionDeclaration_updateToOneRelationship".to_string(),
             description: "Replace the `appEncryptionDeclaration` linkage of one `builds` resource (linkage only).".to_string(),
             input_schema: serde_json::from_str(r#"{"properties":{"data":{"properties":{"id":{"type":"string"},"type":{"enum":["appEncryptionDeclarations"],"type":"string"}},"required":["id","type"],"type":"object"},"id":{"type":"string"}},"required":["id","data"],"type":"object"}"#)
@@ -10021,11 +11635,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_235() -> ToolSpec {
+    ToolSpec {
             name: "builds_appEncryptionDeclaration_getToOneRelated".to_string(),
             description: "List the `appEncryptionDeclaration` related to one `builds` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"fields[appEncryptionDeclarations]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"fields[appEncryptionDeclarations]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -10054,11 +11670,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_236() -> ToolSpec {
+    ToolSpec {
             name: "builds_betaBuildLocalizations_getToManyRelated".to_string(),
             description: "List the `betaBuildLocalizations` related to one `builds` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[betaBuildLocalizations]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"limit":{"maximum":200,"type":"integer"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[betaBuildLocalizations]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"limit":{"maximum":200,"type":"integer"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -10095,8 +11713,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_237() -> ToolSpec {
+    ToolSpec {
             name: "builds_betaGroups_createToManyRelationship".to_string(),
             description: "Link additional `betaGroups` to one `builds` resource (linkage only).".to_string(),
             input_schema: serde_json::from_str(r#"{"properties":{"data":{"items":{"properties":{"id":{"type":"string"},"type":{"enum":["betaGroups"],"type":"string"}},"required":["id","type"],"type":"object"},"type":"array"},"id":{"type":"string"}},"required":["id","data"],"type":"object"}"#)
@@ -10125,8 +11745,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_238() -> ToolSpec {
+    ToolSpec {
             name: "builds_betaGroups_deleteToManyRelationship".to_string(),
             description: "Unlink `betaGroups` from one `builds` resource (linkage only).".to_string(),
             input_schema: serde_json::from_str(r#"{"properties":{"data":{"items":{"properties":{"id":{"type":"string"},"type":{"enum":["betaGroups"],"type":"string"}},"required":["id","type"],"type":"object"},"type":"array"},"id":{"type":"string"}},"required":["id","data"],"type":"object"}"#)
@@ -10155,8 +11777,53 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_239() -> ToolSpec {
+    ToolSpec {
+            name: "builds_buildBetaDetail_getToOneRelated".to_string(),
+            description: "List the `buildBetaDetail` related to one `builds` resource.".to_string(),
+            input_schema: serde_json::from_str(r#"{"properties":{"fields[buildBetaDetails]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[builds]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["build"],"type":"string"},"type":"array","x-mcp-query-explode":false}},"required":["id"],"type":"object"}"#)
+                .expect("generated input schema must be valid JSON"),
+            execution: ExecutionKind::Rest(RestOperation {
+                method: "GET".to_string(),
+                path_template: "/v1/builds/{id}/buildBetaDetail".to_string(),
+                params: vec![
+                    ParamBinding {
+                        name: "id".to_string(),
+                        location: ParamLocation::Path,
+                    },
+                    ParamBinding {
+                        name: "fields[buildBetaDetails]".to_string(),
+                        location: ParamLocation::Query,
+                    },
+                    ParamBinding {
+                        name: "fields[builds]".to_string(),
+                        location: ParamLocation::Query,
+                    },
+                    ParamBinding {
+                        name: "include".to_string(),
+                        location: ParamLocation::Query,
+                    },
+                ],
+                body_fields: vec![
+                ],
+            content_type: None,
+            raw_body: false,
+            media: None,
+        }),
+            hints: ToolHints {
+                title: None,
+                output_schema: None,
+                read_only: Some(true),
+                destructive: Some(false),
+                idempotent: Some(true),
+                open_world: Some(true),
+            },
+        }
+}
+fn build_operation_240() -> ToolSpec {
+    ToolSpec {
             name: "builds_individualTesters_createToManyRelationship".to_string(),
             description: "Link additional `individualTesters` to one `builds` resource (linkage only).".to_string(),
             input_schema: serde_json::from_str(r#"{"properties":{"data":{"items":{"properties":{"id":{"type":"string"},"type":{"enum":["betaTesters"],"type":"string"}},"required":["id","type"],"type":"object"},"type":"array"},"id":{"type":"string"}},"required":["id","data"],"type":"object"}"#)
@@ -10185,8 +11852,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_241() -> ToolSpec {
+    ToolSpec {
             name: "builds_individualTesters_deleteToManyRelationship".to_string(),
             description: "Unlink `individualTesters` from one `builds` resource (linkage only).".to_string(),
             input_schema: serde_json::from_str(r#"{"properties":{"data":{"items":{"properties":{"id":{"type":"string"},"type":{"enum":["betaTesters"],"type":"string"}},"required":["id","type"],"type":"object"},"type":"array"},"id":{"type":"string"}},"required":["id","data"],"type":"object"}"#)
@@ -10215,11 +11884,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_242() -> ToolSpec {
+    ToolSpec {
             name: "builds_individualTesters_getToManyRelated".to_string(),
             description: "List the `individualTesters` related to one `builds` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[betaTesters]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"limit":{"maximum":200,"type":"integer"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[betaTesters]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"limit":{"maximum":200,"type":"integer"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -10256,11 +11927,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_243() -> ToolSpec {
+    ToolSpec {
             name: "bundleIds_bundleIdCapabilities_getToManyRelated".to_string(),
             description: "List the `bundleIdCapabilities` related to one `bundleIds` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[bundleIdCapabilities]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"limit":{"maximum":200,"type":"integer"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[bundleIdCapabilities]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"limit":{"maximum":200,"type":"integer"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -10297,11 +11970,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_244() -> ToolSpec {
+    ToolSpec {
             name: "bundleIds_profiles_getToManyRelated".to_string(),
             description: "List the `profiles` related to one `bundleIds` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[profiles]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"limit":{"maximum":200,"type":"integer"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[profiles]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"limit":{"maximum":200,"type":"integer"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -10338,11 +12013,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_245() -> ToolSpec {
+    ToolSpec {
             name: "customerReviews_response_getToOneRelated".to_string(),
             description: "List the `response` related to one `customerReviews` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"fields[customerReviewResponses]":{"items":{"type":"string"},"type":"array"},"fields[customerReviews]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["review"],"type":"string"},"type":"array"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"fields[customerReviewResponses]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[customerReviews]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["review"],"type":"string"},"type":"array","x-mcp-query-explode":false}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -10379,8 +12056,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_246() -> ToolSpec {
+    ToolSpec {
             name: "inAppPurchaseAvailabilities_availableTerritories_getToManyRelationship".to_string(),
             description: "Get the IDs of the `availableTerritories` linked to one `inAppPurchaseAvailabilities` resource (linkage only).".to_string(),
             input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"id":{"type":"string"},"limit":{"maximum":200,"type":"integer"}},"required":["id"],"type":"object"}"#)
@@ -10416,11 +12095,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_247() -> ToolSpec {
+    ToolSpec {
             name: "inAppPurchaseAvailabilities_availableTerritories_getToManyRelated".to_string(),
             description: "List the `availableTerritories` related to one `inAppPurchaseAvailabilities` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[territories]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"limit":{"maximum":200,"type":"integer"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[territories]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"limit":{"maximum":200,"type":"integer"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -10457,11 +12138,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_248() -> ToolSpec {
+    ToolSpec {
             name: "inAppPurchasePricePoints_equalizations_getToManyRelated".to_string(),
             description: "List the `equalizations` related to one `inAppPurchasePricePoints` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[inAppPurchasePricePoints]":{"items":{"type":"string"},"type":"array"},"fields[territories]":{"items":{"type":"string"},"type":"array"},"filter[inAppPurchaseV2]":{"items":{"type":"string"},"type":"array"},"filter[territory]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["territory"],"type":"string"},"type":"array"},"limit":{"maximum":8000,"type":"integer"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[inAppPurchasePricePoints]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[territories]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[inAppPurchaseV2]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[territory]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["territory"],"type":"string"},"type":"array","x-mcp-query-explode":false},"limit":{"maximum":8000,"type":"integer"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -10514,11 +12197,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_249() -> ToolSpec {
+    ToolSpec {
             name: "inAppPurchasePriceSchedules_automaticPrices_getToManyRelated".to_string(),
             description: "List the `automaticPrices` related to one `inAppPurchasePriceSchedules` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[inAppPurchasePricePoints]":{"items":{"type":"string"},"type":"array"},"fields[inAppPurchasePrices]":{"items":{"type":"string"},"type":"array"},"fields[territories]":{"items":{"type":"string"},"type":"array"},"filter[territory]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["inAppPurchasePricePoint","territory"],"type":"string"},"type":"array"},"limit":{"maximum":200,"type":"integer"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[inAppPurchasePricePoints]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[inAppPurchasePrices]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[territories]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[territory]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["inAppPurchasePricePoint","territory"],"type":"string"},"type":"array","x-mcp-query-explode":false},"limit":{"maximum":200,"type":"integer"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -10571,11 +12256,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_250() -> ToolSpec {
+    ToolSpec {
             name: "inAppPurchasePriceSchedules_baseTerritory_getToOneRelated".to_string(),
             description: "List the `baseTerritory` related to one `inAppPurchasePriceSchedules` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"fields[territories]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"fields[territories]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -10604,11 +12291,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_251() -> ToolSpec {
+    ToolSpec {
             name: "inAppPurchasePriceSchedules_manualPrices_getToManyRelated".to_string(),
             description: "List the `manualPrices` related to one `inAppPurchasePriceSchedules` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[inAppPurchasePricePoints]":{"items":{"type":"string"},"type":"array"},"fields[inAppPurchasePrices]":{"items":{"type":"string"},"type":"array"},"fields[territories]":{"items":{"type":"string"},"type":"array"},"filter[territory]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["inAppPurchasePricePoint","territory"],"type":"string"},"type":"array"},"limit":{"maximum":200,"type":"integer"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[inAppPurchasePricePoints]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[inAppPurchasePrices]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[territories]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[territory]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["inAppPurchasePricePoint","territory"],"type":"string"},"type":"array","x-mcp-query-explode":false},"limit":{"maximum":200,"type":"integer"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -10661,11 +12350,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_252() -> ToolSpec {
+    ToolSpec {
             name: "inAppPurchasesV2_appStoreReviewScreenshot_getToOneRelated".to_string(),
             description: "List the `appStoreReviewScreenshot` related to one `inAppPurchases` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"fields[inAppPurchaseAppStoreReviewScreenshots]":{"items":{"type":"string"},"type":"array"},"fields[inAppPurchases]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["inAppPurchaseV2"],"type":"string"},"type":"array"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"fields[inAppPurchaseAppStoreReviewScreenshots]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[inAppPurchases]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["inAppPurchaseV2"],"type":"string"},"type":"array","x-mcp-query-explode":false}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -10702,11 +12393,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_253() -> ToolSpec {
+    ToolSpec {
             name: "inAppPurchasesV2_iapPriceSchedule_getToOneRelated".to_string(),
             description: "List the `iapPriceSchedule` related to one `inAppPurchases` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"fields[inAppPurchasePriceSchedules]":{"items":{"type":"string"},"type":"array"},"fields[inAppPurchasePrices]":{"items":{"type":"string"},"type":"array"},"fields[territories]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["baseTerritory","manualPrices","automaticPrices"],"type":"string"},"type":"array"},"limit[automaticPrices]":{"maximum":50,"type":"integer"},"limit[manualPrices]":{"maximum":50,"type":"integer"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"fields[inAppPurchasePriceSchedules]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[inAppPurchasePrices]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[territories]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["baseTerritory","manualPrices","automaticPrices"],"type":"string"},"type":"array","x-mcp-query-explode":false},"limit[automaticPrices]":{"maximum":50,"type":"integer"},"limit[manualPrices]":{"maximum":50,"type":"integer"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -10755,11 +12448,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_254() -> ToolSpec {
+    ToolSpec {
             name: "inAppPurchasesV2_inAppPurchaseAvailability_getToOneRelated".to_string(),
             description: "List the `inAppPurchaseAvailability` related to one `inAppPurchases` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"fields[inAppPurchaseAvailabilities]":{"items":{"type":"string"},"type":"array"},"fields[territories]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["availableTerritories"],"type":"string"},"type":"array"},"limit[availableTerritories]":{"maximum":50,"type":"integer"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"fields[inAppPurchaseAvailabilities]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[territories]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["availableTerritories"],"type":"string"},"type":"array","x-mcp-query-explode":false},"limit[availableTerritories]":{"maximum":50,"type":"integer"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -10800,11 +12495,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_255() -> ToolSpec {
+    ToolSpec {
             name: "inAppPurchasesV2_inAppPurchaseLocalizations_getToManyRelated".to_string(),
             description: "List the `inAppPurchaseLocalizations` related to one `inAppPurchases` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[inAppPurchaseLocalizations]":{"items":{"type":"string"},"type":"array"},"fields[inAppPurchases]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["inAppPurchaseV2"],"type":"string"},"type":"array"},"limit":{"maximum":200,"type":"integer"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[inAppPurchaseLocalizations]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[inAppPurchases]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["inAppPurchaseV2"],"type":"string"},"type":"array","x-mcp-query-explode":false},"limit":{"maximum":200,"type":"integer"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -10849,11 +12546,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_256() -> ToolSpec {
+    ToolSpec {
             name: "inAppPurchasesV2_pricePoints_getToManyRelated".to_string(),
             description: "List the `pricePoints` related to one `inAppPurchases` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[inAppPurchasePricePoints]":{"items":{"type":"string"},"type":"array"},"fields[territories]":{"items":{"type":"string"},"type":"array"},"filter[territory]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["territory"],"type":"string"},"type":"array"},"limit":{"maximum":8000,"type":"integer"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[inAppPurchasePricePoints]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[territories]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[territory]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["territory"],"type":"string"},"type":"array","x-mcp-query-explode":false},"limit":{"maximum":8000,"type":"integer"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -10902,11 +12601,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_257() -> ToolSpec {
+    ToolSpec {
             name: "preReleaseVersions_builds_getToManyRelated".to_string(),
             description: "List the `builds` related to one `preReleaseVersions` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[builds]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"limit":{"maximum":200,"type":"integer"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[builds]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"limit":{"maximum":200,"type":"integer"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -10943,11 +12644,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_258() -> ToolSpec {
+    ToolSpec {
             name: "profiles_bundleId_getToOneRelated".to_string(),
             description: "List the `bundleId` related to one `profiles` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"fields[bundleIds]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"fields[bundleIds]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -10976,11 +12679,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_259() -> ToolSpec {
+    ToolSpec {
             name: "profiles_certificates_getToManyRelated".to_string(),
             description: "List the `certificates` related to one `profiles` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[certificates]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"limit":{"maximum":200,"type":"integer"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[certificates]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"limit":{"maximum":200,"type":"integer"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -11017,11 +12722,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_260() -> ToolSpec {
+    ToolSpec {
             name: "profiles_devices_getToManyRelated".to_string(),
             description: "List the `devices` related to one `profiles` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[devices]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"limit":{"maximum":200,"type":"integer"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[devices]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"limit":{"maximum":200,"type":"integer"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -11058,8 +12765,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_261() -> ToolSpec {
+    ToolSpec {
             name: "reviewSubmissions_items_getToManyRelationship".to_string(),
             description: "Get the IDs of the `items` linked to one `reviewSubmissions` resource (linkage only).".to_string(),
             input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"id":{"type":"string"},"limit":{"maximum":200,"type":"integer"}},"required":["id"],"type":"object"}"#)
@@ -11095,11 +12804,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_262() -> ToolSpec {
+    ToolSpec {
             name: "reviewSubmissions_items_getToManyRelated".to_string(),
             description: "List the `items` related to one `reviewSubmissions` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[appCustomProductPageVersions]":{"items":{"type":"string"},"type":"array"},"fields[appEvents]":{"items":{"type":"string"},"type":"array"},"fields[appStoreVersionExperiments]":{"items":{"type":"string"},"type":"array"},"fields[appStoreVersions]":{"items":{"type":"string"},"type":"array"},"fields[backgroundAssetVersions]":{"items":{"type":"string"},"type":"array"},"fields[gameCenterAchievementVersions]":{"items":{"type":"string"},"type":"array"},"fields[gameCenterActivityVersions]":{"items":{"type":"string"},"type":"array"},"fields[gameCenterChallengeVersions]":{"items":{"type":"string"},"type":"array"},"fields[gameCenterLeaderboardSetVersions]":{"items":{"type":"string"},"type":"array"},"fields[gameCenterLeaderboardVersions]":{"items":{"type":"string"},"type":"array"},"fields[inAppPurchaseVersions]":{"items":{"type":"string"},"type":"array"},"fields[reviewSubmissionItems]":{"items":{"type":"string"},"type":"array"},"fields[subscriptionGroupVersions]":{"items":{"type":"string"},"type":"array"},"fields[subscriptionVersions]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["appStoreVersion","appCustomProductPageVersion","appStoreVersionExperiment","appStoreVersionExperimentV2","appEvent","backgroundAssetVersion","gameCenterAchievementVersion","gameCenterActivityVersion","gameCenterChallengeVersion","gameCenterLeaderboardSetVersion","gameCenterLeaderboardVersion","inAppPurchaseVersion","subscriptionVersion","subscriptionGroupVersion"],"type":"string"},"type":"array"},"limit":{"maximum":200,"type":"integer"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[appCustomProductPageVersions]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[appEvents]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[appStoreVersionExperiments]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[appStoreVersions]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[backgroundAssetVersions]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[gameCenterAchievementVersions]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[gameCenterActivityVersions]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[gameCenterChallengeVersions]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[gameCenterLeaderboardSetVersions]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[gameCenterLeaderboardVersions]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[inAppPurchaseVersions]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[reviewSubmissionItems]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[subscriptionGroupVersions]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[subscriptionVersions]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["appStoreVersion","appCustomProductPageVersion","appStoreVersionExperiment","appStoreVersionExperimentV2","appEvent","backgroundAssetVersion","gameCenterAchievementVersion","gameCenterActivityVersion","gameCenterChallengeVersion","gameCenterLeaderboardSetVersion","gameCenterLeaderboardVersion","inAppPurchaseVersion","subscriptionVersion","subscriptionGroupVersion"],"type":"string"},"type":"array","x-mcp-query-explode":false},"limit":{"maximum":200,"type":"integer"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -11192,11 +12903,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_263() -> ToolSpec {
+    ToolSpec {
             name: "subscriptionGroups_subscriptionGroupLocalizations_getToManyRelated".to_string(),
             description: "List the `subscriptionGroupLocalizations` related to one `subscriptionGroups` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[subscriptionGroupLocalizations]":{"items":{"type":"string"},"type":"array"},"fields[subscriptionGroups]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["subscriptionGroup"],"type":"string"},"type":"array"},"limit":{"maximum":200,"type":"integer"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[subscriptionGroupLocalizations]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[subscriptionGroups]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["subscriptionGroup"],"type":"string"},"type":"array","x-mcp-query-explode":false},"limit":{"maximum":200,"type":"integer"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -11241,11 +12954,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_264() -> ToolSpec {
+    ToolSpec {
             name: "subscriptionGroups_subscriptions_getToManyRelated".to_string(),
             description: "List the `subscriptions` related to one `subscriptionGroups` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[promotedPurchases]":{"items":{"type":"string"},"type":"array"},"fields[subscriptionAppStoreReviewScreenshots]":{"items":{"type":"string"},"type":"array"},"fields[subscriptionAvailabilities]":{"items":{"type":"string"},"type":"array"},"fields[subscriptionGroups]":{"items":{"type":"string"},"type":"array"},"fields[subscriptionImages]":{"items":{"type":"string"},"type":"array"},"fields[subscriptionIntroductoryOffers]":{"items":{"type":"string"},"type":"array"},"fields[subscriptionLocalizations]":{"items":{"type":"string"},"type":"array"},"fields[subscriptionOfferCodes]":{"items":{"type":"string"},"type":"array"},"fields[subscriptionPlanAvailabilities]":{"items":{"type":"string"},"type":"array"},"fields[subscriptionPrices]":{"items":{"type":"string"},"type":"array"},"fields[subscriptionPromotionalOffers]":{"items":{"type":"string"},"type":"array"},"fields[subscriptionVersions]":{"items":{"type":"string"},"type":"array"},"fields[subscriptions]":{"items":{"type":"string"},"type":"array"},"fields[winBackOffers]":{"items":{"type":"string"},"type":"array"},"filter[name]":{"items":{"type":"string"},"type":"array"},"filter[productId]":{"items":{"type":"string"},"type":"array"},"filter[state]":{"items":{"enum":["MISSING_METADATA","READY_TO_SUBMIT","WAITING_FOR_REVIEW","IN_REVIEW","DEVELOPER_ACTION_NEEDED","PENDING_BINARY_APPROVAL","APPROVED","DEVELOPER_REMOVED_FROM_SALE","REMOVED_FROM_SALE","REJECTED"],"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["subscriptionLocalizations","appStoreReviewScreenshot","group","introductoryOffers","promotionalOffers","offerCodes","prices","promotedPurchase","subscriptionAvailability","winBackOffers","images","planAvailabilities","versions"],"type":"string"},"type":"array"},"limit":{"maximum":200,"type":"integer"},"limit[images]":{"maximum":50,"type":"integer"},"limit[introductoryOffers]":{"maximum":50,"type":"integer"},"limit[offerCodes]":{"maximum":50,"type":"integer"},"limit[planAvailabilities]":{"maximum":50,"type":"integer"},"limit[prices]":{"maximum":50,"type":"integer"},"limit[promotionalOffers]":{"maximum":50,"type":"integer"},"limit[subscriptionLocalizations]":{"maximum":50,"type":"integer"},"limit[versions]":{"maximum":50,"type":"integer"},"limit[winBackOffers]":{"maximum":50,"type":"integer"},"sort":{"items":{"enum":["name","-name"],"type":"string"},"type":"array"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[promotedPurchases]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[subscriptionAppStoreReviewScreenshots]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[subscriptionAvailabilities]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[subscriptionGroups]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[subscriptionImages]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[subscriptionIntroductoryOffers]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[subscriptionLocalizations]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[subscriptionOfferCodes]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[subscriptionPlanAvailabilities]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[subscriptionPrices]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[subscriptionPromotionalOffers]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[subscriptionVersions]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[subscriptions]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[winBackOffers]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[name]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[productId]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[state]":{"items":{"enum":["MISSING_METADATA","READY_TO_SUBMIT","WAITING_FOR_REVIEW","IN_REVIEW","DEVELOPER_ACTION_NEEDED","PENDING_BINARY_APPROVAL","APPROVED","DEVELOPER_REMOVED_FROM_SALE","REMOVED_FROM_SALE","REJECTED"],"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["subscriptionLocalizations","appStoreReviewScreenshot","group","introductoryOffers","promotionalOffers","offerCodes","prices","promotedPurchase","subscriptionAvailability","winBackOffers","images","planAvailabilities","versions"],"type":"string"},"type":"array","x-mcp-query-explode":false},"limit":{"maximum":200,"type":"integer"},"limit[images]":{"maximum":50,"type":"integer"},"limit[introductoryOffers]":{"maximum":50,"type":"integer"},"limit[offerCodes]":{"maximum":50,"type":"integer"},"limit[planAvailabilities]":{"maximum":50,"type":"integer"},"limit[prices]":{"maximum":50,"type":"integer"},"limit[promotionalOffers]":{"maximum":50,"type":"integer"},"limit[subscriptionLocalizations]":{"maximum":50,"type":"integer"},"limit[versions]":{"maximum":50,"type":"integer"},"limit[winBackOffers]":{"maximum":50,"type":"integer"},"sort":{"items":{"enum":["name","-name"],"type":"string"},"type":"array","x-mcp-query-explode":false}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -11390,8 +13105,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_265() -> ToolSpec {
+    ToolSpec {
             name: "subscriptionPlanAvailabilities_availableTerritories_getToManyRelationship".to_string(),
             description: "Get the IDs of the `availableTerritories` linked to one `subscriptionPlanAvailabilities` resource (linkage only).".to_string(),
             input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"id":{"type":"string"},"limit":{"maximum":200,"type":"integer"}},"required":["id"],"type":"object"}"#)
@@ -11427,8 +13144,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_266() -> ToolSpec {
+    ToolSpec {
             name: "subscriptionPlanAvailabilities_availableTerritories_replaceToManyRelationship".to_string(),
             description: "Replace the `availableTerritories` linkage of one `subscriptionPlanAvailabilities` resource (linkage only).".to_string(),
             input_schema: serde_json::from_str(r#"{"properties":{"data":{"items":{"properties":{"id":{"type":"string"},"type":{"enum":["territories"],"type":"string"}},"required":["id","type"],"type":"object"},"type":"array"},"id":{"type":"string"}},"required":["id","data"],"type":"object"}"#)
@@ -11457,11 +13176,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(false),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_267() -> ToolSpec {
+    ToolSpec {
             name: "subscriptionPlanAvailabilities_availableTerritories_getToManyRelated".to_string(),
             description: "List the `availableTerritories` related to one `subscriptionPlanAvailabilities` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[territories]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"limit":{"maximum":200,"type":"integer"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[territories]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"limit":{"maximum":200,"type":"integer"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -11498,11 +13219,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_268() -> ToolSpec {
+    ToolSpec {
             name: "subscriptionPricePoints_equalizations_getToManyRelated".to_string(),
             description: "List the `equalizations` related to one `subscriptionPricePoints` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[subscriptionPricePoints]":{"items":{"type":"string"},"type":"array"},"fields[territories]":{"items":{"type":"string"},"type":"array"},"filter[planType]":{"items":{"type":"string"},"type":"array"},"filter[subscription]":{"items":{"type":"string"},"type":"array"},"filter[territory]":{"items":{"type":"string"},"type":"array"},"filter[upfrontPricePointId]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["territory"],"type":"string"},"type":"array"},"limit":{"maximum":8000,"type":"integer"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[subscriptionPricePoints]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[territories]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[planType]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[subscription]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[territory]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[upfrontPricePointId]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["territory"],"type":"string"},"type":"array","x-mcp-query-explode":false},"limit":{"maximum":8000,"type":"integer"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -11563,11 +13286,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_269() -> ToolSpec {
+    ToolSpec {
             name: "subscriptions_appStoreReviewScreenshot_getToOneRelated".to_string(),
             description: "List the `appStoreReviewScreenshot` related to one `subscriptions` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"fields[subscriptionAppStoreReviewScreenshots]":{"items":{"type":"string"},"type":"array"},"fields[subscriptions]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["subscription"],"type":"string"},"type":"array"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"fields[subscriptionAppStoreReviewScreenshots]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[subscriptions]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["subscription"],"type":"string"},"type":"array","x-mcp-query-explode":false}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -11604,11 +13329,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_270() -> ToolSpec {
+    ToolSpec {
             name: "subscriptions_introductoryOffers_getToManyRelated".to_string(),
             description: "List the `introductoryOffers` related to one `subscriptions` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[subscriptionIntroductoryOffers]":{"items":{"type":"string"},"type":"array"},"fields[subscriptionPricePoints]":{"items":{"type":"string"},"type":"array"},"fields[subscriptions]":{"items":{"type":"string"},"type":"array"},"fields[territories]":{"items":{"type":"string"},"type":"array"},"filter[territory]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["subscription","territory","subscriptionPricePoint"],"type":"string"},"type":"array"},"limit":{"maximum":200,"type":"integer"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[subscriptionIntroductoryOffers]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[subscriptionPricePoints]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[subscriptions]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[territories]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[territory]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["subscription","territory","subscriptionPricePoint"],"type":"string"},"type":"array","x-mcp-query-explode":false},"limit":{"maximum":200,"type":"integer"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -11665,11 +13392,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_271() -> ToolSpec {
+    ToolSpec {
             name: "subscriptions_planAvailabilities_getToManyRelated".to_string(),
             description: "List the `planAvailabilities` related to one `subscriptions` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[subscriptionPlanAvailabilities]":{"items":{"type":"string"},"type":"array"},"fields[territories]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["availableTerritories"],"type":"string"},"type":"array"},"limit":{"maximum":200,"type":"integer"},"limit[availableTerritories]":{"maximum":50,"type":"integer"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[subscriptionPlanAvailabilities]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[territories]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["availableTerritories"],"type":"string"},"type":"array","x-mcp-query-explode":false},"limit":{"maximum":200,"type":"integer"},"limit[availableTerritories]":{"maximum":50,"type":"integer"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -11718,11 +13447,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_272() -> ToolSpec {
+    ToolSpec {
             name: "subscriptions_pricePoints_getToManyRelated".to_string(),
             description: "List the `pricePoints` related to one `subscriptions` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[subscriptionPricePoints]":{"items":{"type":"string"},"type":"array"},"fields[territories]":{"items":{"type":"string"},"type":"array"},"filter[planType]":{"items":{"type":"string"},"type":"array"},"filter[territory]":{"items":{"type":"string"},"type":"array"},"filter[upfrontPricePointId]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["territory"],"type":"string"},"type":"array"},"limit":{"maximum":8000,"type":"integer"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[subscriptionPricePoints]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[territories]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[planType]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[territory]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[upfrontPricePointId]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["territory"],"type":"string"},"type":"array","x-mcp-query-explode":false},"limit":{"maximum":8000,"type":"integer"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -11779,8 +13510,10 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_273() -> ToolSpec {
+    ToolSpec {
             name: "subscriptions_prices_deleteToManyRelationship".to_string(),
             description: "Unlink `prices` from one `subscriptions` resource (linkage only).".to_string(),
             input_schema: serde_json::from_str(r#"{"properties":{"data":{"items":{"properties":{"id":{"type":"string"},"type":{"enum":["subscriptionPrices"],"type":"string"}},"required":["id","type"],"type":"object"},"type":"array"},"id":{"type":"string"}},"required":["id","data"],"type":"object"}"#)
@@ -11809,11 +13542,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_274() -> ToolSpec {
+    ToolSpec {
             name: "subscriptions_prices_getToManyRelated".to_string(),
             description: "List the `prices` related to one `subscriptions` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[subscriptionPricePoints]":{"items":{"type":"string"},"type":"array"},"fields[subscriptionPrices]":{"items":{"type":"string"},"type":"array"},"fields[territories]":{"items":{"type":"string"},"type":"array"},"filter[planType]":{"items":{"enum":["MONTHLY","UPFRONT"],"type":"string"},"type":"array"},"filter[subscriptionPricePoint]":{"items":{"type":"string"},"type":"array"},"filter[territory]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["territory","subscriptionPricePoint"],"type":"string"},"type":"array"},"limit":{"maximum":200,"type":"integer"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[subscriptionPricePoints]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[subscriptionPrices]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[territories]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[planType]":{"items":{"enum":["MONTHLY","UPFRONT"],"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[subscriptionPricePoint]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[territory]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["territory","subscriptionPricePoint"],"type":"string"},"type":"array","x-mcp-query-explode":false},"limit":{"maximum":200,"type":"integer"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -11874,11 +13609,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_275() -> ToolSpec {
+    ToolSpec {
             name: "subscriptions_promotionalOffers_getToManyRelated".to_string(),
             description: "List the `promotionalOffers` related to one `subscriptions` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[subscriptionPromotionalOfferPrices]":{"items":{"type":"string"},"type":"array"},"fields[subscriptionPromotionalOffers]":{"items":{"type":"string"},"type":"array"},"fields[subscriptions]":{"items":{"type":"string"},"type":"array"},"filter[territory]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["subscription","prices"],"type":"string"},"type":"array"},"limit":{"maximum":200,"type":"integer"},"limit[prices]":{"maximum":50,"type":"integer"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[subscriptionPromotionalOfferPrices]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[subscriptionPromotionalOffers]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[subscriptions]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"filter[territory]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["subscription","prices"],"type":"string"},"type":"array","x-mcp-query-explode":false},"limit":{"maximum":200,"type":"integer"},"limit[prices]":{"maximum":50,"type":"integer"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -11935,11 +13672,13 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-        ToolSpec {
+        }
+}
+fn build_operation_276() -> ToolSpec {
+    ToolSpec {
             name: "subscriptions_subscriptionLocalizations_getToManyRelated".to_string(),
             description: "List the `subscriptionLocalizations` related to one `subscriptions` resource.".to_string(),
-            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[subscriptionLocalizations]":{"items":{"type":"string"},"type":"array"},"fields[subscriptions]":{"items":{"type":"string"},"type":"array"},"id":{"type":"string"},"include":{"items":{"enum":["subscription"],"type":"string"},"type":"array"},"limit":{"maximum":200,"type":"integer"}},"required":["id"],"type":"object"}"#)
+            input_schema: serde_json::from_str(r#"{"properties":{"cursor":{"description":"Next page: the `cursor` value from `links.next` (none = last page).","type":"string"},"fields[subscriptionLocalizations]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"fields[subscriptions]":{"items":{"type":"string"},"type":"array","x-mcp-query-explode":false},"id":{"type":"string"},"include":{"items":{"enum":["subscription"],"type":"string"},"type":"array","x-mcp-query-explode":false},"limit":{"maximum":200,"type":"integer"}},"required":["id"],"type":"object"}"#)
                 .expect("generated input schema must be valid JSON"),
             execution: ExecutionKind::Rest(RestOperation {
                 method: "GET".to_string(),
@@ -11984,296 +13723,311 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-    ]
+        }
 }
 
 /// Profiles exposed when neither config.toml nor MCP_FACTORY_PROFILES choose.
 #[rustfmt::skip]
 pub fn default_profiles() -> Vec<String> {
-    vec!["core".to_string(), "metadata".to_string(), "assets".to_string(), "testflight".to_string()]
+    vec!["workflow".to_string()]
 }
 
 /// Tool name -> runtime profiles (see `--tool-config`).
 #[rustfmt::skip]
 pub fn build_tool_profiles() -> Vec<(&'static str, &'static [&'static str])> {
     vec![
-        ("ageRatingDeclarations_updateInstance", &["metadata"]),
-        ("analytics_segment_download", &["reports"]),
-        ("analyticsReportInstances_getInstance", &["reports"]),
-        ("analyticsReportInstances_segments_getToManyRelated", &["reports"]),
-        ("analyticsReportRequests_createInstance", &["reports"]),
-        ("analyticsReportRequests_deleteInstance", &["reports"]),
-        ("analyticsReportRequests_getInstance", &["reports"]),
-        ("analyticsReportRequests_reports_getToManyRelated", &["reports"]),
-        ("analyticsReports_getInstance", &["reports"]),
-        ("analyticsReports_instances_getToManyRelated", &["reports"]),
-        ("analyticsReportSegments_getInstance", &["reports"]),
-        ("appAvailabilitiesV2_createInstance", &["pricing"]),
-        ("appAvailabilitiesV2_getInstance", &["pricing"]),
-        ("appAvailabilitiesV2_territoryAvailabilities_getToManyRelated", &["pricing"]),
-        ("appAvailabilitiesV2_territoryAvailabilities_getToManyRelationship", &["pricing"]),
-        ("appCategories_getCollection", &["metadata"]),
-        ("appCategories_getInstance", &["metadata"]),
-        ("appCategories_subcategories_getToManyRelated", &["metadata"]),
-        ("appEncryptionDeclarationDocuments_createInstance", &["assets"]),
-        ("appEncryptionDeclarationDocuments_getInstance", &["metadata", "assets"]),
-        ("appEncryptionDeclarationDocuments_updateInstance", &["assets"]),
-        ("appEncryptionDeclarations_createInstance", &["metadata"]),
-        ("appEncryptionDeclarations_getCollection", &["metadata"]),
-        ("appEncryptionDeclarations_getInstance", &["metadata"]),
-        ("appInfoLocalizations_createInstance", &["metadata"]),
-        ("appInfoLocalizations_deleteInstance", &["metadata"]),
-        ("appInfoLocalizations_getInstance", &["metadata"]),
-        ("appInfoLocalizations_updateInstance", &["metadata"]),
-        ("appInfos_ageRatingDeclaration_getToOneRelated", &["metadata"]),
-        ("appInfos_appInfoLocalizations_getToManyRelated", &["metadata"]),
-        ("appInfos_getInstance", &["metadata"]),
-        ("appInfos_updateInstance", &["metadata"]),
-        ("appPreviews_createInstance", &["assets"]),
-        ("appPreviews_deleteInstance", &["assets"]),
-        ("appPreviews_getInstance", &["assets"]),
-        ("appPreviews_updateInstance", &["assets"]),
-        ("appPreviewSets_appPreviews_getToManyRelated", &["assets"]),
-        ("appPreviewSets_appPreviews_replaceToManyRelationship", &["assets"]),
-        ("appPreviewSets_createInstance", &["assets"]),
-        ("appPreviewSets_deleteInstance", &["assets"]),
-        ("appPreviewSets_getInstance", &["assets"]),
-        ("appPricePointsV3_equalizations_getToManyRelated", &["pricing"]),
-        ("appPricePointsV3_getInstance", &["pricing"]),
-        ("appPriceSchedules_automaticPrices_getToManyRelated", &["pricing"]),
-        ("appPriceSchedules_baseTerritory_getToOneRelated", &["pricing"]),
-        ("appPriceSchedules_createInstance", &["pricing"]),
-        ("appPriceSchedules_getInstance", &["pricing"]),
-        ("appPriceSchedules_manualPrices_getToManyRelated", &["pricing"]),
-        ("apps_analyticsReportRequests_getToManyRelated", &["reports"]),
-        ("apps_appAvailabilityV2_getToOneRelated", &["pricing"]),
-        ("apps_appEncryptionDeclarations_getToManyRelated", &["metadata"]),
-        ("apps_appInfos_getToManyRelated", &["metadata"]),
-        ("apps_appPricePoints_getToManyRelated", &["pricing"]),
-        ("apps_appPriceSchedule_getToOneRelated", &["pricing"]),
-        ("apps_appStoreVersions_getToManyRelated", &["core"]),
-        ("apps_betaAppLocalizations_getToManyRelated", &["testflight"]),
-        ("apps_betaAppReviewDetail_getToOneRelated", &["testflight"]),
-        ("apps_betaGroups_getToManyRelated", &["testflight"]),
-        ("apps_betaLicenseAgreement_getToOneRelated", &["testflight"]),
-        ("apps_builds_getToManyRelated", &["core"]),
+        ("ageRatingDeclarations_updateInstance", &["release_raw", "metadata"]),
+        ("analytics_segment_download", &["reports", "reports_raw"]),
+        ("analyticsReportInstances_getInstance", &["reports_raw", "reports"]),
+        ("analyticsReportInstances_segments_getToManyRelated", &["reports_raw", "reports"]),
+        ("analyticsReportRequests_createInstance", &["reports_raw", "reports"]),
+        ("analyticsReportRequests_deleteInstance", &["reports_raw", "reports"]),
+        ("analyticsReportRequests_getInstance", &["reports_raw", "reports"]),
+        ("analyticsReportRequests_reports_getToManyRelated", &["reports_raw", "reports"]),
+        ("analyticsReports_getInstance", &["reports_raw", "reports"]),
+        ("analyticsReports_instances_getToManyRelated", &["reports_raw", "reports"]),
+        ("analyticsReportSegments_getInstance", &["reports_raw", "reports"]),
+        ("app_get", &["workflow"]),
+        ("appAvailabilitiesV2_createInstance", &["monetization_raw", "pricing"]),
+        ("appAvailabilitiesV2_getInstance", &["monetization_raw", "pricing"]),
+        ("appAvailabilitiesV2_territoryAvailabilities_getToManyRelated", &["monetization_raw", "pricing"]),
+        ("appAvailabilitiesV2_territoryAvailabilities_getToManyRelationship", &["monetization_raw", "pricing"]),
+        ("appCategories_getCollection", &["release_raw", "metadata"]),
+        ("appCategories_getInstance", &["release_raw", "metadata"]),
+        ("appCategories_subcategories_getToManyRelated", &["release_raw", "metadata"]),
+        ("appEncryptionDeclarationDocuments_createInstance", &["release_raw", "assets"]),
+        ("appEncryptionDeclarationDocuments_getInstance", &["release_raw", "metadata", "assets"]),
+        ("appEncryptionDeclarationDocuments_updateInstance", &["release_raw", "assets"]),
+        ("appEncryptionDeclarations_createInstance", &["release_raw", "metadata"]),
+        ("appEncryptionDeclarations_getCollection", &["release_raw", "metadata"]),
+        ("appEncryptionDeclarations_getInstance", &["release_raw", "metadata"]),
+        ("appInfoLocalizations_createInstance", &["release_raw", "metadata"]),
+        ("appInfoLocalizations_deleteInstance", &["release_raw", "metadata"]),
+        ("appInfoLocalizations_getInstance", &["release_raw", "metadata"]),
+        ("appInfoLocalizations_updateInstance", &["release_raw", "metadata"]),
+        ("appInfos_ageRatingDeclaration_getToOneRelated", &["release_raw", "metadata"]),
+        ("appInfos_appInfoLocalizations_getToManyRelated", &["release_raw", "metadata"]),
+        ("appInfos_getInstance", &["release_raw", "metadata"]),
+        ("appInfos_updateInstance", &["release_raw", "metadata"]),
+        ("appPreviews_createInstance", &["release_raw", "assets"]),
+        ("appPreviews_deleteInstance", &["release_raw", "assets"]),
+        ("appPreviews_getInstance", &["release_raw", "assets"]),
+        ("appPreviews_updateInstance", &["release_raw", "assets"]),
+        ("appPreviewSets_appPreviews_getToManyRelated", &["release_raw", "assets"]),
+        ("appPreviewSets_appPreviews_replaceToManyRelationship", &["release_raw", "assets"]),
+        ("appPreviewSets_createInstance", &["release_raw", "assets"]),
+        ("appPreviewSets_deleteInstance", &["release_raw", "assets"]),
+        ("appPreviewSets_getInstance", &["release_raw", "assets"]),
+        ("appPricePointsV3_equalizations_getToManyRelated", &["monetization_raw", "pricing"]),
+        ("appPricePointsV3_getInstance", &["monetization_raw", "pricing"]),
+        ("appPriceSchedules_automaticPrices_getToManyRelated", &["monetization_raw", "pricing"]),
+        ("appPriceSchedules_baseTerritory_getToOneRelated", &["monetization_raw", "pricing"]),
+        ("appPriceSchedules_createInstance", &["monetization_raw", "pricing"]),
+        ("appPriceSchedules_getInstance", &["monetization_raw", "pricing"]),
+        ("appPriceSchedules_manualPrices_getToManyRelated", &["monetization_raw", "pricing"]),
+        ("apps_analyticsReportRequests_getToManyRelated", &["reports_raw", "reports"]),
+        ("apps_appAvailabilityV2_getToOneRelated", &["monetization_raw", "pricing"]),
+        ("apps_appEncryptionDeclarations_getToManyRelated", &["release_raw", "metadata"]),
+        ("apps_appInfos_getToManyRelated", &["release_raw", "metadata"]),
+        ("apps_appPricePoints_getToManyRelated", &["monetization_raw", "pricing"]),
+        ("apps_appPriceSchedule_getToOneRelated", &["monetization_raw", "pricing"]),
+        ("apps_appStoreVersions_getToManyRelated", &["release_raw", "testflight_raw", "monetization_raw", "signing_raw", "reports_raw", "core"]),
+        ("apps_betaAppLocalizations_getToManyRelated", &["testflight_raw", "testflight"]),
+        ("apps_betaAppReviewDetail_getToOneRelated", &["testflight_raw", "testflight"]),
+        ("apps_betaGroups_getToManyRelated", &["testflight_raw", "testflight"]),
+        ("apps_betaLicenseAgreement_getToOneRelated", &["testflight_raw", "testflight"]),
+        ("apps_builds_getToManyRelated", &["release_raw", "testflight_raw", "monetization_raw", "signing_raw", "reports_raw", "core"]),
         ("apps_customerReviews_getToManyRelated", &["reviews"]),
-        ("apps_getCollection", &["core"]),
-        ("apps_getInstance", &["core"]),
-        ("apps_inAppPurchasesV2_getToManyRelated", &["monetization"]),
-        ("apps_preReleaseVersions_getToManyRelated", &["testflight"]),
-        ("apps_subscriptionGroups_getToManyRelated", &["monetization"]),
-        ("apps_updateInstance", &["metadata"]),
-        ("appScreenshots_createInstance", &["assets"]),
-        ("appScreenshots_deleteInstance", &["assets"]),
-        ("appScreenshots_getInstance", &["assets"]),
-        ("appScreenshots_updateInstance", &["assets"]),
-        ("appScreenshotSets_appScreenshots_getToManyRelated", &["assets"]),
-        ("appScreenshotSets_appScreenshots_replaceToManyRelationship", &["assets"]),
-        ("appScreenshotSets_createInstance", &["assets"]),
-        ("appScreenshotSets_deleteInstance", &["assets"]),
-        ("appScreenshotSets_getInstance", &["assets"]),
-        ("appStoreReviewAttachments_createInstance", &["assets"]),
-        ("appStoreReviewAttachments_deleteInstance", &["assets"]),
-        ("appStoreReviewAttachments_getInstance", &["assets"]),
-        ("appStoreReviewAttachments_updateInstance", &["assets"]),
-        ("appStoreReviewDetails_appStoreReviewAttachments_getToManyRelated", &["assets"]),
-        ("appStoreReviewDetails_createInstance", &["core"]),
-        ("appStoreReviewDetails_getInstance", &["core"]),
-        ("appStoreReviewDetails_updateInstance", &["core"]),
-        ("appStoreVersionLocalizations_appPreviewSets_getToManyRelated", &["assets"]),
-        ("appStoreVersionLocalizations_appScreenshotSets_getToManyRelated", &["assets"]),
-        ("appStoreVersionLocalizations_createInstance", &["metadata"]),
-        ("appStoreVersionLocalizations_deleteInstance", &["metadata"]),
-        ("appStoreVersionLocalizations_getInstance", &["metadata"]),
-        ("appStoreVersionLocalizations_updateInstance", &["metadata"]),
-        ("appStoreVersionPhasedReleases_createInstance", &["core"]),
-        ("appStoreVersionPhasedReleases_deleteInstance", &["core"]),
-        ("appStoreVersionPhasedReleases_updateInstance", &["core"]),
-        ("appStoreVersionReleaseRequests_createInstance", &["core"]),
-        ("appStoreVersions_appStoreReviewDetail_getToOneRelated", &["core"]),
-        ("appStoreVersions_appStoreVersionLocalizations_getToManyRelated", &["metadata"]),
-        ("appStoreVersions_appStoreVersionPhasedRelease_getToOneRelated", &["core"]),
-        ("appStoreVersions_build_getToOneRelated", &["core"]),
-        ("appStoreVersions_build_updateToOneRelationship", &["core"]),
-        ("appStoreVersions_createInstance", &["core"]),
+        ("apps_getCollection", &["release_raw", "testflight_raw", "monetization_raw", "signing_raw", "reports_raw", "core"]),
+        ("apps_getInstance", &["release_raw", "testflight_raw", "monetization_raw", "signing_raw", "reports_raw", "core"]),
+        ("apps_inAppPurchasesV2_getToManyRelated", &["monetization_raw", "monetization"]),
+        ("apps_preReleaseVersions_getToManyRelated", &["testflight_raw", "testflight"]),
+        ("apps_subscriptionGroups_getToManyRelated", &["monetization_raw", "monetization"]),
+        ("apps_updateInstance", &["release_raw", "metadata"]),
+        ("appScreenshots_createInstance", &["release_raw", "assets"]),
+        ("appScreenshots_deleteInstance", &["release_raw", "assets"]),
+        ("appScreenshots_getInstance", &["release_raw", "assets"]),
+        ("appScreenshots_updateInstance", &["release_raw", "assets"]),
+        ("appScreenshotSets_appScreenshots_getToManyRelated", &["release_raw", "assets"]),
+        ("appScreenshotSets_appScreenshots_replaceToManyRelationship", &["release_raw", "assets"]),
+        ("appScreenshotSets_createInstance", &["release_raw", "assets"]),
+        ("appScreenshotSets_deleteInstance", &["release_raw", "assets"]),
+        ("appScreenshotSets_getInstance", &["release_raw", "assets"]),
+        ("appStoreReviewAttachments_createInstance", &["release_raw", "assets"]),
+        ("appStoreReviewAttachments_deleteInstance", &["release_raw", "assets"]),
+        ("appStoreReviewAttachments_getInstance", &["release_raw", "assets"]),
+        ("appStoreReviewAttachments_updateInstance", &["release_raw", "assets"]),
+        ("appStoreReviewDetails_appStoreReviewAttachments_getToManyRelated", &["release_raw", "assets"]),
+        ("appStoreReviewDetails_createInstance", &["release_raw", "testflight_raw", "monetization_raw", "signing_raw", "reports_raw", "core"]),
+        ("appStoreReviewDetails_getInstance", &["release_raw", "testflight_raw", "monetization_raw", "signing_raw", "reports_raw", "core"]),
+        ("appStoreReviewDetails_updateInstance", &["release_raw", "testflight_raw", "monetization_raw", "signing_raw", "reports_raw", "core"]),
+        ("appStoreVersionLocalizations_appPreviewSets_getToManyRelated", &["release_raw", "assets"]),
+        ("appStoreVersionLocalizations_appScreenshotSets_getToManyRelated", &["release_raw", "assets"]),
+        ("appStoreVersionLocalizations_createInstance", &["release_raw", "metadata"]),
+        ("appStoreVersionLocalizations_deleteInstance", &["release_raw", "metadata"]),
+        ("appStoreVersionLocalizations_getInstance", &["release_raw", "metadata"]),
+        ("appStoreVersionLocalizations_updateInstance", &["release_raw", "metadata"]),
+        ("appStoreVersionPhasedReleases_createInstance", &["release_raw", "testflight_raw", "monetization_raw", "signing_raw", "reports_raw", "core"]),
+        ("appStoreVersionPhasedReleases_deleteInstance", &["release_raw", "testflight_raw", "monetization_raw", "signing_raw", "reports_raw", "core"]),
+        ("appStoreVersionPhasedReleases_updateInstance", &["release_raw", "testflight_raw", "monetization_raw", "signing_raw", "reports_raw", "core"]),
+        ("appStoreVersionReleaseRequests_createInstance", &["release_raw", "testflight_raw", "monetization_raw", "signing_raw", "reports_raw", "core"]),
+        ("appStoreVersions_appStoreReviewDetail_getToOneRelated", &["release_raw", "testflight_raw", "monetization_raw", "signing_raw", "reports_raw", "core"]),
+        ("appStoreVersions_appStoreVersionLocalizations_getToManyRelated", &["release_raw", "metadata"]),
+        ("appStoreVersions_appStoreVersionPhasedRelease_getToOneRelated", &["release_raw", "testflight_raw", "monetization_raw", "signing_raw", "reports_raw", "core"]),
+        ("appStoreVersions_build_getToOneRelated", &["release_raw", "testflight_raw", "monetization_raw", "signing_raw", "reports_raw", "core"]),
+        ("appStoreVersions_build_updateToOneRelationship", &["release_raw", "testflight_raw", "monetization_raw", "signing_raw", "reports_raw", "core"]),
+        ("appStoreVersions_createInstance", &["release_raw", "testflight_raw", "monetization_raw", "signing_raw", "reports_raw", "core"]),
         ("appStoreVersions_customerReviews_getToManyRelated", &["reviews"]),
-        ("appStoreVersions_deleteInstance", &["core"]),
-        ("appStoreVersions_getInstance", &["core"]),
-        ("appStoreVersions_updateInstance", &["core"]),
-        ("asset_upload", &["assets", "monetization"]),
-        ("betaAppLocalizations_createInstance", &["testflight"]),
-        ("betaAppLocalizations_deleteInstance", &["testflight"]),
-        ("betaAppLocalizations_getCollection", &["testflight"]),
-        ("betaAppLocalizations_getInstance", &["testflight"]),
-        ("betaAppLocalizations_updateInstance", &["testflight"]),
-        ("betaAppReviewDetails_getCollection", &["testflight"]),
-        ("betaAppReviewDetails_getInstance", &["testflight"]),
-        ("betaAppReviewDetails_updateInstance", &["testflight"]),
-        ("betaAppReviewSubmissions_createInstance", &["testflight"]),
-        ("betaAppReviewSubmissions_getCollection", &["testflight"]),
-        ("betaAppReviewSubmissions_getInstance", &["testflight"]),
-        ("betaBuildLocalizations_createInstance", &["testflight"]),
-        ("betaBuildLocalizations_deleteInstance", &["testflight"]),
-        ("betaBuildLocalizations_getCollection", &["testflight"]),
-        ("betaBuildLocalizations_getInstance", &["testflight"]),
-        ("betaBuildLocalizations_updateInstance", &["testflight"]),
-        ("betaGroups_betaTesters_createToManyRelationship", &["testflight"]),
-        ("betaGroups_betaTesters_deleteToManyRelationship", &["testflight"]),
-        ("betaGroups_betaTesters_getToManyRelated", &["testflight"]),
-        ("betaGroups_builds_createToManyRelationship", &["testflight"]),
-        ("betaGroups_builds_deleteToManyRelationship", &["testflight"]),
-        ("betaGroups_builds_getToManyRelated", &["testflight"]),
-        ("betaGroups_createInstance", &["testflight"]),
-        ("betaGroups_deleteInstance", &["testflight"]),
-        ("betaGroups_getCollection", &["testflight"]),
-        ("betaGroups_getInstance", &["testflight"]),
-        ("betaGroups_updateInstance", &["testflight"]),
-        ("betaLicenseAgreements_getCollection", &["testflight"]),
-        ("betaLicenseAgreements_getInstance", &["testflight"]),
-        ("betaLicenseAgreements_updateInstance", &["testflight"]),
-        ("betaTesters_apps_deleteToManyRelationship", &["testflight"]),
-        ("betaTesters_betaGroups_getToManyRelated", &["testflight"]),
-        ("betaTesters_createInstance", &["testflight"]),
-        ("betaTesters_deleteInstance", &["testflight"]),
-        ("betaTesters_getCollection", &["testflight"]),
-        ("betaTesters_getInstance", &["testflight"]),
-        ("buildBetaDetails_getCollection", &["testflight"]),
-        ("buildBetaDetails_getInstance", &["testflight"]),
-        ("buildBetaDetails_updateInstance", &["testflight"]),
-        ("builds_appEncryptionDeclaration_getToOneRelated", &["metadata"]),
-        ("builds_appEncryptionDeclaration_updateToOneRelationship", &["metadata"]),
-        ("builds_betaBuildLocalizations_getToManyRelated", &["testflight"]),
-        ("builds_betaGroups_createToManyRelationship", &["testflight"]),
-        ("builds_betaGroups_deleteToManyRelationship", &["testflight"]),
-        ("builds_getCollection", &["core"]),
-        ("builds_getInstance", &["core"]),
-        ("builds_individualTesters_createToManyRelationship", &["testflight"]),
-        ("builds_individualTesters_deleteToManyRelationship", &["testflight"]),
-        ("builds_individualTesters_getToManyRelated", &["testflight"]),
-        ("builds_updateInstance", &["core"]),
-        ("bundleIdCapabilities_createInstance", &["signing"]),
-        ("bundleIdCapabilities_deleteInstance", &["signing"]),
-        ("bundleIdCapabilities_updateInstance", &["signing"]),
-        ("bundleIds_bundleIdCapabilities_getToManyRelated", &["signing"]),
-        ("bundleIds_createInstance", &["signing"]),
-        ("bundleIds_deleteInstance", &["signing"]),
-        ("bundleIds_getCollection", &["signing"]),
-        ("bundleIds_getInstance", &["signing"]),
-        ("bundleIds_profiles_getToManyRelated", &["signing"]),
-        ("bundleIds_updateInstance", &["signing"]),
-        ("certificates_createInstance", &["signing"]),
-        ("certificates_deleteInstance", &["signing"]),
-        ("certificates_getCollection", &["signing"]),
-        ("certificates_getInstance", &["signing"]),
-        ("certificates_updateInstance", &["signing"]),
+        ("appStoreVersions_deleteInstance", &["release_raw", "testflight_raw", "monetization_raw", "signing_raw", "reports_raw", "core"]),
+        ("appStoreVersions_getInstance", &["release_raw", "testflight_raw", "monetization_raw", "signing_raw", "reports_raw", "core"]),
+        ("appStoreVersions_updateInstance", &["release_raw", "testflight_raw", "monetization_raw", "signing_raw", "reports_raw", "core"]),
+        ("asset_upload", &["assets", "monetization", "workflow", "release_raw", "monetization_raw"]),
+        ("betaAppLocalizations_createInstance", &["testflight_raw", "testflight"]),
+        ("betaAppLocalizations_deleteInstance", &["testflight_raw", "testflight"]),
+        ("betaAppLocalizations_getCollection", &["testflight_raw", "testflight"]),
+        ("betaAppLocalizations_getInstance", &["testflight_raw", "testflight"]),
+        ("betaAppLocalizations_updateInstance", &["testflight_raw", "testflight"]),
+        ("betaAppReviewDetails_getCollection", &["testflight_raw", "testflight"]),
+        ("betaAppReviewDetails_getInstance", &["testflight_raw", "testflight"]),
+        ("betaAppReviewDetails_updateInstance", &["testflight_raw", "testflight"]),
+        ("betaAppReviewSubmissions_createInstance", &["testflight_raw", "testflight"]),
+        ("betaAppReviewSubmissions_getCollection", &["testflight_raw", "testflight"]),
+        ("betaAppReviewSubmissions_getInstance", &["testflight_raw", "testflight"]),
+        ("betaBuildLocalizations_createInstance", &["testflight_raw", "testflight"]),
+        ("betaBuildLocalizations_deleteInstance", &["testflight_raw", "testflight"]),
+        ("betaBuildLocalizations_getCollection", &["testflight_raw", "testflight"]),
+        ("betaBuildLocalizations_getInstance", &["testflight_raw", "testflight"]),
+        ("betaBuildLocalizations_updateInstance", &["testflight_raw", "testflight"]),
+        ("betaGroups_betaTesters_createToManyRelationship", &["testflight_raw", "testflight"]),
+        ("betaGroups_betaTesters_deleteToManyRelationship", &["testflight_raw", "testflight"]),
+        ("betaGroups_betaTesters_getToManyRelated", &["testflight_raw", "testflight"]),
+        ("betaGroups_builds_createToManyRelationship", &["testflight_raw", "testflight"]),
+        ("betaGroups_builds_deleteToManyRelationship", &["testflight_raw", "testflight"]),
+        ("betaGroups_builds_getToManyRelated", &["testflight_raw", "testflight"]),
+        ("betaGroups_builds_getToManyRelationship", &["testflight_raw", "testflight"]),
+        ("betaGroups_createInstance", &["testflight_raw", "testflight"]),
+        ("betaGroups_deleteInstance", &["testflight_raw", "testflight"]),
+        ("betaGroups_getCollection", &["testflight_raw", "testflight"]),
+        ("betaGroups_getInstance", &["testflight_raw", "testflight"]),
+        ("betaGroups_updateInstance", &["testflight_raw", "testflight"]),
+        ("betaLicenseAgreements_getCollection", &["testflight_raw", "testflight"]),
+        ("betaLicenseAgreements_getInstance", &["testflight_raw", "testflight"]),
+        ("betaLicenseAgreements_updateInstance", &["testflight_raw", "testflight"]),
+        ("betaTesters_apps_deleteToManyRelationship", &["testflight_raw", "testflight"]),
+        ("betaTesters_betaGroups_getToManyRelated", &["testflight_raw", "testflight"]),
+        ("betaTesters_createInstance", &["testflight_raw", "testflight"]),
+        ("betaTesters_deleteInstance", &["testflight_raw", "testflight"]),
+        ("betaTesters_getCollection", &["testflight_raw", "testflight"]),
+        ("betaTesters_getInstance", &["testflight_raw", "testflight"]),
+        ("buildBetaDetails_getCollection", &["testflight_raw", "testflight"]),
+        ("buildBetaDetails_getInstance", &["testflight_raw", "testflight"]),
+        ("buildBetaDetails_updateInstance", &["testflight_raw", "testflight"]),
+        ("builds_appEncryptionDeclaration_getToOneRelated", &["release_raw", "metadata"]),
+        ("builds_appEncryptionDeclaration_updateToOneRelationship", &["release_raw", "metadata"]),
+        ("builds_betaBuildLocalizations_getToManyRelated", &["testflight_raw", "testflight"]),
+        ("builds_betaGroups_createToManyRelationship", &["testflight_raw", "testflight"]),
+        ("builds_betaGroups_deleteToManyRelationship", &["testflight_raw", "testflight"]),
+        ("builds_buildBetaDetail_getToOneRelated", &["testflight_raw", "testflight"]),
+        ("builds_getCollection", &["release_raw", "testflight_raw", "monetization_raw", "signing_raw", "reports_raw", "core"]),
+        ("builds_getInstance", &["release_raw", "testflight_raw", "monetization_raw", "signing_raw", "reports_raw", "core"]),
+        ("builds_individualTesters_createToManyRelationship", &["testflight_raw", "testflight"]),
+        ("builds_individualTesters_deleteToManyRelationship", &["testflight_raw", "testflight"]),
+        ("builds_individualTesters_getToManyRelated", &["testflight_raw", "testflight"]),
+        ("builds_updateInstance", &["release_raw", "testflight_raw", "monetization_raw", "signing_raw", "reports_raw", "core"]),
+        ("bundleIdCapabilities_createInstance", &["signing_raw", "signing"]),
+        ("bundleIdCapabilities_deleteInstance", &["signing_raw", "signing"]),
+        ("bundleIdCapabilities_updateInstance", &["signing_raw", "signing"]),
+        ("bundleIds_bundleIdCapabilities_getToManyRelated", &["signing_raw", "signing"]),
+        ("bundleIds_createInstance", &["signing_raw", "signing"]),
+        ("bundleIds_deleteInstance", &["signing_raw", "signing"]),
+        ("bundleIds_getCollection", &["signing_raw", "signing"]),
+        ("bundleIds_getInstance", &["signing_raw", "signing"]),
+        ("bundleIds_profiles_getToManyRelated", &["signing_raw", "signing"]),
+        ("bundleIds_updateInstance", &["signing_raw", "signing"]),
+        ("certificates_createInstance", &["signing_raw", "signing"]),
+        ("certificates_deleteInstance", &["signing_raw", "signing"]),
+        ("certificates_getCollection", &["signing_raw", "signing"]),
+        ("certificates_getInstance", &["signing_raw", "signing"]),
+        ("certificates_updateInstance", &["signing_raw", "signing"]),
         ("customerReviewResponses_createInstance", &["reviews"]),
         ("customerReviewResponses_deleteInstance", &["reviews"]),
         ("customerReviewResponses_getInstance", &["reviews"]),
         ("customerReviews_getInstance", &["reviews"]),
         ("customerReviews_response_getToOneRelated", &["reviews"]),
-        ("devices_createInstance", &["signing"]),
-        ("devices_getCollection", &["signing"]),
-        ("devices_getInstance", &["signing"]),
-        ("devices_updateInstance", &["signing"]),
-        ("financeReports_getCollection", &["reports"]),
-        ("inAppPurchaseAppStoreReviewScreenshots_createInstance", &["monetization"]),
-        ("inAppPurchaseAppStoreReviewScreenshots_deleteInstance", &["monetization"]),
-        ("inAppPurchaseAppStoreReviewScreenshots_getInstance", &["monetization"]),
-        ("inAppPurchaseAppStoreReviewScreenshots_updateInstance", &["monetization"]),
-        ("inAppPurchaseAvailabilities_availableTerritories_getToManyRelated", &["monetization"]),
-        ("inAppPurchaseAvailabilities_availableTerritories_getToManyRelationship", &["monetization"]),
-        ("inAppPurchaseAvailabilities_createInstance", &["monetization"]),
-        ("inAppPurchaseAvailabilities_getInstance", &["monetization"]),
-        ("inAppPurchaseLocalizations_createInstance", &["monetization"]),
-        ("inAppPurchaseLocalizations_deleteInstance", &["monetization"]),
-        ("inAppPurchaseLocalizations_getInstance", &["monetization"]),
-        ("inAppPurchaseLocalizations_updateInstance", &["monetization"]),
-        ("inAppPurchasePricePoints_equalizations_getToManyRelated", &["pricing"]),
-        ("inAppPurchasePriceSchedules_automaticPrices_getToManyRelated", &["pricing"]),
-        ("inAppPurchasePriceSchedules_baseTerritory_getToOneRelated", &["pricing"]),
-        ("inAppPurchasePriceSchedules_createInstance", &["pricing"]),
-        ("inAppPurchasePriceSchedules_getInstance", &["pricing"]),
-        ("inAppPurchasePriceSchedules_manualPrices_getToManyRelated", &["pricing"]),
-        ("inAppPurchaseSubmissions_createInstance", &["monetization"]),
-        ("inAppPurchasesV2_appStoreReviewScreenshot_getToOneRelated", &["monetization"]),
-        ("inAppPurchasesV2_createInstance", &["monetization"]),
-        ("inAppPurchasesV2_deleteInstance", &["monetization"]),
-        ("inAppPurchasesV2_getInstance", &["monetization"]),
-        ("inAppPurchasesV2_iapPriceSchedule_getToOneRelated", &["pricing"]),
-        ("inAppPurchasesV2_inAppPurchaseAvailability_getToOneRelated", &["monetization"]),
-        ("inAppPurchasesV2_inAppPurchaseLocalizations_getToManyRelated", &["monetization"]),
-        ("inAppPurchasesV2_pricePoints_getToManyRelated", &["pricing"]),
-        ("inAppPurchasesV2_updateInstance", &["monetization"]),
-        ("preReleaseVersions_builds_getToManyRelated", &["testflight"]),
-        ("preReleaseVersions_getCollection", &["testflight"]),
-        ("profiles_bundleId_getToOneRelated", &["signing"]),
-        ("profiles_certificates_getToManyRelated", &["signing"]),
-        ("profiles_createInstance", &["signing"]),
-        ("profiles_deleteInstance", &["signing"]),
-        ("profiles_devices_getToManyRelated", &["signing"]),
-        ("profiles_getCollection", &["signing"]),
-        ("profiles_getInstance", &["signing"]),
-        ("reviewSubmissionItems_createInstance", &["core"]),
-        ("reviewSubmissionItems_deleteInstance", &["core"]),
-        ("reviewSubmissionItems_updateInstance", &["core"]),
-        ("reviewSubmissions_createInstance", &["core"]),
-        ("reviewSubmissions_getCollection", &["core"]),
-        ("reviewSubmissions_getInstance", &["core"]),
-        ("reviewSubmissions_items_getToManyRelated", &["core"]),
-        ("reviewSubmissions_items_getToManyRelationship", &["core"]),
-        ("reviewSubmissions_updateInstance", &["core"]),
-        ("salesReports_getCollection", &["reports"]),
-        ("subscriptionAppStoreReviewScreenshots_createInstance", &["monetization"]),
-        ("subscriptionAppStoreReviewScreenshots_deleteInstance", &["monetization"]),
-        ("subscriptionAppStoreReviewScreenshots_getInstance", &["monetization"]),
-        ("subscriptionAppStoreReviewScreenshots_updateInstance", &["monetization"]),
-        ("subscriptionGroupLocalizations_createInstance", &["monetization"]),
-        ("subscriptionGroupLocalizations_deleteInstance", &["monetization"]),
-        ("subscriptionGroupLocalizations_getInstance", &["monetization"]),
-        ("subscriptionGroupLocalizations_updateInstance", &["monetization"]),
-        ("subscriptionGroups_createInstance", &["monetization"]),
-        ("subscriptionGroups_deleteInstance", &["monetization"]),
-        ("subscriptionGroups_getInstance", &["monetization"]),
-        ("subscriptionGroups_subscriptionGroupLocalizations_getToManyRelated", &["monetization"]),
-        ("subscriptionGroups_subscriptions_getToManyRelated", &["monetization"]),
-        ("subscriptionGroups_updateInstance", &["monetization"]),
-        ("subscriptionIntroductoryOffers_createInstance", &["monetization"]),
-        ("subscriptionIntroductoryOffers_deleteInstance", &["monetization"]),
-        ("subscriptionIntroductoryOffers_updateInstance", &["monetization"]),
-        ("subscriptionLocalizations_createInstance", &["monetization"]),
-        ("subscriptionLocalizations_deleteInstance", &["monetization"]),
-        ("subscriptionLocalizations_getInstance", &["monetization"]),
-        ("subscriptionLocalizations_updateInstance", &["monetization"]),
-        ("subscriptionPlanAvailabilities_availableTerritories_getToManyRelated", &["monetization"]),
-        ("subscriptionPlanAvailabilities_availableTerritories_getToManyRelationship", &["monetization"]),
-        ("subscriptionPlanAvailabilities_availableTerritories_replaceToManyRelationship", &["monetization"]),
-        ("subscriptionPlanAvailabilities_createInstance", &["monetization"]),
-        ("subscriptionPlanAvailabilities_getInstance", &["monetization"]),
-        ("subscriptionPlanAvailabilities_updateInstance", &["monetization"]),
-        ("subscriptionPricePoints_equalizations_getToManyRelated", &["pricing"]),
-        ("subscriptionPricePoints_getInstance", &["pricing"]),
-        ("subscriptionPrices_createInstance", &["pricing"]),
-        ("subscriptionPrices_deleteInstance", &["pricing"]),
-        ("subscriptionPromotionalOffers_createInstance", &["monetization"]),
-        ("subscriptionPromotionalOffers_deleteInstance", &["monetization"]),
-        ("subscriptionPromotionalOffers_getInstance", &["monetization"]),
-        ("subscriptionPromotionalOffers_updateInstance", &["monetization"]),
-        ("subscriptions_appStoreReviewScreenshot_getToOneRelated", &["monetization"]),
-        ("subscriptions_createInstance", &["monetization"]),
-        ("subscriptions_deleteInstance", &["monetization"]),
-        ("subscriptions_getInstance", &["monetization"]),
-        ("subscriptions_introductoryOffers_getToManyRelated", &["monetization"]),
-        ("subscriptions_planAvailabilities_getToManyRelated", &["monetization"]),
-        ("subscriptions_pricePoints_getToManyRelated", &["pricing"]),
-        ("subscriptions_prices_deleteToManyRelationship", &["pricing"]),
-        ("subscriptions_prices_getToManyRelated", &["pricing"]),
-        ("subscriptions_promotionalOffers_getToManyRelated", &["monetization"]),
-        ("subscriptions_subscriptionLocalizations_getToManyRelated", &["monetization"]),
-        ("subscriptions_updateInstance", &["monetization"]),
-        ("subscriptionSubmissions_createInstance", &["monetization"]),
-        ("territories_getCollection", &["pricing"]),
-        ("territoryAvailabilities_updateInstance", &["pricing"]),
+        ("devices_createInstance", &["signing_raw", "signing"]),
+        ("devices_getCollection", &["signing_raw", "signing"]),
+        ("devices_getInstance", &["signing_raw", "signing"]),
+        ("devices_updateInstance", &["signing_raw", "signing"]),
+        ("financeReports_getCollection", &["reports_raw", "reports"]),
+        ("inAppPurchaseAppStoreReviewScreenshots_createInstance", &["monetization_raw", "monetization"]),
+        ("inAppPurchaseAppStoreReviewScreenshots_deleteInstance", &["monetization_raw", "monetization"]),
+        ("inAppPurchaseAppStoreReviewScreenshots_getInstance", &["monetization_raw", "monetization"]),
+        ("inAppPurchaseAppStoreReviewScreenshots_updateInstance", &["monetization_raw", "monetization"]),
+        ("inAppPurchaseAvailabilities_availableTerritories_getToManyRelated", &["monetization_raw", "monetization"]),
+        ("inAppPurchaseAvailabilities_availableTerritories_getToManyRelationship", &["monetization_raw", "monetization"]),
+        ("inAppPurchaseAvailabilities_createInstance", &["monetization_raw", "monetization"]),
+        ("inAppPurchaseAvailabilities_getInstance", &["monetization_raw", "monetization"]),
+        ("inAppPurchaseLocalizations_createInstance", &["monetization_raw", "monetization"]),
+        ("inAppPurchaseLocalizations_deleteInstance", &["monetization_raw", "monetization"]),
+        ("inAppPurchaseLocalizations_getInstance", &["monetization_raw", "monetization"]),
+        ("inAppPurchaseLocalizations_updateInstance", &["monetization_raw", "monetization"]),
+        ("inAppPurchasePricePoints_equalizations_getToManyRelated", &["monetization_raw", "pricing"]),
+        ("inAppPurchasePriceSchedules_automaticPrices_getToManyRelated", &["monetization_raw", "pricing"]),
+        ("inAppPurchasePriceSchedules_baseTerritory_getToOneRelated", &["monetization_raw", "pricing"]),
+        ("inAppPurchasePriceSchedules_createInstance", &["monetization_raw", "pricing"]),
+        ("inAppPurchasePriceSchedules_getInstance", &["monetization_raw", "pricing"]),
+        ("inAppPurchasePriceSchedules_manualPrices_getToManyRelated", &["monetization_raw", "pricing"]),
+        ("inAppPurchaseSubmissions_createInstance", &["monetization_raw", "monetization"]),
+        ("inAppPurchasesV2_appStoreReviewScreenshot_getToOneRelated", &["monetization_raw", "monetization"]),
+        ("inAppPurchasesV2_createInstance", &["monetization_raw", "monetization"]),
+        ("inAppPurchasesV2_deleteInstance", &["monetization_raw", "monetization"]),
+        ("inAppPurchasesV2_getInstance", &["monetization_raw", "monetization"]),
+        ("inAppPurchasesV2_iapPriceSchedule_getToOneRelated", &["monetization_raw", "pricing"]),
+        ("inAppPurchasesV2_inAppPurchaseAvailability_getToOneRelated", &["monetization_raw", "monetization"]),
+        ("inAppPurchasesV2_inAppPurchaseLocalizations_getToManyRelated", &["monetization_raw", "monetization"]),
+        ("inAppPurchasesV2_pricePoints_getToManyRelated", &["monetization_raw", "pricing"]),
+        ("inAppPurchasesV2_updateInstance", &["monetization_raw", "monetization"]),
+        ("metadata_apply", &["workflow"]),
+        ("metadata_get", &["workflow"]),
+        ("preReleaseVersions_builds_getToManyRelated", &["testflight_raw", "testflight"]),
+        ("preReleaseVersions_getCollection", &["testflight_raw", "testflight"]),
+        ("profiles_bundleId_getToOneRelated", &["signing_raw", "signing"]),
+        ("profiles_certificates_getToManyRelated", &["signing_raw", "signing"]),
+        ("profiles_createInstance", &["signing_raw", "signing"]),
+        ("profiles_deleteInstance", &["signing_raw", "signing"]),
+        ("profiles_devices_getToManyRelated", &["signing_raw", "signing"]),
+        ("profiles_getCollection", &["signing_raw", "signing"]),
+        ("profiles_getInstance", &["signing_raw", "signing"]),
+        ("release", &["workflow"]),
+        ("release_prepare", &["workflow"]),
+        ("release_status", &["workflow"]),
+        ("report_query", &["workflow"]),
+        ("review_submit", &["workflow"]),
+        ("reviewSubmissionItems_createInstance", &["release_raw", "testflight_raw", "monetization_raw", "signing_raw", "reports_raw", "core"]),
+        ("reviewSubmissionItems_deleteInstance", &["release_raw", "testflight_raw", "monetization_raw", "signing_raw", "reports_raw", "core"]),
+        ("reviewSubmissionItems_updateInstance", &["release_raw", "testflight_raw", "monetization_raw", "signing_raw", "reports_raw", "core"]),
+        ("reviewSubmissions_createInstance", &["release_raw", "testflight_raw", "monetization_raw", "signing_raw", "reports_raw", "core"]),
+        ("reviewSubmissions_getCollection", &["release_raw", "testflight_raw", "monetization_raw", "signing_raw", "reports_raw", "core"]),
+        ("reviewSubmissions_getInstance", &["release_raw", "testflight_raw", "monetization_raw", "signing_raw", "reports_raw", "core"]),
+        ("reviewSubmissions_items_getToManyRelated", &["release_raw", "testflight_raw", "monetization_raw", "signing_raw", "reports_raw", "core"]),
+        ("reviewSubmissions_items_getToManyRelationship", &["release_raw", "testflight_raw", "monetization_raw", "signing_raw", "reports_raw", "core"]),
+        ("reviewSubmissions_updateInstance", &["release_raw", "testflight_raw", "monetization_raw", "signing_raw", "reports_raw", "core"]),
+        ("salesReports_getCollection", &["reports_raw", "reports"]),
+        ("screenshots_get", &["workflow"]),
+        ("screenshots_sync", &["workflow"]),
+        ("subscriptionAppStoreReviewScreenshots_createInstance", &["monetization_raw", "monetization"]),
+        ("subscriptionAppStoreReviewScreenshots_deleteInstance", &["monetization_raw", "monetization"]),
+        ("subscriptionAppStoreReviewScreenshots_getInstance", &["monetization_raw", "monetization"]),
+        ("subscriptionAppStoreReviewScreenshots_updateInstance", &["monetization_raw", "monetization"]),
+        ("subscriptionGroupLocalizations_createInstance", &["monetization_raw", "monetization"]),
+        ("subscriptionGroupLocalizations_deleteInstance", &["monetization_raw", "monetization"]),
+        ("subscriptionGroupLocalizations_getInstance", &["monetization_raw", "monetization"]),
+        ("subscriptionGroupLocalizations_updateInstance", &["monetization_raw", "monetization"]),
+        ("subscriptionGroups_createInstance", &["monetization_raw", "monetization"]),
+        ("subscriptionGroups_deleteInstance", &["monetization_raw", "monetization"]),
+        ("subscriptionGroups_getInstance", &["monetization_raw", "monetization"]),
+        ("subscriptionGroups_subscriptionGroupLocalizations_getToManyRelated", &["monetization_raw", "monetization"]),
+        ("subscriptionGroups_subscriptions_getToManyRelated", &["monetization_raw", "monetization"]),
+        ("subscriptionGroups_updateInstance", &["monetization_raw", "monetization"]),
+        ("subscriptionIntroductoryOffers_createInstance", &["monetization_raw", "monetization"]),
+        ("subscriptionIntroductoryOffers_deleteInstance", &["monetization_raw", "monetization"]),
+        ("subscriptionIntroductoryOffers_updateInstance", &["monetization_raw", "monetization"]),
+        ("subscriptionLocalizations_createInstance", &["monetization_raw", "monetization"]),
+        ("subscriptionLocalizations_deleteInstance", &["monetization_raw", "monetization"]),
+        ("subscriptionLocalizations_getInstance", &["monetization_raw", "monetization"]),
+        ("subscriptionLocalizations_updateInstance", &["monetization_raw", "monetization"]),
+        ("subscriptionPlanAvailabilities_availableTerritories_getToManyRelated", &["monetization_raw", "monetization"]),
+        ("subscriptionPlanAvailabilities_availableTerritories_getToManyRelationship", &["monetization_raw", "monetization"]),
+        ("subscriptionPlanAvailabilities_availableTerritories_replaceToManyRelationship", &["monetization_raw", "monetization"]),
+        ("subscriptionPlanAvailabilities_createInstance", &["monetization_raw", "monetization"]),
+        ("subscriptionPlanAvailabilities_getInstance", &["monetization_raw", "monetization"]),
+        ("subscriptionPlanAvailabilities_updateInstance", &["monetization_raw", "monetization"]),
+        ("subscriptionPricePoints_equalizations_getToManyRelated", &["monetization_raw", "pricing"]),
+        ("subscriptionPricePoints_getInstance", &["monetization_raw", "pricing"]),
+        ("subscriptionPrices_createInstance", &["monetization_raw", "pricing"]),
+        ("subscriptionPrices_deleteInstance", &["monetization_raw", "pricing"]),
+        ("subscriptionPromotionalOffers_createInstance", &["monetization_raw", "monetization"]),
+        ("subscriptionPromotionalOffers_deleteInstance", &["monetization_raw", "monetization"]),
+        ("subscriptionPromotionalOffers_getInstance", &["monetization_raw", "monetization"]),
+        ("subscriptionPromotionalOffers_updateInstance", &["monetization_raw", "monetization"]),
+        ("subscriptions_appStoreReviewScreenshot_getToOneRelated", &["monetization_raw", "monetization"]),
+        ("subscriptions_createInstance", &["monetization_raw", "monetization"]),
+        ("subscriptions_deleteInstance", &["monetization_raw", "monetization"]),
+        ("subscriptions_getInstance", &["monetization_raw", "monetization"]),
+        ("subscriptions_introductoryOffers_getToManyRelated", &["monetization_raw", "monetization"]),
+        ("subscriptions_planAvailabilities_getToManyRelated", &["monetization_raw", "monetization"]),
+        ("subscriptions_pricePoints_getToManyRelated", &["monetization_raw", "pricing"]),
+        ("subscriptions_prices_deleteToManyRelationship", &["monetization_raw", "pricing"]),
+        ("subscriptions_prices_getToManyRelated", &["monetization_raw", "pricing"]),
+        ("subscriptions_promotionalOffers_getToManyRelated", &["monetization_raw", "monetization"]),
+        ("subscriptions_subscriptionLocalizations_getToManyRelated", &["monetization_raw", "monetization"]),
+        ("subscriptions_updateInstance", &["monetization_raw", "monetization"]),
+        ("subscriptionSubmissions_createInstance", &["monetization_raw", "monetization"]),
+        ("territories_getCollection", &["monetization_raw", "pricing"]),
+        ("territoryAvailabilities_updateInstance", &["monetization_raw", "pricing"]),
+        ("testflight_distribute", &["workflow"]),
+        ("testflight_remove", &["workflow"]),
+        ("testflight_status", &["workflow"]),
+        ("version_get", &["workflow"]),
     ]
 }

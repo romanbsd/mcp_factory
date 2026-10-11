@@ -4,8 +4,18 @@ use mcp_factory_core::ParamLocation;
 use mcp_factory_core::RestOperation;
 use mcp_factory_core::ToolHints;
 use mcp_factory_core::ToolSpec;
+#[allow(dead_code)]
 pub fn build_tools() -> Vec<ToolSpec> {
-    vec![
+    operation_catalog().iter().map(|operation| (operation.build)()).collect()
+}
+
+/// All generated capabilities; creating this catalog does not parse any schema.
+pub fn operation_catalog() -> &'static [mcp_factory_core::OperationDescriptor] {
+    &[
+        mcp_factory_core::OperationDescriptor { name: "getPet", build: build_operation_0 },
+    ]
+}
+fn build_operation_0() -> ToolSpec {
         ToolSpec {
             name: "getPet".to_string(),
             description: "Get a pet".to_string(),
@@ -34,6 +44,5 @@ pub fn build_tools() -> Vec<ToolSpec> {
                 idempotent: Some(true),
                 open_world: Some(true),
             },
-        },
-    ]
+        }
 }

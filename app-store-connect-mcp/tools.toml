@@ -7,7 +7,7 @@
 # `*_getToManyRelated` (full resources) rather than `*_getToManyRelationship`
 # (IDs only) unless the IDs alone are what a workflow needs.
 
-default_profiles = ["core", "metadata", "assets", "testflight"]
+default_profiles = ["workflow"]
 
 # Apple paginates with an opaque `cursor` carried in `links.next`.
 cursor_param = "cursor"
@@ -18,6 +18,14 @@ cursor_param = "cursor"
 strip_enums = ["fields[*]"]
 
 [profiles]
+# Workflow dependencies remain internal; this profile exposes custom tasks only.
+workflow = []
+release_raw = []
+testflight_raw = []
+monetization_raw = []
+signing_raw = []
+reports_raw = []
+
 core = [
     # Find the app, its versions and builds.
     "apps_getCollection",
@@ -102,6 +110,9 @@ assets = [
 ]
 
 testflight = [
+    "betaGroups_builds_getToManyRelationship",
+    "builds_buildBetaDetail_getToOneRelated",
+
     # Groups and their builds/testers.
     "apps_betaGroups_getToManyRelated",
     "betaGroups_getCollection",
@@ -285,8 +296,31 @@ reports = [
     "analyticsReportSegments_getInstance",
 ]
 
+# Additive raw presets inherit operations and handwritten tool memberships.
+[profile_extends]
+release_raw = ["core", "metadata", "assets"]
+testflight_raw = ["core", "testflight"]
+monetization_raw = ["core", "monetization", "pricing"]
+signing_raw = ["core", "signing"]
+reports_raw = ["core", "reports"]
+
 [custom_tools]
-asset_upload = ["assets", "monetization"]
+app_get = ["workflow"]
+version_get = ["workflow"]
+release_status = ["workflow"]
+release_prepare = ["workflow"]
+metadata_get = ["workflow"]
+metadata_apply = ["workflow"]
+screenshots_get = ["workflow"]
+screenshots_sync = ["workflow"]
+testflight_status = ["workflow"]
+testflight_distribute = ["workflow"]
+testflight_remove = ["workflow"]
+review_submit = ["workflow"]
+release = ["workflow"]
+report_query = ["workflow"]
+
+asset_upload = ["assets", "monetization", "workflow"]
 analytics_segment_download = ["reports"]
 
 [descriptions]

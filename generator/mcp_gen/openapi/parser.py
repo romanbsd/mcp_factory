@@ -286,6 +286,10 @@ def _build_param_inputs(
             continue
         params.append(ParamBinding(name=name, location=location))
         schema = parameter.get("schema", {"type": "string"})
+        if location == "query" and schema.get("type") == "array" and parameter.get("style", "form") == "form" and parameter.get("explode", True) is False:
+            # Preserve OpenAPI serialization without changing Discovery's
+            # repeated-key query arrays or the public typed array schema.
+            schema = {**schema, "x-mcp-query-explode": False}
         schema_parts.append(
             {
                 "type": "object",

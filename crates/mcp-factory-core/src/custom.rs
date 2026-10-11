@@ -7,16 +7,28 @@ use serde_json::Value;
 use crate::error::ProxyError;
 use crate::tools::{ToolHints, ToolResult};
 
-/// Restricted invocation surface exposed to handwritten orchestration tools.
-/// Implementations must reject generated tools that are not explicitly marked
-/// read-only, so reporting code cannot mutate an upstream by construction.
+/// Internal capabilities exposed to handwritten orchestration tools.
+/// Read-only calls and response streams require read-only operations; mutations
+/// additionally require a mutating caller and the runtime's safety permission.
 #[async_trait]
-pub trait ReadOnlyToolInvoker: Send + Sync {
+pub trait OperationInvoker: Send + Sync {
     async fn invoke_read_only(
         &self,
         name: &str,
         arguments: Value,
     ) -> Result<ToolResult, ProxyError>;
+
+    /// Open a generated read-only REST response for bounded binary/report processing.
+    /// Implementations retain schema validation and read-only enforcement.
+    async fn stream_read_only(
+        &self,
+        name: &str,
+        _arguments: Value,
+    ) -> Result<reqwest::Response, ProxyError> {
+        Err(ProxyError::Validation(format!(
+            "streaming read-only operation unavailable: {name}"
+        )))
+    }
 
     /// Invoke any generated tool, including ones that change upstream state.
     /// The server grants this only to custom tools that are not themselves
@@ -37,7 +49,7 @@ pub trait ReadOnlyToolInvoker: Send + Sync {
 pub trait CustomToolHandler: Send + Sync {
     async fn call(
         &self,
-        invoker: &dyn ReadOnlyToolInvoker,
+        invoker: &dyn OperationInvoker,
         arguments: Value,
     ) -> Result<ToolResult, ProxyError>;
 }
@@ -130,6 +142,9 @@ impl CustomToolRegistry {
     }
 }
 
+/// Compatibility name for existing extension implementations.
+pub use OperationInvoker as ReadOnlyToolInvoker;
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -141,7 +156,7 @@ mod tests {
     impl CustomToolHandler for NoopHandler {
         async fn call(
             &self,
-            _invoker: &dyn ReadOnlyToolInvoker,
+            _invoker: &dyn OperationInvoker,
             _arguments: Value,
         ) -> Result<ToolResult, ProxyError> {
             Ok(ToolResult::text("ok"))

@@ -40,16 +40,18 @@ async fn main() -> anyhow::Result<()> {
         return run_oauth_login(&config).await.map_err(Into::into);
     }
 
-    let tools = tools::build_tools();
     let custom_tools = extensions::build_custom_tools(&config);
-    let resources = resources::build_resources();
+    let mut resources = resources::build_resources();
+    resources.extend(extensions::build_resources());
     let server = McpProxyServer::builder(config)
         .tool_profiles(&tools::build_tool_profiles())?
-        .tools(&tools)?
+        .operation_catalog(tools::operation_catalog())?
         .custom_tools(&custom_tools)?
         .resources(&resources)?
         .build()?;
 
+    drop(custom_tools);
+    drop(resources);
     server.run().await?;
     Ok(())
 }
