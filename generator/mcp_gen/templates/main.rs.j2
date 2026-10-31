@@ -40,6 +40,9 @@ async fn main() -> anyhow::Result<()> {
     }
 {% endif %}
 
+{% if extensions_configure_config %}
+    extensions::configure_config(&mut config)?;
+{% endif %}
     if std::env::args().any(|a| a == "--auth-login") {
         return run_oauth_login(&config).await.map_err(Into::into);
     }
@@ -49,7 +52,13 @@ async fn main() -> anyhow::Result<()> {
 {% if extensions_have_resources %}
     resources.extend(extensions::build_resources());
 {% endif %}
+{% if extensions_have_auth %}
+    let auth = extensions::build_auth_provider(&config)?;
+{% endif %}
     let server = McpProxyServer::builder(config)
+{% if extensions_have_auth %}
+        .auth_provider(auth)
+{% endif %}
 {% if tool_profiles %}
         .tool_profiles(&tools::build_tool_profiles())?
 {% endif %}

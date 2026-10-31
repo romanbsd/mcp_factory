@@ -1,0 +1,24 @@
+[package]
+name = "google-analytics-mcp"
+version = "0.1.0"
+edition = "2021"
+license.workspace = true
+authors.workspace = true
+description = "Compact Google Analytics MCP workflows with generated API coverage"
+readme = "README.md"
+
+[dependencies]
+mcp-factory-provider-auth = { workspace = true, features = ["google"] }
+mcp-factory-core.workspace = true
+tokio.workspace = true
+serde_json.workspace = true
+anyhow.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+
+[[bin]]
+name = "google-analytics-mcp"
+path = "src/main.rs"
+
+[dev-dependencies]
+jsonschema.workspace = true

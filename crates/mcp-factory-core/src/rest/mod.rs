@@ -546,7 +546,7 @@ fn substitute_path_binding(path: &str, key: &str, value: &Value) -> Result<Strin
     let reserved_placeholder = format!("{{+{key}}}");
     let mut resolved = path.to_string();
     if resolved.contains(&reserved_placeholder) {
-        // Google Discovery uses RFC 6570 reserved expansion for
+        // RFC 6570 reserved expansion supports
         // resource names such as `apps/123`. Preserve separators while
         // encoding each segment and neutralizing traversal segments.
         let replacement = encode_reserved_path_value(value)?;
@@ -603,7 +603,7 @@ pub fn build_url(
 fn resolve_operation_url(base_url: &str, path: &str) -> Result<reqwest::Url, ProxyError> {
     if is_absolute_operation_url(path) {
         // An absolute operation URL supports schemas that span multiple upstream
-        // services (for example, a combined Google API Discovery surface). The
+        // services in a composed API surface. The
         // value is fixed at generation time; tool arguments can only replace
         // percent-encoded path segments, so callers cannot select another host.
         reqwest::Url::parse(path)
@@ -1086,7 +1086,7 @@ mod tests {
 
     #[test]
     fn gunzip_text_decodes_gzip_typed_utf8_only() {
-        let report = "Provider\tSKU\tUnits\nAPPLE\tcom.example\t3\n";
+        let report = "Provider\tSKU\tUnits\nVENDOR\tcom.example\t3\n";
         assert_eq!(
             gunzip_text("application/a-gzip", &gzip(report.as_bytes())).unwrap(),
             Some(report.to_string())

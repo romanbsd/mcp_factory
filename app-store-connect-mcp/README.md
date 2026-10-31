@@ -48,12 +48,16 @@ App Store Connect API) and set:
 | `ASC_ISSUER_ID` | Issuer ID (UUID) |
 | `ASC_PRIVATE_KEY_PATH` | Path to the downloaded `AuthKey_<KEY_ID>.p8` |
 
-When all three are set (and `config.toml` has no `[auth]` section) every request
+When all three are set and `[auth]` is omitted (or its type is `auto`), every request
 carries an ES256 JWT (`aud: appstoreconnect-v1`) that is cached for 15 minutes
 and renewed automatically before Apple's 20-minute limit. Key material never
 appears in tool schemas, results or error messages. An explicit
-`[auth] type = "app_store_connect"` with `key_id_env`, `issuer_id_env` and
+`[auth] type = "external"`, `provider = "app_store_connect"` with `[auth.options] key_id_env`, `issuer_id_env` and
 `private_key_path_env` selects other variable names.
+An explicit `[auth] type = "none"` disables authentication even when legacy
+variables are present. A partial set of nonblank legacy variables fails startup
+when automatic authentication is enabled. Explicit bearer, OAuth2 and external
+auth configurations also take precedence over the legacy fallback.
 
 A 401 result means the token was rejected (wrong key, issuer, clock skew); a
 403 means the key's role lacks permission for that resource. The two carry

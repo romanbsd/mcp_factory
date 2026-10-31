@@ -1,0 +1,192 @@
+{
+  "method": "macOS RSS after initialize and tools/list, 250ms settled; direct installed executables; no Analytics API calls; warm filesystem/cache runs; normalized tools payload includes descriptions and schemas",
+  "samples": {
+    "google_python": [
+      {
+        "initialize_ms": 567.58,
+        "ready_ms": 568.55,
+        "tools_list_ms": 0.94,
+        "rss_kib": 146496,
+        "tool_count": 9,
+        "tool_list_bytes": 55115,
+        "tool_list_wire_bytes": 55150,
+        "server_info": {
+          "name": "Google Analytics MCP Server",
+          "version": "1.0.0"
+        }
+      },
+      {
+        "initialize_ms": 552.29,
+        "ready_ms": 553.26,
+        "tools_list_ms": 0.97,
+        "rss_kib": 146624,
+        "tool_count": 9,
+        "tool_list_bytes": 55115,
+        "tool_list_wire_bytes": 55150,
+        "server_info": {
+          "name": "Google Analytics MCP Server",
+          "version": "1.0.0"
+        }
+      },
+      {
+        "initialize_ms": 552.66,
+        "ready_ms": 553.6,
+        "tools_list_ms": 0.93,
+        "rss_kib": 146704,
+        "tool_count": 9,
+        "tool_list_bytes": 55115,
+        "tool_list_wire_bytes": 55150,
+        "server_info": {
+          "name": "Google Analytics MCP Server",
+          "version": "1.0.0"
+        }
+      },
+      {
+        "initialize_ms": 550.1,
+        "ready_ms": 551.11,
+        "tools_list_ms": 1.0,
+        "rss_kib": 146608,
+        "tool_count": 9,
+        "tool_list_bytes": 55115,
+        "tool_list_wire_bytes": 55150,
+        "server_info": {
+          "name": "Google Analytics MCP Server",
+          "version": "1.0.0"
+        }
+      },
+      {
+        "initialize_ms": 555.98,
+        "ready_ms": 556.94,
+        "tools_list_ms": 0.94,
+        "rss_kib": 146800,
+        "tool_count": 9,
+        "tool_list_bytes": 55115,
+        "tool_list_wire_bytes": 55150,
+        "server_info": {
+          "name": "Google Analytics MCP Server",
+          "version": "1.0.0"
+        }
+      }
+    ],
+    "factory_workflow": [
+      {
+        "initialize_ms": 9.76,
+        "ready_ms": 10.39,
+        "tools_list_ms": 0.62,
+        "rss_kib": 17488,
+        "tool_count": 19,
+        "tool_list_bytes": 16239,
+        "tool_list_wire_bytes": 16274,
+        "server_info": {
+          "name": "google-analytics-mcp",
+          "version": "0.1.0"
+        }
+      },
+      {
+        "initialize_ms": 7.66,
+        "ready_ms": 7.97,
+        "tools_list_ms": 0.29,
+        "rss_kib": 17520,
+        "tool_count": 19,
+        "tool_list_bytes": 16239,
+        "tool_list_wire_bytes": 16274,
+        "server_info": {
+          "name": "google-analytics-mcp",
+          "version": "0.1.0"
+        }
+      },
+      {
+        "initialize_ms": 7.87,
+        "ready_ms": 8.19,
+        "tools_list_ms": 0.31,
+        "rss_kib": 17408,
+        "tool_count": 19,
+        "tool_list_bytes": 16239,
+        "tool_list_wire_bytes": 16274,
+        "server_info": {
+          "name": "google-analytics-mcp",
+          "version": "0.1.0"
+        }
+      },
+      {
+        "initialize_ms": 7.67,
+        "ready_ms": 8.0,
+        "tools_list_ms": 0.32,
+        "rss_kib": 17408,
+        "tool_count": 19,
+        "tool_list_bytes": 16239,
+        "tool_list_wire_bytes": 16274,
+        "server_info": {
+          "name": "google-analytics-mcp",
+          "version": "0.1.0"
+        }
+      },
+      {
+        "initialize_ms": 6.35,
+        "ready_ms": 6.62,
+        "tools_list_ms": 0.26,
+        "rss_kib": 17488,
+        "tool_count": 19,
+        "tool_list_bytes": 16239,
+        "tool_list_wire_bytes": 16274,
+        "server_info": {
+          "name": "google-analytics-mcp",
+          "version": "0.1.0"
+        }
+      }
+    ],
+    "factory_raw": [
+      {
+        "initialize_ms": 11.59,
+        "ready_ms": 15.6,
+        "tools_list_ms": 4.0,
+        "rss_kib": 35040,
+        "tool_count": 248,
+        "tool_list_bytes": 802955,
+        "tool_list_wire_bytes": 802990,
+        "server_info": {
+          "name": "google-analytics-mcp",
+          "version": "0.1.0"
+        }
+      }
+    ]
+  },
+  "medians": {
+    "google_python": {
+      "ready_ms": 553.6,
+      "initialize_ms": 552.66,
+      "tools_list_ms": 0.94,
+      "rss_kib": 146624,
+      "tool_count": 9,
+      "tool_list_bytes": 55115
+    },
+    "factory_workflow": {
+      "ready_ms": 8.0,
+      "initialize_ms": 7.67,
+      "tools_list_ms": 0.31,
+      "rss_kib": 17488,
+      "tool_count": 19,
+      "tool_list_bytes": 16239
+    },
+    "factory_raw": {
+      "ready_ms": 15.6,
+      "initialize_ms": 11.59,
+      "tools_list_ms": 4.0,
+      "rss_kib": 35040,
+      "tool_count": 248,
+      "tool_list_bytes": 802955
+    }
+  },
+  "baseline": {
+    "distribution": "analytics-mcp",
+    "version": "0.8.0",
+    "python": "3.15.2",
+    "command": "~/.local/bin/analytics-mcp",
+    "installation": "existing uv tool"
+  },
+  "candidate": {
+    "name": "google-analytics-mcp",
+    "version": "0.1.0",
+    "build": "cargo build --release -p google-analytics-mcp --offline"
+  }
+}

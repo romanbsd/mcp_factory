@@ -125,6 +125,10 @@ def render_crate(
 
     context["extensions_have_resources"] = bool(re.search(r"pub\s+fn\s+build_resources\s*\(", extension_path.read_text(encoding="utf-8")))
 
+    context["extensions_have_auth"] = bool(re.search(r"pub\s+fn\s+build_auth_provider\s*\(", extension_path.read_text(encoding="utf-8")))
+
+    context["extensions_configure_config"] = bool(re.search(r"pub\s+fn\s+configure_config\s*\(", extension_path.read_text(encoding="utf-8")))
+
     templates = {
         "Cargo.toml.j2": output_dir / "Cargo.toml",
         "main.rs.j2": output_dir / "src" / "main.rs",

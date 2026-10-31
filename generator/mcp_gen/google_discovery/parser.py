@@ -12,6 +12,7 @@ from mcp_gen.models import (
     ToolSpec,
     sanitize_tool_name,
     unique_name,
+    glob_match,
 )
 
 
@@ -109,7 +110,7 @@ def _schema(
     return result or {}
 
 
-def _walk_methods(spec: dict[str, Any], prefix: tuple[str, ...] = ()):
+def walk_google_discovery_methods(spec: dict[str, Any], prefix: tuple[str, ...] = ()):
     """Yield (resource_path, method_name, method) for every operation.
 
     Accepts either a full Discovery document (whose ``methods`` hold top-level
@@ -133,7 +134,7 @@ def _walk_methods(spec: dict[str, Any], prefix: tuple[str, ...] = ()):
                 yield resource_path, method_name, method
         nested = resource.get("resources", {})
         if isinstance(nested, dict):
-            yield from _walk_methods({"resources": nested}, resource_path)
+            yield from walk_google_discovery_methods({"resources": nested}, resource_path)
 
 
 def _base_url(spec: dict[str, Any]) -> str | None:
@@ -151,7 +152,9 @@ def _is_read_only(method_id: str, http_method: str) -> bool:
     if http_method in {"GET", "HEAD", "OPTIONS"}:
         return True
     action = method_id.rsplit(".", 1)[-1].lower()
-    return action in {"query", "search"}
+    if http_method == "POST" and action in {"query", "search"}:
+        return True
+    return False
 
 
 def _collect_tool_parameters(
@@ -223,12 +226,13 @@ def _method_to_tool(
     upstream_base_url: str | None,
     definitions: dict[str, Any],
     read_only: bool,
+    body_required: bool,
 ) -> ToolSpec:
     semantically_read_only = read_only
     input_schema, params, body_fields, raw_body = _collect_tool_parameters(
         method,
         definitions,
-        body_required=not semantically_read_only,
+        body_required=body_required,
     )
     media = method.get("mediaUpload")
     media_path_template: str | None = None
@@ -296,24 +300,36 @@ def parse_google_discovery(
     *,
     tags: set[str] | None = None,
     read_only: bool = False,
+    operations: set[str] | None = None,
+    read_only_operations: set[str] | None = None,
 ) -> GenerationResult:
     spec = load_google_discovery(path)
     upstream_base_url = _base_url(spec)
     definitions = spec.get("schemas", {})
     definitions = definitions if isinstance(definitions, dict) else {}
+    known_ids = {str(method.get("id") or ".".join((*path, name))) for path, name, method in walk_google_discovery_methods(spec)}
+    if read_only_operations and read_only_operations - known_ids:
+        raise ValueError("Unknown read-only operation(s): " + ", ".join(sorted(read_only_operations - known_ids)))
     tools: list[ToolSpec] = []
     seen_names: set[str] = set()
+    matched: set[str] = set()
 
-    for resource_path, method_name, method in _walk_methods(spec):
+    for resource_path, method_name, method in walk_google_discovery_methods(spec):
         if tags and not tags.intersection(resource_path):
             # Root-level methods have an empty path and cannot be tagged.
             continue
         http_method = str(method.get("httpMethod", "GET")).upper()
         method_id = str(method.get("id") or ".".join((*resource_path, method_name)))
-        semantically_read_only = _is_read_only(method_id, http_method)
+        semantically_read_only = _is_read_only(method_id, http_method) or method_id in (read_only_operations or set())
         if read_only and not semantically_read_only:
             continue
 
+        source_id = method_id
+        if operations is not None:
+            hits = {pattern for pattern in operations if glob_match(source_id, pattern)}
+            if not hits:
+                continue
+            matched.update(hits)
         api_name_value = spec.get("name")
         if isinstance(api_name_value, str) and api_name_value:
             api_prefix = f"{api_name_value}."
@@ -332,8 +348,15 @@ def parse_google_discovery(
                 upstream_base_url=upstream_base_url,
                 definitions=definitions,
                 read_only=semantically_read_only,
+                body_required=not _is_read_only(source_id, http_method),
             )
         )
+
+        tools[-1].operation_id = source_id
+
+    if operations is not None and operations - matched:
+        from mcp_gen.openapi.parser import UnknownOperationError
+        raise UnknownOperationError("Unknown or filtered operation(s): " + ", ".join(sorted(operations - matched)))
 
     schema_text = path.read_text(encoding="utf-8")
     api_name = str(spec.get("name") or "api")

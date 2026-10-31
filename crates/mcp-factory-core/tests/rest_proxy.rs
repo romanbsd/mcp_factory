@@ -85,7 +85,7 @@ async fn rest_proxy_compacts_jsonapi_responses_when_enabled() {
 #[tokio::test]
 async fn rest_proxy_returns_gzip_reports_as_text() {
     let mock_server = MockServer::start().await;
-    let report = "Provider\tSKU\tUnits\nAPPLE\tcom.example.app\t42\n";
+    let report = "Provider\tSKU\tUnits\nVENDOR\tcom.example.app\t42\n";
     let mut encoder = GzEncoder::new(Vec::new(), Compression::default());
     encoder.write_all(report.as_bytes()).unwrap();
     Mock::given(method("GET"))
@@ -580,4 +580,57 @@ async fn rest_proxy_media_upload_enforces_size_and_content_type() {
         .unwrap_err();
     assert!(error.to_string().contains("not accepted"));
     assert!(mock_server.received_requests().await.unwrap().is_empty());
+}
+
+#[tokio::test]
+async fn server_owned_auth_injection_and_missing_adapter_fail_closed() {
+    use mcp_factory_core::auth::AuthProvider;
+    use mcp_factory_core::{async_trait, AuthConfig, McpProxyServer, ProxyConfig, ProxyError};
+    use std::sync::Arc;
+    struct Adapter;
+    #[async_trait]
+    impl AuthProvider for Adapter {
+        async fn apply_request_auth(
+            &self,
+            request: reqwest::RequestBuilder,
+        ) -> Result<reqwest::RequestBuilder, ProxyError> {
+            Ok(request.header("X-Adapter", "injected"))
+        }
+        fn api_key_query(&self) -> Option<(String, String)> {
+            None
+        }
+    }
+    let config = ProxyConfig {
+        auth: AuthConfig::External {
+            provider: "example".into(),
+            options: Default::default(),
+        },
+        ..Default::default()
+    };
+    assert!(
+        matches!(McpProxyServer::builder(config.clone()).auth_provider(None).build(),Err(ProxyError::Config(message)) if message.contains("requires a server adapter"))
+    );
+    let api = MockServer::start().await;
+    Mock::given(method("GET"))
+        .and(path("/pets/42"))
+        .and(header("X-Adapter", "injected"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({"ok":true})))
+        .expect(1)
+        .mount(&api)
+        .await;
+    let config = ProxyConfig {
+        base_url: api.uri(),
+        ..config
+    };
+    let server = McpProxyServer::builder(config)
+        .auth_provider(Some(Arc::new(Adapter)))
+        .tools(&[common::rest_get_pet_tool()])
+        .unwrap()
+        .build()
+        .unwrap();
+    assert!(server
+        .invoke_tool("get_pet", json!({"petId":42}))
+        .await
+        .unwrap()
+        .contains("true"));
 }

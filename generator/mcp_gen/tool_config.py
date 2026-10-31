@@ -216,7 +216,11 @@ def apply_tool_config(result: GenerationResult, config: ToolConfig) -> None:
         tool_profiles[tool.name] = [
             profile
             for profile, patterns in config.profiles.items()
-            if any(glob_match(operation_id, pattern) for pattern in patterns)
+            if any(
+                glob_match(operation_id, pattern)
+                or (result.schema_kind == "google_discovery" and glob_match(tool.name, pattern))
+                for pattern in patterns
+            )
         ]
         if tool.name in config.descriptions:
             tool.description = config.descriptions[tool.name].strip()

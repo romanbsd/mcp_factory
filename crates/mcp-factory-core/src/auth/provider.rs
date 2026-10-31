@@ -4,7 +4,6 @@ use async_trait::async_trait;
 use reqwest::RequestBuilder;
 
 use crate::auth::oauth2::OAuth2Provider;
-use crate::auth::{AppStoreConnectAuthProvider, GoogleServiceAccountAuthProvider};
 use crate::config::AuthConfig;
 use crate::error::ProxyError;
 
@@ -91,27 +90,16 @@ pub fn auth_provider_from_config(
     interactive: bool,
 ) -> Result<Arc<dyn AuthProvider>, ProxyError> {
     match auth {
-        AuthConfig::None => Ok(Arc::new(StaticAuthProvider::new(AuthConfig::None))),
+        AuthConfig::Auto | AuthConfig::None => {
+            Ok(Arc::new(StaticAuthProvider::new(AuthConfig::None)))
+        }
         AuthConfig::OAuth2 { .. } => {
             let provider = Arc::new(OAuth2Provider::new(auth, http, interactive)?);
             Ok(Arc::new(OAuth2AuthProvider::new(provider)))
         }
-        AuthConfig::GoogleServiceAccount {
-            credentials_path_env,
-            scopes,
-        } => Ok(Arc::new(GoogleServiceAccountAuthProvider::from_env(
-            credentials_path_env,
-            scopes,
-        )?)),
-        AuthConfig::AppStoreConnect {
-            key_id_env,
-            issuer_id_env,
-            private_key_path_env,
-        } => Ok(Arc::new(AppStoreConnectAuthProvider::from_env(
-            key_id_env,
-            issuer_id_env,
-            private_key_path_env,
-        )?)),
+        AuthConfig::External { provider, .. } => Err(ProxyError::Config(format!(
+            "external auth provider {provider:?} requires a server adapter"
+        ))),
         _ => Ok(Arc::new(StaticAuthProvider::new(auth.clone()))),
     }
 }

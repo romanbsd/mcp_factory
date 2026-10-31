@@ -33,3 +33,9 @@ Inheritance is transitive; child patterns are additive and duplicate patterns ar
 Unknown profiles, cycles, reserved `all` inheritance and unmatched operation patterns fail
 rather than silently reducing coverage. Existing configs without inheritance retain their
 behavior. `all` remains the runtime preset exposing every configured tool.
+
+Google Discovery inputs support `--operations` and `--tool-config` using full
+Discovery method IDs (for example `analyticsdata.properties.runReport`). Unknown
+or filtered selections fail generation. Server generation code may pass explicit `read_only_operations` method IDs; the parser validates these IDs and contains no service-specific action allowlists. Unknown `run*` actions remain mutating.
+
+Server-owned authentication uses an optional `build_auth_provider(&ProxyConfig)` extension hook. Generated startup passes the result into the generic builder; the core has no provider SDK dependency. External configuration uses `[auth] type = "external"`, `provider = "adapter-name"`, and `[auth.options]` for adapter-owned settings. Missing adapters fail closed.

@@ -42,10 +42,15 @@ pub fn build_tools(config: &ProxyConfig) -> Vec<CustomToolSpec> {
         return Vec::new();
     }
     let source = match &config.auth {
-        AuthConfig::GoogleServiceAccount {
-            credentials_path_env,
-            ..
-        } => StorageSource::KeyEnv(credentials_path_env.clone()),
+        AuthConfig::External { provider, options } if provider == "google_service_account" => {
+            StorageSource::KeyEnv(
+                options
+                    .get("credentials_path_env")
+                    .and_then(Value::as_str)
+                    .unwrap_or("GOOGLE_APPLICATION_CREDENTIALS")
+                    .into(),
+            )
+        }
         _ => StorageSource::Unsupported,
     };
     tools(Arc::new(InstallsContext::new(
@@ -221,7 +226,7 @@ impl InstallsContext {
                         "auth_unsupported",
                         "Install reports need google_service_account auth; the configured auth cannot be assumed to grant Cloud Storage access.",
                     )
-                    .remedy("Configure [auth] type = \"google_service_account\" (see README, Install reports).")),
+                    .remedy("Configure [auth] type = \"external\", provider = \"google_service_account\" (see README, Install reports).")),
                     #[cfg(test)]
                     StorageSource::Ready(storage) => Ok(storage.clone()),
                 }

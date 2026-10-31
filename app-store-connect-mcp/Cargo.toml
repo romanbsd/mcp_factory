@@ -4,6 +4,7 @@ version = "0.1.0"
 edition.workspace = true
 
 [dependencies]
+mcp-factory-provider-auth = { workspace = true, features = ["app-store-connect"] }
 mcp-factory-core.workspace = true
 tokio.workspace = true
 tokio-util.workspace = true

@@ -1,0 +1,54 @@
+mod extensions;
+mod resources;
+mod tools;
+
+use mcp_factory_core::{run_oauth_login, McpProxyServer, ProxyConfig};
+
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
+    let mut config = ProxyConfig::load_runtime(ProxyConfig {
+        base_url: "https://analyticsdata.googleapis.com".to_string(),
+        server_name: "google-analytics-mcp".to_string(),
+        server_version: env!("CARGO_PKG_VERSION").to_string(),
+        transport: "stdio".parse().unwrap_or_default(),
+        ..ProxyConfig::default()
+    })?;
+    // A config.toml may omit identity fields. Restore the generation-time
+    // defaults so a partial config doesn't silently drop them.
+    if config.server_version == ProxyConfig::default().server_version {
+        config.server_version = env!("CARGO_PKG_VERSION").to_string();
+    }
+    if config.base_url.is_empty() {
+        config.base_url = "https://analyticsdata.googleapis.com".to_string();
+    }
+    if config.server_name.is_empty() {
+        config.server_name = "google-analytics-mcp".to_string();
+    }
+    if config.transport == ProxyConfig::default().transport {
+        config.transport = "stdio".parse().unwrap_or_default();
+    }
+    // Default tool profiles unless config.toml or MCP_FACTORY_PROFILES choose.
+    if config.profiles.is_none() {
+        config.profiles = Some(tools::default_profiles());
+    }
+
+    if std::env::args().any(|a| a == "--auth-login") {
+        return run_oauth_login(&config).await.map_err(Into::into);
+    }
+
+    let custom_tools = extensions::build_custom_tools();
+    let resources = resources::build_resources();
+    let auth = extensions::build_auth_provider(&config)?;
+    let server = McpProxyServer::builder(config)
+        .auth_provider(auth)
+        .tool_profiles(&tools::build_tool_profiles())?
+        .operation_catalog(tools::operation_catalog())?
+        .custom_tools(&custom_tools)?
+        .resources(&resources)?
+        .build()?;
+
+    drop(custom_tools);
+    drop(resources);
+    server.run().await?;
+    Ok(())
+}

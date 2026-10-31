@@ -378,12 +378,14 @@ Environment variables:
 | `MCP_FACTORY_MEDIA_ROOT` | Directory media-upload tools may read files from (unset disables them) |
 | `MCP_FACTORY_COMPACT_JSONAPI` | `1`/`0`: strip JSON:API `links` and link-only relationships, minify JSON responses (config: `compact_jsonapi`) |
 | `MCP_FACTORY_PROFILES` | Comma-separated tool profiles to expose for servers generated with `--tool-config`; `all` exposes every profile, unknown names are a startup error (config: `profiles`) |
-| `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_PRIVATE_KEY_PATH` | App Store Connect API key; when all three are set and no `[auth]` is configured, requests carry an ES256 JWT renewed before its 20-minute limit (config: `[auth] type = "app_store_connect"`) |
+| `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_PRIVATE_KEY_PATH` | App Store Connect API key; when all three are set and no `[auth]` is configured, requests carry an ES256 JWT renewed before its 20-minute limit (App Store server adapter: `[auth] type = "external"`, `provider = "app_store_connect"`; custom environment names go in `[auth.options]`) |
 
 Generated crates also ship a `config.toml` template. At runtime, configuration
 is loaded in this order: `MCP_FACTORY_CONFIG`, `config.toml` in the current
 directory, `config.toml` beside the executable, then generated defaults.
 Environment overrides are applied last.
+Omitting `[auth]` selects `auto`, which permits credential environment defaults.
+An explicit `[auth] type = "none"` disables authentication and these defaults.
 
 `--base-url` is optional at generation time when the OpenAPI schema declares a
 `servers[].url` — it's used as the default (and baked into `config.toml`),
@@ -420,3 +422,9 @@ The runtime refreshes access tokens automatically before upstream calls when a r
 
 - [`examples/petstore-openapi`](examples/petstore-openapi) — OpenAPI proxy with path/query/body params
 - [`examples/graphql-example`](examples/graphql-example) — GraphQL query + mutation tools
+
+### Google Analytics
+
+[Google Analytics MCP](google-analytics-mcp/README.md) exposes compact reporting,
+metadata, configuration and audit workflows backed by pinned official Data and
+Admin Discovery documents. Advanced profiles expose the generated API operations.

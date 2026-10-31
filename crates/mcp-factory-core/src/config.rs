@@ -34,10 +34,6 @@ fn default_client_secret_env() -> String {
     "MCP_FACTORY_OAUTH_CLIENT_SECRET".to_string()
 }
 
-fn default_google_credentials_env() -> String {
-    "GOOGLE_APPLICATION_CREDENTIALS".to_string()
-}
-
 pub fn default_token_store_path() -> PathBuf {
     if let Ok(dir) = env::var("XDG_CONFIG_HOME") {
         return PathBuf::from(dir).join("mcp-factory").join("tokens.json");
@@ -48,7 +44,10 @@ pub fn default_token_store_path() -> PathBuf {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum AuthConfig {
+    /// Allow environment defaults when authentication was not configured.
     #[default]
+    Auto,
+    /// Explicitly disable authentication, including environment defaults.
     None,
     Bearer {
         #[serde(default = "default_bearer_env")]
@@ -77,32 +76,12 @@ pub enum AuthConfig {
         #[serde(default = "default_token_store_path")]
         token_store: PathBuf,
     },
-    GoogleServiceAccount {
-        #[serde(default = "default_google_credentials_env")]
-        credentials_path_env: String,
-        scopes: Vec<String>,
+    /// Configuration interpreted by a server-owned auth adapter.
+    External {
+        provider: String,
+        #[serde(default)]
+        options: serde_json::Map<String, serde_json::Value>,
     },
-    /// App Store Connect API key: ES256 JWTs minted from a `.p8` key.
-    AppStoreConnect {
-        #[serde(default = "default_asc_key_id_env")]
-        key_id_env: String,
-        #[serde(default = "default_asc_issuer_id_env")]
-        issuer_id_env: String,
-        #[serde(default = "default_asc_private_key_path_env")]
-        private_key_path_env: String,
-    },
-}
-
-fn default_asc_key_id_env() -> String {
-    "ASC_KEY_ID".to_string()
-}
-
-fn default_asc_issuer_id_env() -> String {
-    "ASC_ISSUER_ID".to_string()
-}
-
-fn default_asc_private_key_path_env() -> String {
-    "ASC_PRIVATE_KEY_PATH".to_string()
 }
 
 fn default_bearer_env() -> String {
@@ -136,10 +115,7 @@ impl AuthConfig {
 
     pub fn resolve_secret(&self) -> Option<String> {
         let env_var = match self {
-            Self::None
-            | Self::OAuth2 { .. }
-            | Self::GoogleServiceAccount { .. }
-            | Self::AppStoreConnect { .. } => return None,
+            Self::Auto | Self::None | Self::OAuth2 { .. } | Self::External { .. } => return None,
             Self::Bearer { env_var } => env_var,
             Self::ApiKeyHeader { env_var, .. } => env_var,
             Self::ApiKeyQuery { env_var, .. } => env_var,
@@ -210,7 +186,7 @@ impl Default for ProxyConfig {
     fn default() -> Self {
         Self {
             base_url: String::new(),
-            auth: AuthConfig::None,
+            auth: AuthConfig::Auto,
             timeout_secs: default_timeout_secs(),
             transport: TransportMode::Stdio,
             bind_addr: default_bind_addr(),
@@ -287,7 +263,7 @@ impl ProxyConfig {
                 self.profiles = Some(profiles);
             }
         }
-        if matches!(self.auth, AuthConfig::None) {
+        if matches!(self.auth, AuthConfig::Auto) {
             if env::var("MCP_FACTORY_BEARER_TOKEN")
                 .ok()
                 .filter(|v| !v.is_empty())
@@ -300,19 +276,6 @@ impl ProxyConfig {
                 .is_some()
             {
                 self.auth = AuthConfig::api_key_header("X-API-Key");
-            } else if [
-                default_asc_key_id_env(),
-                default_asc_issuer_id_env(),
-                default_asc_private_key_path_env(),
-            ]
-            .iter()
-            .all(|name| env::var(name).is_ok_and(|value| !value.trim().is_empty()))
-            {
-                self.auth = AuthConfig::AppStoreConnect {
-                    key_id_env: default_asc_key_id_env(),
-                    issuer_id_env: default_asc_issuer_id_env(),
-                    private_key_path_env: default_asc_private_key_path_env(),
-                };
             }
         }
         Ok(self)
@@ -381,6 +344,22 @@ mod tests {
     use super::*;
 
     #[test]
+    fn explicit_none_opts_out_of_environment_auth() {
+        temp_env::with_var("MCP_FACTORY_BEARER_TOKEN", Some("ambient"), || {
+            let automatic: ProxyConfig =
+                toml::from_str("base_url = 'https://example.com'").unwrap();
+            assert_eq!(automatic.auth, AuthConfig::Auto);
+            assert!(matches!(
+                automatic.merge_env().unwrap().auth,
+                AuthConfig::Bearer { .. }
+            ));
+            let disabled: ProxyConfig =
+                toml::from_str("base_url = 'https://example.com'\n[auth]\ntype = 'none'").unwrap();
+            assert_eq!(disabled.merge_env().unwrap().auth, AuthConfig::None);
+        });
+    }
+
+    #[test]
     fn auth_resolve_secret_from_env() {
         temp_env::with_var("MCP_FACTORY_BEARER_TOKEN", Some("secret"), || {
             let auth = AuthConfig::bearer();
@@ -438,45 +417,6 @@ mod tests {
         });
         temp_env::with_var("MCP_FACTORY_COMPACT_JSONAPI", Some("maybe"), || {
             assert!(ProxyConfig::default().merge_env().is_err());
-        });
-    }
-
-    #[test]
-    fn app_store_connect_auth_from_env() {
-        // Pin every variable the auth fallbacks read (empty = unset) so an
-        // ambient bearer token, API key or ASC key cannot change the outcome.
-        let incomplete = [
-            ("MCP_FACTORY_BEARER_TOKEN", ""),
-            ("MCP_FACTORY_API_KEY", ""),
-            ("ASC_KEY_ID", "KEY"),
-            ("ASC_ISSUER_ID", ""),
-            ("ASC_PRIVATE_KEY_PATH", ""),
-        ];
-        temp_env::with_vars(&incomplete, || {
-            // Incomplete ASC variables never switch auth on.
-            assert_eq!(
-                ProxyConfig::default().merge_env().unwrap().auth,
-                AuthConfig::None
-            );
-        });
-        let vars = [
-            ("MCP_FACTORY_BEARER_TOKEN", ""),
-            ("MCP_FACTORY_API_KEY", ""),
-            ("ASC_KEY_ID", "KEY"),
-            ("ASC_ISSUER_ID", "issuer"),
-            ("ASC_PRIVATE_KEY_PATH", "/keys/AuthKey.p8"),
-        ];
-        temp_env::with_vars(&vars, || {
-            assert!(matches!(
-                ProxyConfig::default().merge_env().unwrap().auth,
-                AuthConfig::AppStoreConnect { .. }
-            ));
-            // An explicit auth section wins over the environment.
-            let explicit = ProxyConfig {
-                auth: AuthConfig::bearer(),
-                ..ProxyConfig::default()
-            };
-            assert_eq!(explicit.merge_env().unwrap().auth, AuthConfig::bearer());
         });
     }
 
@@ -550,20 +490,13 @@ mod tests {
     }
 
     #[test]
-    fn google_service_account_config_deserializes() {
-        let toml_str = r#"
-            type = "google_service_account"
-            scopes = ["https://www.googleapis.com/auth/androidpublisher"]
-        "#;
-        let auth: AuthConfig = toml::from_str(toml_str).unwrap();
-        assert!(matches!(
-            auth,
-            AuthConfig::GoogleServiceAccount {
-                credentials_path_env,
-                scopes,
-            } if credentials_path_env == "GOOGLE_APPLICATION_CREDENTIALS"
-                && scopes == ["https://www.googleapis.com/auth/androidpublisher"]
-        ));
+    fn external_auth_config_is_provider_agnostic() {
+        let auth: AuthConfig =
+            toml::from_str("type = 'external'\nprovider = 'example'\n[options]\nregion = 'local'")
+                .unwrap();
+        assert!(
+            matches!(auth, AuthConfig::External { provider, options } if provider == "example" && options["region"] == "local")
+        );
     }
 }
 
@@ -575,25 +508,6 @@ mod temp_env {
     // Env is process-global and tests run in parallel; serialize every mutation
     // so one test's override never leaks into another's `merge_env`.
     static ENV_LOCK: Mutex<()> = Mutex::new(());
-
-    /// Set several variables at once (one lock acquisition, so no nesting).
-    pub fn with_vars<F: FnOnce()>(vars: &[(&str, &str)], f: F) {
-        let _guard = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
-        let previous: Vec<_> = vars
-            .iter()
-            .map(|(key, _)| (*key, env::var(key).ok()))
-            .collect();
-        for (key, value) in vars {
-            env::set_var(key, value);
-        }
-        f();
-        for (key, value) in previous {
-            match value {
-                Some(v) => env::set_var(key, v),
-                None => env::remove_var(key),
-            }
-        }
-    }
 
     pub fn with_var<F: FnOnce()>(key: &str, value: Option<&str>, f: F) {
         let _guard = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());

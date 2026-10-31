@@ -13,8 +13,8 @@ use ring::rand::SystemRandom;
 use ring::signature::{EcdsaKeyPair, ECDSA_P256_SHA256_FIXED_SIGNING};
 use serde_json::json;
 
-use crate::auth::AuthProvider;
-use crate::error::ProxyError;
+use mcp_factory_core::auth::AuthProvider;
+use mcp_factory_core::ProxyError;
 
 /// Apple rejects tokens that live longer than 20 minutes.
 const TOKEN_LIFETIME: Duration = Duration::from_secs(15 * 60);

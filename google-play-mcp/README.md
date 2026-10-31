@@ -183,7 +183,7 @@ include it. These tools never change permissions, create objects, or sign URLs.
 
 **OAuth.** With `oauth2` auth the tools return `auth_unsupported`. An existing
 refresh token cannot be assumed to cover Cloud Storage. Use
-`google_service_account` for install reports.
+`[auth] type = "external"`, `provider = "google_service_account"` for install reports; credential settings and scopes belong in `[auth.options]`.
 
 Configuration, permission, and export problems are isolated. Startup and every
 other tool keep working, and the install tools return a structured `error`

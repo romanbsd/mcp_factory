@@ -44,7 +44,9 @@ fn config(base_url: &str, profiles: &[&str]) -> ProxyConfig {
 
 fn server(config: ProxyConfig) -> McpProxyServer {
     let custom = super::build_custom_tools(&config);
+    let auth = super::build_auth_provider(&config).unwrap();
     McpProxyServer::builder(config)
+        .auth_provider(auth)
         .tool_profiles(&crate::tools::build_tool_profiles())
         .unwrap()
         .tools(&generated())
@@ -526,10 +528,14 @@ async fn requests_carry_an_app_store_connect_jwt() {
         .mount(&api)
         .await;
     let mut config = config(&api.uri(), &["core"]);
-    config.auth = AuthConfig::AppStoreConnect {
-        key_id_env: "ASC_JWT_TEST_KEY_ID".to_string(),
-        issuer_id_env: "ASC_JWT_TEST_ISSUER".to_string(),
-        private_key_path_env: "ASC_JWT_TEST_KEY_PATH".to_string(),
+    let options = json!({
+        "key_id_env":"ASC_JWT_TEST_KEY_ID",
+        "issuer_id_env":"ASC_JWT_TEST_ISSUER",
+        "private_key_path_env":"ASC_JWT_TEST_KEY_PATH"
+    });
+    config.auth = AuthConfig::External {
+        provider: "app_store_connect".into(),
+        options: serde_json::from_value(options).unwrap(),
     };
     server(config)
         .invoke_read_only("apps_getCollection", json!({}))
@@ -567,7 +573,9 @@ fn upload_server(api: &MockServer, media_root: &std::path::Path) -> McpProxyServ
         poll_interval: Duration::from_millis(10),
         transfers: Arc::new(tokio::sync::Semaphore::new(2)),
     });
+    let auth = super::build_auth_provider(&config).unwrap();
     McpProxyServer::builder(config)
+        .auth_provider(auth)
         .tool_profiles(&crate::tools::build_tool_profiles())
         .unwrap()
         .tools(&generated())

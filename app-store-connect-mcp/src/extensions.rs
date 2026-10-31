@@ -3,6 +3,57 @@
 //! preserved across `mcp-gen` runs; profiles for these tools are assigned in
 //! tools.toml (`[custom_tools]`).
 
+/// Server-owned provider selection; generated startup detects this optional hook.
+pub fn build_auth_provider(
+    config: &mcp_factory_core::ProxyConfig,
+) -> Result<
+    Option<std::sync::Arc<dyn mcp_factory_core::auth::AuthProvider>>,
+    mcp_factory_core::ProxyError,
+> {
+    mcp_factory_provider_auth::from_config(config)
+}
+
+/// Apply legacy server-specific environment defaults to the real startup config.
+pub fn configure_config(
+    config: &mut mcp_factory_core::ProxyConfig,
+) -> Result<(), mcp_factory_core::ProxyError> {
+    configure_legacy_auth(config, |name| std::env::var(name))
+}
+fn configure_legacy_auth(
+    config: &mut mcp_factory_core::ProxyConfig,
+    read: impl Fn(&str) -> Result<String, std::env::VarError>,
+) -> Result<(), mcp_factory_core::ProxyError> {
+    if !matches!(config.auth, mcp_factory_core::AuthConfig::Auto) {
+        return Ok(());
+    }
+    let mut present = 0;
+    let mut missing = Vec::new();
+    for name in ["ASC_KEY_ID", "ASC_ISSUER_ID", "ASC_PRIVATE_KEY_PATH"] {
+        match read(name) {
+            Ok(value) if !value.trim().is_empty() => present += 1,
+            Ok(_) | Err(std::env::VarError::NotPresent) => missing.push(name),
+            Err(std::env::VarError::NotUnicode(_)) => {
+                return Err(mcp_factory_core::ProxyError::Config(format!(
+                    "Legacy credential variable {name} is not valid Unicode"
+                )))
+            }
+        }
+    }
+    if present > 0 && !missing.is_empty() {
+        return Err(mcp_factory_core::ProxyError::Config(format!(
+            "Incomplete legacy credentials; missing or blank: {}",
+            missing.join(", ")
+        )));
+    }
+    if present > 0 && missing.is_empty() {
+        config.auth = mcp_factory_core::AuthConfig::External {
+            provider: "app_store_connect".into(),
+            options: Default::default(),
+        };
+    }
+    Ok(())
+}
+
 mod analytics;
 mod asset_upload;
 #[cfg(test)]
@@ -161,5 +212,58 @@ mod unit_tests {
         assert!(check_transfer_url("http://127.0.0.1:9000/x").is_ok());
         assert!(check_transfer_url("http://upload.example.com/x").is_err());
         assert!(check_transfer_url("file:///etc/passwd").is_err());
+    }
+}
+
+#[cfg(test)]
+mod startup_auth_tests {
+    use super::*;
+    #[test]
+    fn legacy_startup_auth_is_explicit_and_fail_closed() {
+        let mut config = mcp_factory_core::ProxyConfig::default();
+        configure_legacy_auth(&mut config, |_| Ok("configured".into())).unwrap();
+        assert!(
+            matches!(config.auth,mcp_factory_core::AuthConfig::External{ref provider,..} if provider=="app_store_connect")
+        );
+        let mut config = mcp_factory_core::ProxyConfig::default();
+        assert!(
+            configure_legacy_auth(&mut config, |name| if name == "ASC_KEY_ID" {
+                Ok("key".into())
+            } else {
+                Err(std::env::VarError::NotPresent)
+            })
+            .is_err()
+        );
+        configure_legacy_auth(&mut config, |_| Err(std::env::VarError::NotPresent)).unwrap();
+        assert!(matches!(config.auth, mcp_factory_core::AuthConfig::Auto));
+        config.auth = mcp_factory_core::AuthConfig::None;
+        configure_legacy_auth(&mut config, |_| {
+            panic!("explicit none must not read legacy credentials")
+        })
+        .unwrap();
+        assert!(matches!(config.auth, mcp_factory_core::AuthConfig::None));
+        config.auth = mcp_factory_core::AuthConfig::bearer();
+        configure_legacy_auth(&mut config, |_| {
+            panic!("explicit auth must not read legacy credentials")
+        })
+        .unwrap();
+        assert!(matches!(
+            config.auth,
+            mcp_factory_core::AuthConfig::Bearer { .. }
+        ));
+    }
+    #[test]
+    fn unknown_adapter_fails_closed() {
+        let config = mcp_factory_core::ProxyConfig {
+            auth: mcp_factory_core::AuthConfig::External {
+                provider: "unknown".into(),
+                options: Default::default(),
+            },
+            ..Default::default()
+        };
+        assert!(matches!(
+            build_auth_provider(&config),
+            Err(mcp_factory_core::ProxyError::Config(_))
+        ));
     }
 }

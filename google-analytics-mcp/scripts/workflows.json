@@ -1,0 +1,21 @@
+[
+  "analytics_discover_properties",
+  "analytics_property_configuration",
+  "analytics_metadata",
+  "analytics_validate_report",
+  "analytics_run_report",
+  "analytics_overview",
+  "analytics_acquisition",
+  "analytics_content",
+  "analytics_events",
+  "analytics_ecommerce",
+  "analytics_compare",
+  "analytics_realtime",
+  "analytics_funnel",
+  "analytics_conversions",
+  "analytics_pivot",
+  "analytics_batch",
+  "analytics_quota",
+  "analytics_access_audit",
+  "analytics_change_history"
+]

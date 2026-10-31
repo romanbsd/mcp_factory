@@ -5,7 +5,9 @@ transport = "stdio"
 # operator-controlled staging directory. Never place credentials in that root.
 
 [auth]
-type = "google_service_account"
+type = "external"
+provider = "google_service_account"
+[auth.options]
 credentials_path_env = "GOOGLE_APPLICATION_CREDENTIALS"
 scopes = [
   "https://www.googleapis.com/auth/androidpublisher",

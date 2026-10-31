@@ -173,10 +173,7 @@ mod tests {
                 .unwrap();
             // Deliver a distinct chunk before the premature close so reqwest can
             // yield the useful prefix and then report the body framing error.
-            socket
-                .write_all(b"Apple vendor access denied")
-                .await
-                .unwrap();
+            socket.write_all(b"Upstream access denied").await.unwrap();
             socket.flush().await.unwrap();
             tokio::time::sleep(std::time::Duration::from_millis(30)).await;
             socket.shutdown().await.unwrap();
@@ -187,7 +184,7 @@ mod tests {
             .await
             .unwrap();
         let prefix = read_error_prefix(response, 100).await.unwrap();
-        assert_eq!(prefix.text, "Apple vendor access denied");
+        assert_eq!(prefix.text, "Upstream access denied");
         assert!(prefix.text.len() <= 100);
         assert!(prefix.truncated);
         let diagnostic = prefix.read_error.unwrap();

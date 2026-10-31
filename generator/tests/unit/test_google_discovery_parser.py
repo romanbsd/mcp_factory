@@ -2,6 +2,25 @@ from pathlib import Path
 import json
 
 from mcp_gen.google_discovery.parser import parse_google_discovery
+from mcp_gen.tool_config import ToolConfig, apply_tool_config
+
+
+def test_profiles_preserve_generated_names_alongside_discovery_ids(fixtures_dir: Path) -> None:
+    result = parse_google_discovery(fixtures_dir / "minimal-google-discovery.json")
+    apply_tool_config(result, ToolConfig(profiles={
+        "legacy": ["items_get"],
+        "qualified": ["demo.items.get"],
+        "both": ["items_*", "demo.items.*"],
+    }))
+    assert result.tool_profiles["items_get"] == ["legacy", "qualified", "both"]
+    assert result.tool_profiles["items_create"] == ["both"]
+
+    # Other schema formats retain operation-ID-only profile semantics.
+    result.schema_kind = "openapi"
+    apply_tool_config(result, ToolConfig(profiles={
+        "legacy": ["items_get"], "qualified": ["demo.items.get"],
+    }))
+    assert result.tool_profiles["items_get"] == ["qualified"]
 
 
 def test_parses_methods_and_media_uploads(fixtures_dir: Path) -> None:
@@ -99,3 +118,33 @@ def test_parses_root_level_methods(fixtures_dir: Path) -> None:
     assert root_tool.rest is not None
     assert root_tool.rest.path_template == "https://demo.googleapis.com/v1/root"
     assert root_tool.output_schema["required"] == ["name"]
+
+
+def test_post_reads_require_explicit_server_policy(fixtures_dir):
+    import pytest
+    from mcp_gen.google_discovery.parser import _is_read_only
+    assert not _is_read_only('example.items.runReport', 'POST')
+    assert not _is_read_only('example.items.query', 'DELETE')
+    assert not _is_read_only('example.items.search', 'PATCH')
+    path = fixtures_dir / 'minimal-google-discovery.json'
+    spec = json.loads(path.read_text())
+    operation = spec['resources']['items']['methods']['create']['id']
+    result = parse_google_discovery(path, read_only=True, read_only_operations={operation})
+    selected = next(t for t in result.tools if t.operation_id == operation)
+    assert selected.read_only
+    assert "body" in selected.input_schema["required"]
+    with pytest.raises(ValueError, match='Unknown read-only'):
+        parse_google_discovery(path, read_only_operations={'missing'})
+
+
+def test_discovery_selection_fails_closed(fixtures_dir):
+    import pytest
+    from mcp_gen.openapi.parser import UnknownOperationError
+    path = fixtures_dir / 'minimal-google-discovery.json'
+    spec = json.loads(path.read_text())
+    operation = spec['resources']['items']['methods']['get']['id']
+    result = parse_google_discovery(path, operations={operation})
+    assert len(result.tools) == 1
+    assert result.tools[0].operation_id == operation
+    with pytest.raises(UnknownOperationError):
+        parse_google_discovery(path, operations={'missing.*'})

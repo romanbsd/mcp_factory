@@ -1,0 +1,9 @@
+base_url = "https://analyticsdata.googleapis.com"
+server_name = "google-analytics-mcp"
+transport = "stdio"
+profiles = ["workflow"]
+[auth]
+type = "external"
+provider = "google_adc"
+[auth.options]
+scopes = ["https://www.googleapis.com/auth/analytics.readonly"]

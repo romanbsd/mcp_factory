@@ -6,8 +6,8 @@ use async_trait::async_trait;
 use gcp_auth::{CustomServiceAccount, TokenProvider};
 use reqwest::RequestBuilder;
 
-use crate::auth::AuthProvider;
-use crate::error::ProxyError;
+use mcp_factory_core::auth::AuthProvider;
+use mcp_factory_core::ProxyError;
 
 pub struct GoogleServiceAccountAuthProvider {
     provider: Arc<dyn TokenProvider>,
@@ -16,19 +16,20 @@ pub struct GoogleServiceAccountAuthProvider {
 
 impl GoogleServiceAccountAuthProvider {
     pub fn from_env(credentials_path_env: &str, scopes: &[String]) -> Result<Self, ProxyError> {
-        if scopes.is_empty() {
-            return Err(ProxyError::Config(
-                "google_service_account auth requires at least one OAuth scope".to_string(),
-            ));
-        }
-        let path = env::var(credentials_path_env)
-            .ok()
-            .filter(|value| !value.trim().is_empty())
-            .ok_or_else(|| {
-                ProxyError::Config(format!(
-                    "google service-account credential path environment variable {credentials_path_env} is not set"
-                ))
-            })?;
+        crate::validate_google_scopes(scopes)?;
+        let path = match env::var(credentials_path_env) {
+            Ok(value) if !value.trim().is_empty() => value.trim().to_owned(),
+            Ok(_) | Err(env::VarError::NotPresent) => {
+                return Err(ProxyError::Config(format!(
+                    "Google credential path variable {credentials_path_env} is missing or blank"
+                )))
+            }
+            Err(env::VarError::NotUnicode(_)) => {
+                return Err(ProxyError::Config(format!(
+                    "Google credential path variable {credentials_path_env} is not valid Unicode"
+                )))
+            }
+        };
         let provider = CustomServiceAccount::from_file(PathBuf::from(path)).map_err(|error| {
             ProxyError::Config(format!(
                 "failed to load Google service-account credentials from {credentials_path_env}: {error}"

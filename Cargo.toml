@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["crates/mcp-factory-core", "google-play-mcp", "app-store-connect-mcp"]
+members = ["crates/mcp-factory-core", "crates/mcp-factory-provider-auth", "google-play-mcp", "app-store-connect-mcp", "google-analytics-mcp"]
 
 [workspace.package]
 version = "0.1.0"
@@ -10,7 +10,8 @@ authors = ["MCP Factory Contributors"]
 
 [workspace.dependencies]
 mcp-factory-core = { path = "crates/mcp-factory-core" }
-rmcp = { version = "3.5", features = [
+mcp-factory-provider-auth = { path = "crates/mcp-factory-provider-auth", default-features = false }
+rmcp = { version = "3.8", features = [
     "server",
     "schemars",
     "transport-io",
@@ -38,7 +39,7 @@ thiserror = "2"
 anyhow = "1"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
-jsonschema = "0.59"
+jsonschema = "0.60.2"
 percent-encoding = "2"
 base64 = "0.23"
 toml = "1.1"

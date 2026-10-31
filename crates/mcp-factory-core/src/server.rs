@@ -39,6 +39,7 @@ struct McpProxyServerInner {
 }
 
 pub struct McpProxyServerBuilder {
+    auth: Option<Arc<dyn crate::auth::AuthProvider>>,
     config: ProxyConfig,
     tools: ToolRegistry,
     operations: OperationRegistry,
@@ -240,6 +241,7 @@ impl McpProxyServerBuilder {
     pub fn new(config: ProxyConfig) -> Self {
         Self {
             config,
+            auth: None,
             tools: ToolRegistry::new(),
             operations: OperationRegistry::default(),
             custom_tools: CustomToolRegistry::default(),
@@ -248,6 +250,13 @@ impl McpProxyServerBuilder {
             assigned_tools: HashSet::new(),
             offered_tools: HashSet::new(),
         }
+    }
+
+    /// Supply server-owned authentication without coupling the runtime to a vendor SDK.
+    /// `None` retains the configured built-in authentication fallback; it does not disable auth.
+    pub fn auth_provider(mut self, auth: Option<Arc<dyn crate::auth::AuthProvider>>) -> Self {
+        self.auth = auth;
+        self
     }
 
     /// Assign tools (generated or custom) to named profiles and drop those
@@ -400,8 +409,14 @@ impl McpProxyServerBuilder {
         // Only launch the browser login flow on stdio (local) servers; an HTTP
         // server may be remote/headless, where popping a browser is wrong.
         let interactive = !matches!(self.config.transport, crate::config::TransportMode::Http);
-        let auth =
-            crate::auth::auth_provider_from_config(&self.config.auth, http.clone(), interactive)?;
+        let auth = match self.auth {
+            Some(auth) => auth,
+            None => crate::auth::auth_provider_from_config(
+                &self.config.auth,
+                http.clone(),
+                interactive,
+            )?,
+        };
         let rest = RestProxyExecutor::new(
             http.clone(),
             self.config.base_url.clone(),

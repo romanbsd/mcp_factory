@@ -89,12 +89,12 @@ def _parse_schema(
     )
     if operations is not None and not operation_set:
         raise typer.BadParameter("--operations needs at least one operationId")
-    if operation_set and schema_kind != "openapi":
-        raise typer.BadParameter("--operations is only supported for OpenAPI schemas")
+    if operation_set and schema_kind not in {"openapi", "google_discovery", "google-discovery"}:
+        raise typer.BadParameter("--operations is only supported for OpenAPI or Google Discovery schemas")
     curation = None
     if tool_config is not None:
-        if schema_kind != "openapi":
-            raise typer.BadParameter("--tool-config is only supported for OpenAPI schemas")
+        if schema_kind not in {"openapi", "google_discovery", "google-discovery"}:
+            raise typer.BadParameter("--tool-config is only supported for OpenAPI or Google Discovery schemas")
         if operation_set:
             raise typer.BadParameter("use either --operations or --tool-config, not both")
         try:
@@ -117,7 +117,10 @@ def _parse_schema(
     elif schema_kind == "graphql":
         result = parse_graphql(input, read_only=read_only)
     elif schema_kind in {"google_discovery", "google-discovery"}:
-        result = parse_google_discovery(input, tags=tag_set, read_only=read_only)
+        try:
+            result = parse_google_discovery(input, tags=tag_set, read_only=read_only, operations=operation_set)
+        except UnknownOperationError as error:
+            raise typer.BadParameter(str(error)) from error
     else:
         raise typer.BadParameter(f"unsupported kind: {schema_kind}")
 
@@ -152,7 +155,7 @@ def generate(
     operations: str | None = typer.Option(
         None,
         "--operations",
-        help="Comma-separated OpenAPI operationId allowlist (* and ? wildcards allowed)",
+        help="Comma-separated OpenAPI operationIds or Google Discovery method IDs (* and ? wildcards allowed)",
     ),
     tool_config: Path | None = typer.Option(
         None,
@@ -295,7 +298,7 @@ def package(
     operations: str | None = typer.Option(
         None,
         "--operations",
-        help="Comma-separated OpenAPI operationId allowlist (* and ? wildcards allowed)",
+        help="Comma-separated OpenAPI operationIds or Google Discovery method IDs (* and ? wildcards allowed)",
     ),
     tool_config: Path | None = typer.Option(
         None,

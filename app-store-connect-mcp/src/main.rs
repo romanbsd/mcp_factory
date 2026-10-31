@@ -36,6 +36,8 @@ async fn main() -> anyhow::Result<()> {
         config.profiles = Some(tools::default_profiles());
     }
 
+    extensions::configure_config(&mut config)?;
+
     if std::env::args().any(|a| a == "--auth-login") {
         return run_oauth_login(&config).await.map_err(Into::into);
     }
@@ -43,7 +45,9 @@ async fn main() -> anyhow::Result<()> {
     let custom_tools = extensions::build_custom_tools(&config);
     let mut resources = resources::build_resources();
     resources.extend(extensions::build_resources());
+    let auth = extensions::build_auth_provider(&config)?;
     let server = McpProxyServer::builder(config)
+        .auth_provider(auth)
         .tool_profiles(&tools::build_tool_profiles())?
         .operation_catalog(tools::operation_catalog())?
         .custom_tools(&custom_tools)?

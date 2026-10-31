@@ -464,3 +464,24 @@ def test_compose_generates_one_crate_and_preserves_config(
     main_rs = (output / "src" / "main.rs").read_text(encoding="utf-8")
     assert "if config.base_url.is_empty()" in main_rs
     assert "if config.server_name.is_empty()" in main_rs
+
+
+def test_generated_startup_preserves_server_owned_auth_hook(tmp_path, fixtures_dir):
+    output = tmp_path / 'adapter'
+    (output / 'src').mkdir(parents=True)
+    extension = output / 'src/extensions.rs'
+    source = '''pub fn configure_config(config: &mut mcp_factory_core::ProxyConfig) -> Result<(), mcp_factory_core::ProxyError> { Ok(()) }
+pub fn build_auth_provider(config: &mcp_factory_core::ProxyConfig) -> Result<Option<std::sync::Arc<dyn mcp_factory_core::auth::AuthProvider>>, mcp_factory_core::ProxyError> { Ok(None) }
+pub fn build_custom_tools() -> Vec<mcp_factory_core::CustomToolSpec> { vec![] }
+'''
+    extension.write_text(source)
+    result = runner.invoke(app, ['generate', '--input', str(fixtures_dir / 'minimal-google-discovery.json'), '--output', str(output)])
+    assert result.exit_code == 0, result.output
+    assert extension.read_text() == source
+    main = (output / 'src/main.rs').read_text()
+    assert 'extensions::build_auth_provider(&config)?' in main
+    assert '.auth_provider(auth)' in main
+    assert 'extensions::configure_config(&mut config)?' in main
+    assert main.index('configure_config(&mut config)') < main.index('build_auth_provider(&config)')
+    assert 'gcp_auth' not in main
+    assert 'mcp_factory_provider_auth' not in main

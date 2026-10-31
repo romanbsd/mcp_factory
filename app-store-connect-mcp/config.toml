@@ -9,6 +9,17 @@ compact_jsonapi = true
 # Available: assets, core, metadata, monetization, monetization_raw, pricing, release_raw, reports, reports_raw, reviews, signing, signing_raw, testflight, testflight_raw, workflow
 # profiles = ["workflow"]
 
+# App Store Connect JWT auth (all three named variables must be set):
+# [auth]
+# type = "external"
+# provider = "app_store_connect"
+# [auth.options]
+# key_id_env = "ASC_KEY_ID"
+# issuer_id_env = "ASC_ISSUER_ID"
+# private_key_path_env = "ASC_PRIVATE_KEY_PATH"
+# These three legacy variables also enable JWT auth when auth is auto or omitted.
+# A partial set fails startup in auto mode. An explicit type = "none" disables auth.
+
 # Static bearer token (reads MCP_FACTORY_BEARER_TOKEN by default):
 # [auth]
 # type = "bearer"
@@ -29,10 +40,3 @@ compact_jsonapi = true
 # ahead of time (or for HTTP transport, where auto-login is disabled):
 #   mcp-factory-auth login --config config.toml
 #   cargo run -- --auth-login
-
-# Google service account (renewable in-memory tokens; credential JSON is read
-# from GOOGLE_APPLICATION_CREDENTIALS by default):
-# [auth]
-# type = "google_service_account"
-# scopes = ["https://www.googleapis.com/auth/example"]
-# credentials_path_env = "GOOGLE_APPLICATION_CREDENTIALS"  # optional
