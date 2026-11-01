@@ -101,7 +101,8 @@ fn tools(ctx: Arc<InstallsContext>) -> Vec<CustomToolSpec> {
                     "dimensionValues": {"type": "array", "maxItems": 50, "items": {"type": ["string", "integer"]}, "description": "Version codes to keep; omit for all."},
                     "metrics": {"type": "array", "items": {"enum": parse::METRICS.iter().map(|metric| metric.key).collect::<Vec<_>>()}, "description": "Omit for every metric present in the export."},
                     "includeRows": {"type": "boolean", "default": true},
-                    "account": account
+                    "account": account,
+                    "bucket": {"type":"string","description":"Per-call Play report bucket override, bare pubsite_prod_* name or gs:// URI; uses the current authenticated principal."}
                 },
                 "required": ["packageName", "startDate", "endDate"],
                 "additionalProperties": false
@@ -121,7 +122,8 @@ fn tools(ctx: Arc<InstallsContext>) -> Vec<CustomToolSpec> {
                     "dimension": {"type": "string", "pattern": "^[a-z_]+$"},
                     "pageToken": {"type": "string"},
                     "limit": {"type": "integer", "minimum": 1, "maximum": 100, "default": 50},
-                    "account": account
+                    "account": account,
+                    "bucket": {"type":"string","description":"Per-call Play report bucket override, bare pubsite_prod_* name or gs:// URI; uses the current authenticated principal."}
                 },
                 "required": ["packageName"],
                 "additionalProperties": false
@@ -139,7 +141,8 @@ fn tools(ctx: Arc<InstallsContext>) -> Vec<CustomToolSpec> {
                     "mode": {"enum": ["original_csv", "rows"], "default": "rows"},
                     "offset": {"type": "integer", "minimum": 0, "default": 0, "description": "rows mode: zero-based data-row offset."},
                     "limit": {"type": "integer", "minimum": 1, "maximum": MAX_RAW_ROWS, "default": 200},
-                    "account": account
+                    "account": account,
+                    "bucket": {"type":"string","description":"Per-call Play report bucket override, bare pubsite_prod_* name or gs:// URI; uses the current authenticated principal."}
                 },
                 "required": ["reportId"],
                 "additionalProperties": false
@@ -569,17 +572,37 @@ async fn setup(
     arguments: &Value,
     package: &str,
 ) -> Result<(Arc<dyn Storage>, AccountConfig, Resolution, Vec<Value>), Value> {
-    let account = ctx
-        .reports
-        .select(arguments["account"].as_str())
-        .map_err(failure)?
-        .clone();
+    let override_bucket = arguments
+        .get("bucket")
+        .map(|value| {
+            value
+                .as_str()
+                .ok_or_else(|| Failure::new("invalid_bucket", "bucket must be a string"))
+                .and_then(resolve::normalize_bucket)
+        })
+        .transpose()
+        .map_err(failure)?;
+    let mut account = match ctx.reports.select(arguments["account"].as_str()) {
+        Ok(account) => account.clone(),
+        Err(_) if override_bucket.is_some() && arguments.get("account").is_none() => {
+            AccountConfig::default()
+        }
+        Err(error) => return Err(failure(error)),
+    };
+    if let Some(bucket) = &override_bucket {
+        account.bucket = Some(bucket.clone());
+    }
     let storage = ctx.storage().await.map_err(failure)?;
     let (resolution, candidates) = ctx
         .resolve(storage.as_ref(), recorder, &account, package)
         .await;
     match resolution {
-        Ok(resolution) => Ok((storage, account, resolution, candidates)),
+        Ok(mut resolution) => {
+            if override_bucket.is_some() {
+                resolution.provenance = "explicit_override".into();
+            }
+            Ok((storage, account, resolution, candidates))
+        }
         Err(error) => {
             let mut envelope = failure(error);
             envelope["discovery"] = json!({"candidates": candidates});
@@ -603,7 +626,8 @@ async fn access_check(ctx: &InstallsContext, recorder: &Recorder, arguments: &Va
         &override_bucket,
     ) {
         (Ok(account), _) => account.clone(),
-        (Err(_), Some(_)) => AccountConfig::default(),
+        (Err(_), Some(_)) if arguments.get("account").is_none() => AccountConfig::default(),
+        (Err(error), Some(_)) => return failure(error),
         (Err(error), None) => return failure(error),
     };
     let storage = match ctx.storage().await {

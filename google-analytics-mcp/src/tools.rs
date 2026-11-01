@@ -8580,6 +8580,7 @@ pub fn build_tool_profiles() -> Vec<(&'static str, &'static [&'static str])> {
     vec![
         ("analytics_access_audit", &["workflow"]),
         ("analytics_acquisition", &["workflow"]),
+        ("analytics_activation", &["workflow"]),
         ("analytics_batch", &["workflow"]),
         ("analytics_change_history", &["workflow"]),
         ("analytics_compare", &["workflow"]),
@@ -8595,6 +8596,7 @@ pub fn build_tool_profiles() -> Vec<(&'static str, &'static [&'static str])> {
         ("analytics_property_configuration", &["workflow"]),
         ("analytics_quota", &["workflow"]),
         ("analytics_realtime", &["workflow"]),
+        ("analytics_retention", &["workflow"]),
         ("analytics_run_report", &["workflow"]),
         ("analytics_validate_report", &["workflow"]),
         ("analyticsadmin_v1alpha_accounts_accessBindings_batchCreate", &["analyticsadmin_write", "raw"]),

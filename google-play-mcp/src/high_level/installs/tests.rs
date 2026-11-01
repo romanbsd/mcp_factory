@@ -1432,3 +1432,62 @@ async fn storage_initialization_failure_is_retried() {
 async fn probe_ctx(ctx: &Arc<InstallsContext>) -> Value {
     run(ctx, ACCESS, json!({"packageName": PKG})).await
 }
+
+#[tokio::test]
+async fn explicit_bucket_continues_access_check_query_list_and_raw_without_reconnection() {
+    let ctx = context(ReportsConfig::default(), Arc::new(play_bucket()));
+    assert_eq!(
+        run(
+            &ctx,
+            ACCESS,
+            json!({"packageName":PKG,"bucket":"pubsite_prod_123"})
+        )
+        .await["status"],
+        "ok"
+    );
+    let args = json!({"packageName":PKG,"bucket":"gs://pubsite_prod_123","startDate":"2026-10-01","endDate":"2026-10-02"});
+    let report = run(&ctx, "reports_installs_query", args.clone()).await;
+    assert_ne!(report["status"], "error", "{report}");
+    assert_eq!(report["resolution"]["provenance"], "explicit_override");
+    let listed = run(
+        &ctx,
+        "reports_installs_list",
+        json!({"packageName":PKG,"bucket":"pubsite_prod_123"}),
+    )
+    .await;
+    let raw = run(
+        &ctx,
+        "reports_installs_get_raw",
+        json!({"reportId":listed["reports"][0]["reportId"],"bucket":"pubsite_prod_123"}),
+    )
+    .await;
+    assert_ne!(raw["status"], "error", "{raw}");
+    let mut invalid = args.clone();
+    invalid["bucket"] = json!("gs://pubsite_prod_123/path");
+    assert_eq!(
+        run(&ctx, "reports_installs_query", invalid).await["error"]["code"],
+        "invalid_bucket"
+    );
+    // An override does not silently forgive a wrong account or persist ambient routing.
+    let mut wrong = args.clone();
+    wrong["account"] = json!("unknown");
+    assert_eq!(
+        run(&ctx, "reports_installs_query", wrong).await["error"]["code"],
+        "missing_developer_id"
+    );
+    let mut unscoped = args;
+    unscoped.as_object_mut().unwrap().remove("bucket");
+    assert_eq!(
+        run(&ctx, "reports_installs_query", unscoped).await["error"]["code"],
+        "missing_developer_id"
+    );
+}
+
+#[tokio::test]
+async fn bucket_override_never_forgives_an_unknown_configured_account() {
+    let ctx = context(dev("123"), Arc::new(play_bucket()));
+    for name in [ACCESS, "reports_installs_list", "reports_installs_query"] {
+        let report=run(&ctx,name,json!({"packageName":PKG,"account":"456","bucket":"pubsite_prod_123","startDate":"2026-10-01","endDate":"2026-10-02"})).await;
+        assert_eq!(report["error"]["code"], "unknown_account", "{report}");
+    }
+}

@@ -17,5 +17,7 @@
   "analytics_batch",
   "analytics_quota",
   "analytics_access_audit",
-  "analytics_change_history"
+  "analytics_change_history",
+  "analytics_activation",
+  "analytics_retention"
 ]

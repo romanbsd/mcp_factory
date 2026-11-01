@@ -177,6 +177,20 @@ candidate validates, the error tells you which override to set.
 Only `pubsite_prod_*` bucket names are accepted. Paths, other schemes, and
 credential-bearing URLs are rejected.
 
+All four tools accept a per-call `bucket` override. After verifying a bucket with
+`reports_install_access_check`, pass the same bucket to query, list and raw reads:
+
+```json
+{"packageName":"org.example.app","bucket":"gs://pubsite_prod_123","startDate":"2026-10-01","endDate":"2026-10-07"}
+```
+
+This needs neither `GOOGLE_PLAY_REPORTS_BUCKET` nor a new MCP connection. The
+override uses the current authenticated principal and does not persist a new
+account mapping or change credentials. With several configured accounts, `account`
+selects one; an explicit unknown account is rejected even when a bucket is supplied.
+An override chooses the bucket, not proof that it belongs to a given developer ID.
+Raw reads still validate the report ID against the selected bucket and generation.
+
 **Permissions.** Bulk reports require the account-level Play Console permission
 *View app information and download bulk reports*. App-level access may not
 include it. These tools never change permissions, create objects, or sign URLs.

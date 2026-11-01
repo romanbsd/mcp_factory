@@ -1,6 +1,6 @@
 # Google Analytics MCP
 
-Rust MCP server with 19 default workflows and 248 generated Data/Admin API operations.
+Rust MCP server with 21 default workflows and 248 generated Data/Admin API operations.
 The pinned Discovery revisions are Admin **20261027** and Data **20261028**, for both
 v1beta and v1alpha. Alpha methods retain Google's preview limitations.
 
@@ -36,6 +36,8 @@ variable to the key path. Never commit credentials.
 | `compare` | Two explicit date ranges in one report |
 | `realtime`, `funnel`, `conversions`, `pivot` | Specialized REST reporting |
 | `batch` | Up to five Core requests for one property |
+| `activation` | Closed, ordered user funnel through 2–10 explicit event steps (alpha) |
+| `retention` | Daily returning-user metrics for a first-session acquisition cohort |
 | `quota` | Alpha quota snapshot |
 | `access_audit`, `change_history` | Data access and configuration change evidence |
 
@@ -47,6 +49,56 @@ metrics; request filters and ordering remain available. Default dates are
 ```json
 {"propertyId":"123456","daily":true,"limit":100}
 ```
+
+Properties may combine Android, iOS and web. Reporting presets, Core reports,
+comparisons, batches, pivots, conversions, funnels and lifecycle tools accept
+`platform` (`Android`, `iOS`, `web`) and/or numeric `streamId`. These selectors are
+ANDed with existing dimension filters, including each request in a batch. A
+platform alone does not identify a package when a property contains several apps;
+use the stream ID from `analytics_property_configuration` for that app.
+The content preset uses `unifiedPagePathScreen`: web page path or app screen class,
+so Android/iOS content does not collapse into the web-only `pagePath` dimension.
+
+```json
+{"propertyId":"123456","platform":"Android","streamId":"987654","daily":true}
+```
+
+Every response labels its scope. Without selectors, usage reports are explicitly
+property-wide (or request-filtered when you supplied a dimension filter); the
+server never guesses Android from the surrounding conversation. Each reporting
+source includes its effective filters and dates. Realtime and Admin metadata/audit
+tools do not accept these selectors; use API-specific raw filters where supported.
+
+For `analytics_activation`, supply your actual instrumented event names:
+
+```json
+{"propertyId":"123456","platform":"Android","streamId":"987654","startDate":"28daysAgo","endDate":"yesterday","steps":[{"eventName":"first_open"},{"eventName":"onboarding_complete"},{"eventName":"core_action"}],"withinSeconds":86400}
+```
+
+This calls Google's closed user-funnel API, rather than dividing separate event
+totals. `withinSeconds` bounds elapsed time between successive steps; omit it for
+any elapsed time within the report window. Other events may intervene unless
+`directlyFollowed` is true. The API is alpha and GA reporting identity, consent,
+thresholding and available event history constrain the result. It does not export
+individual journeys or guarantee cross-device linkage.
+
+For `analytics_retention`:
+
+```json
+{"propertyId":"123456","cohortDate":"2026-01-01","horizonDays":7,"platform":"Android","streamId":"987654"}
+```
+
+The API supports cohort membership by **firstSessionDate only**, not an arbitrary
+activation event. This tool reports `cohortActiveUsers`, `cohortTotalUsers` and
+their retention fraction over daily offsets. Filters constrain reported activity;
+they are not proof of a first-open or activation-specific acquisition cohort.
+The cohort and requested horizon must end before today (UTC guard); GA property
+timezone and processing delays still apply. Missing/thresholded rows are not zero.
+Activation funnels and retention cohorts are independent reports, not a joined
+activation-to-return analysis. Such a custom event cohort/journey analysis needs
+an appropriate event-level export, such as BigQuery, and a deliberate identity model.
+See Google's [cohort contract](https://developers.google.com/analytics/devguides/reporting/data/v1/rest/v1beta/CohortSpec)
+and [alpha funnel guide](https://developers.google.com/analytics/devguides/reporting/data/v1/funnels).
 
 For `analytics_compare`:
 
@@ -69,12 +121,22 @@ budget is exceeded. Error details are truncated and non-JSON upstream responses
 are reported as unavailable evidence.
 Report offsets are supplied through `request.offset`; raw collection tools accept
 Google's page tokens. The server does not silently fetch all report rows.
+For multiple date ranges, pagination shows physical returned rows separately from
+upstream `rowCount` and counts by the `dateRange` dimension. It does not display
+six expanded rows as “six out of three” or infer a global next offset. Ambiguous
+completion is `null` and the source is partial; use single-range reports for
+unambiguous pagination.
+
+Unavailable sources retain the upstream error and add a diagnostic category for
+disabled APIs, insufficient OAuth scopes, credential/quota-project problems, known
+property permission denials and quota exhaustion. Generic 403 responses remain
+unclassified: HTTP status alone cannot distinguish these causes.
 
 ## Advanced coverage
 
 Set `MCP_FACTORY_PROFILES` to a comma-separated combination of:
 
-- `workflow` (default): 19 public workflows, generated dependencies kept internal.
+- `workflow` (default): 21 public workflows, generated dependencies kept internal.
 - `analyticsdata_read` / `analyticsadmin_read`: generated read operations.
 - `analyticsdata_write` / `analyticsadmin_write`: generated operations that create
   or change resources, including audience exports/report tasks and alpha chat.

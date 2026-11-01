@@ -1,3 +1,9 @@
+#[path = "diagnostics.rs"]
+mod diagnostics;
+#[path = "lifecycle.rs"]
+mod lifecycle;
+#[path = "scope.rs"]
+mod scope;
 /// Server-owned provider selection; generated startup detects this optional hook.
 pub fn build_auth_provider(
     config: &mcp_factory_core::ProxyConfig,
@@ -24,9 +30,11 @@ pub fn build_custom_tools() -> Vec<CustomToolSpec> {
         ("analytics_run_report", "Run a Core report with the complete Google REST request body, including cohorts and comparisons."),
         ("analytics_overview", "Traffic and engagement totals or daily trend."),
         ("analytics_acquisition", "Sessions, users and key events by session source and medium."),
-        ("analytics_content", "Views and active users by page path."),
+        ("analytics_content", "Views and active users by web page path or app screen class."),
         ("analytics_events", "Event counts and users by event name."),
         ("analytics_ecommerce", "Purchased items and item revenue by item name."),
+        ("analytics_activation", "Measure ordered user progression through 2-10 named event steps using a closed alpha funnel; not separate event totals."),
+        ("analytics_retention", "Track first-session acquisition cohorts over mature daily offsets using user retention metrics; not an arbitrary activation-event cohort."),
         ("analytics_compare", "Compare two date ranges in one report. Supply dateRanges with exactly two ranges."),
         ("analytics_realtime", "Run a realtime report with Google REST request fields."),
         ("analytics_funnel", "Run a funnel report with the complete alpha REST request fields."),
@@ -49,11 +57,26 @@ pub fn build_custom_tools() -> Vec<CustomToolSpec> {
             "request":{"type":"object","description":"Google REST camelCase request fields; nested API fields are validated by the generated operation."},
             "pageToken":{"type":"string"}
         }});
+        if scope::supported(name) {
+            schema["properties"]["platform"] = json!({"enum":["Android","iOS","web"],"description":"Explicit event platform; omitted means property-wide, potentially mixing Android, iOS and web."});
+            schema["properties"]["streamId"] = json!({"type":"string","pattern":"^[0-9]+$","description":"Numeric GA data stream ID, not Firebase app ID, package name or measurement ID. ANDed with platform and request filters."});
+        }
+        if name == "analytics_activation" {
+            schema["properties"]["steps"] = json!({"type":"array","minItems":2,"maxItems":10,"items":{"type":"object","additionalProperties":false,"required":["eventName"],"properties":{"eventName":{"type":"string","minLength":1,"maxLength":100},"name":{"type":"string","minLength":1,"maxLength":100}}}});
+            schema["properties"]["withinSeconds"] = json!({"type":"integer","minimum":1,"maximum":604800,"description":"Maximum elapsed seconds between successive steps; omitted means any elapsed time within the report window."});
+            schema["properties"]["directlyFollowed"] = json!({"type":"boolean","default":false});
+        }
+        if name == "analytics_retention" {
+            schema["properties"]["cohortDate"] = json!({"type":"string","format":"date","description":"Acquisition date for firstSessionDate membership (not arbitrary event membership)."});
+            schema["properties"]["horizonDays"] = json!({"type":"integer","minimum":1,"maximum":90,"default":7});
+        }
         if name == "analytics_change_history" { schema["required"] = json!(["accountId"]); }
         else if name != "analytics_discover_properties" { schema["required"] = json!(["propertyId"]); }
         if ["analytics_run_report","analytics_realtime","analytics_validate_report","analytics_funnel","analytics_conversions","analytics_pivot","analytics_batch","analytics_compare","analytics_access_audit"].contains(&name) {
             schema["required"].as_array_mut().unwrap().push(json!("request"));
         }
+        if name == "analytics_activation" { schema["required"].as_array_mut().unwrap().push(json!("steps")); }
+        if name == "analytics_retention" { schema["required"].as_array_mut().unwrap().push(json!("cohortDate")); }
         CustomToolSpec { name:name.into(), description:description.into(), input_schema:schema,
             hints:ToolHints {read_only:Some(true), destructive:Some(false), idempotent:Some(true), open_world:Some(true), ..Default::default()},
             handler:Arc::new(Handler(name)) }
@@ -83,7 +106,12 @@ async fn invoke(invoker: &dyn OperationInvoker, operation: &str, args: Value) ->
                 json!({"status":"complete","operation":operation,"data":value})
             }
             Ok(result) => {
-                json!({"status":"unavailable","operation":operation,"error":result.into_text()})
+                let upstream = result.structured.clone();
+                let text = result.into_text();
+                let upstream = upstream
+                    .or_else(|| serde_json::from_str(&text).ok())
+                    .unwrap_or(Value::Null);
+                json!({"status":"unavailable","operation":operation,"error":text,"diagnostic":diagnostics::explain(&upstream)})
             }
             Err(error) => {
                 json!({"status":"unavailable","operation":operation,"error":error.to_string()})
@@ -120,6 +148,29 @@ fn mark_pagination(value: &mut Value, request: &Value) -> bool {
         .and_then(|s| s.parse().ok())
         .or_else(|| request["offset"].as_u64())
         .unwrap_or(0);
+    if request["dateRanges"]
+        .as_array()
+        .is_some_and(|r| r.len() > 1)
+    {
+        let index = value["dimensionHeaders"]
+            .as_array()
+            .and_then(|h| h.iter().position(|h| h["name"] == "dateRange"));
+        let mut per_range = std::collections::BTreeMap::<String, u64>::new();
+        if let Some(index) = index {
+            for row in value["rows"].as_array().into_iter().flatten() {
+                if let Some(name) = row["dimensionValues"][index]["value"].as_str() {
+                    *per_range.entry(name.into()).or_default() += 1;
+                }
+            }
+        }
+        let ranges = request["dateRanges"].as_array().unwrap().len();
+        let expanded_complete = total > 0
+            && returned > total
+            && per_range.len() == ranges
+            && per_range.values().all(|count| *count == total);
+        value["pagination"] = json!({"complete":if expanded_complete {Some(true)} else {None},"offset":offset,"returnedRows":returned,"upstreamRowCount":total,"returnedRowsByDateRange":per_range,"semantics":"multiple_date_ranges","note":"Date ranges expand physical rows. rowCount is preserved without treating it as a combined total; no global nextOffset is inferred. Use single-range reports for unambiguous pagination."});
+        return !expanded_complete;
+    }
     let complete = offset.saturating_add(returned) >= total;
     value["pagination"] =
         json!({"complete":complete,"offset":offset,"returnedRows":returned,"totalRows":total});
@@ -129,6 +180,11 @@ fn mark_pagination(value: &mut Value, request: &Value) -> bool {
     !complete
 }
 fn compact(value: &mut Value) {
+    for key in ["funnelTable", "funnelVisualization"] {
+        if let Some(report) = value.get_mut(key) {
+            compact(report);
+        }
+    }
     if let Some(reports) = value.get_mut("reports").and_then(Value::as_array_mut) {
         for report in reports {
             compact(report);
@@ -171,6 +227,17 @@ impl CustomToolHandler for Handler {
         );
         let limit = args["limit"].as_u64().unwrap_or(100);
         let mut body = args.get("request").cloned().unwrap_or(json!({}));
+        if !body.is_object() {
+            return Err(ProxyError::Validation("request must be an object".into()));
+        }
+        if !scope::supported(self.0)
+            && (args.get("platform").is_some() || args.get("streamId").is_some())
+        {
+            return Err(ProxyError::Validation(
+                "platform/stream selectors are not supported for this workflow".into(),
+            ));
+        }
+        lifecycle::prepare(self.0, &args, &mut body)?;
         let data = "analyticsdata_v1beta_properties_";
         let mut sources = Vec::new();
         match self.0 {
@@ -263,7 +330,9 @@ impl CustomToolHandler for Handler {
                 let operation = match self.0 {
                     "analytics_validate_report" => format!("{data}checkCompatibility"),
                     "analytics_realtime" => format!("{data}runRealtimeReport"),
-                    "analytics_funnel" => "analyticsdata_v1alpha_properties_runFunnelReport".into(),
+                    "analytics_funnel" | "analytics_activation" => {
+                        "analyticsdata_v1alpha_properties_runFunnelReport".into()
+                    }
                     "analytics_conversions" => "analyticsdata_v1alpha_properties_runReport".into(),
                     "analytics_pivot" => format!("{data}runPivotReport"),
                     "analytics_batch" => format!("{data}batchRunReports"),
@@ -329,9 +398,10 @@ impl CustomToolHandler for Handler {
                         vec!["sessionSourceMedium"],
                         vec!["sessions", "activeUsers", "keyEvents"],
                     )),
-                    "analytics_content" => {
-                        Some((vec!["pagePath"], vec!["screenPageViews", "activeUsers"]))
-                    }
+                    "analytics_content" => Some((
+                        vec!["unifiedPagePathScreen"],
+                        vec!["screenPageViews", "activeUsers"],
+                    )),
                     "analytics_events" => {
                         Some((vec!["eventName"], vec!["eventCount", "totalUsers"]))
                     }
@@ -359,9 +429,19 @@ impl CustomToolHandler for Handler {
                     "analytics_batch",
                 ]
                 .contains(&self.0)
+                    && body.get("cohortSpec").is_none()
                     && body.get("dateRanges").is_none()
                 {
                     body["dateRanges"] = json!([{"startDate":args["startDate"].as_str().unwrap_or("28daysAgo"),"endDate":args["endDate"].as_str().unwrap_or("yesterday")}]);
+                }
+                if scope::supported(self.0) {
+                    if self.0 == "analytics_batch" {
+                        for request in body["requests"].as_array_mut().unwrap() {
+                            scope::apply(request, &args)?;
+                        }
+                    } else {
+                        scope::apply(&mut body, &args)?;
+                    }
                 }
                 let request_body = body.clone();
                 let params = if self.0 == "analytics_access_audit" {
@@ -373,6 +453,7 @@ impl CustomToolHandler for Handler {
                 if mark_pagination(&mut result["data"], &request_body) {
                     result["status"] = json!("partial");
                 }
+                result["scope"] = json!({"dimensionFilter":request_body["dimensionFilter"],"batchFilters":request_body["requests"].as_array().map(|r| r.iter().map(|v| v["dimensionFilter"].clone()).collect::<Vec<_>>()),"dateRanges":request_body["dateRanges"],"cohortSpec":request_body["cohortSpec"]});
                 compact(&mut result["data"]);
                 sources.push(result);
             }
@@ -414,7 +495,7 @@ impl CustomToolHandler for Handler {
             .iter()
             .filter(|v| v["status"] != "unavailable")
             .count();
-        let report = json!({"status":if sources.iter().all(|v|v["status"]=="complete"){"complete"}else if successes==0{"unavailable"}else{"partial"},"sources":sources,"pagination":"Report limits bound returned rows; inspect rowCount and offset. List responses retain nextPageToken; configuration lists are first-page snapshots."});
+        let report = json!({"scope":scope::label(self.0, &args),"interpretation":lifecycle::interpretation(self.0),"status":if sources.iter().all(|v|v["status"]=="complete"){"complete"}else if successes==0{"unavailable"}else{"partial"},"sources":sources,"pagination":"Report limits bound returned rows; inspect rowCount and offset. List responses retain nextPageToken; configuration lists are first-page snapshots."});
         Ok(ToolResult::text(serde_json::to_string(&report).unwrap()).with_structured(Some(report)))
     }
 }
@@ -621,7 +702,7 @@ mod tests {
     #[test]
     fn workflow_schemas_are_small_and_valid() {
         let tools = build_custom_tools();
-        assert_eq!(tools.len(), 19);
+        assert_eq!(tools.len(), 21);
         for tool in &tools {
             jsonschema::validator_for(&tool.input_schema).unwrap();
         }
@@ -663,7 +744,7 @@ mod contracts {
             raw.tool_names().len(),
             full
         );
-        assert_eq!(workflow.tool_names().len(), 19);
+        assert_eq!(workflow.tool_names().len(), 21);
         assert_eq!(raw.tool_names().len(), 248);
         assert!(compact < 25_000);
         assert!(compact * 4 < full);
@@ -709,6 +790,12 @@ mod generated_contracts {
     async fn every_workflow_routes_valid_inputs_to_read_only_operations() {
         for tool in build_custom_tools() {
             let mut args = json!({"propertyId":"123","accountId":"456","request":{}});
+            if tool.name == "analytics_activation" {
+                args["steps"] = json!([{"eventName":"first_open"},{"eventName":"core_action"}]);
+            }
+            if tool.name == "analytics_retention" {
+                args["cohortDate"] = json!("2025-01-01");
+            }
             if tool.name == "analytics_compare" {
                 args["request"]["dateRanges"] = json!([{"startDate":"14daysAgo","endDate":"8daysAgo"},{"startDate":"7daysAgo","endDate":"yesterday"}]);
             }
@@ -728,3 +815,7 @@ mod generated_contracts {
         }
     }
 }
+
+#[cfg(test)]
+#[path = "feedback_tests.rs"]
+mod feedback_tests;
