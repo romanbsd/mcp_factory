@@ -453,7 +453,7 @@ impl CustomToolHandler for Handler {
                 if mark_pagination(&mut result["data"], &request_body) {
                     result["status"] = json!("partial");
                 }
-                result["scope"] = json!({"dimensionFilter":request_body["dimensionFilter"],"batchFilters":request_body["requests"].as_array().map(|r| r.iter().map(|v| v["dimensionFilter"].clone()).collect::<Vec<_>>()),"dateRanges":request_body["dateRanges"],"cohortSpec":request_body["cohortSpec"]});
+                result["scope"] = json!({"dimensionFilter":request_body["dimensionFilter"],"batchScopes":request_body["requests"].as_array().map(|requests| requests.iter().enumerate().map(|(index, request)| json!({"reportIndex":index,"dimensionFilter":request["dimensionFilter"],"dateRanges":request["dateRanges"],"cohortSpec":request["cohortSpec"]})).collect::<Vec<_>>()),"dateRanges":request_body["dateRanges"],"cohortSpec":request_body["cohortSpec"]});
                 compact(&mut result["data"]);
                 sources.push(result);
             }

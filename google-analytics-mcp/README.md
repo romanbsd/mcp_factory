@@ -66,7 +66,9 @@ so Android/iOS content does not collapse into the web-only `pagePath` dimension.
 Every response labels its scope. Without selectors, usage reports are explicitly
 property-wide (or request-filtered when you supplied a dimension filter); the
 server never guesses Android from the surrounding conversation. Each reporting
-source includes its effective filters and dates. Realtime and Admin metadata/audit
+source includes its effective filters and dates; batch sources expose indexed
+`batchScopes` for each report's filters, date ranges and cohort specification.
+Realtime and Admin metadata/audit
 tools do not accept these selectors; use API-specific raw filters where supported.
 
 For `analytics_activation`, supply your actual instrumented event names:

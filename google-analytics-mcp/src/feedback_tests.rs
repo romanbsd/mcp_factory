@@ -214,3 +214,24 @@ fn legacy_insufficient_permissions_is_not_automatically_an_oauth_scope_error() {
         "insufficient_oauth_scope"
     );
 }
+
+#[tokio::test]
+async fn batch_scope_preserves_each_report_date_window() {
+    let mock = Capture(Mutex::new(vec![]));
+    let first = json!([{"startDate":"2026-01-01","endDate":"2026-01-07"}]);
+    let second = json!([{"startDate":"2026-02-01","endDate":"2026-02-07"}]);
+    let result=Handler("analytics_batch").call(&mock,json!({"propertyId":"123","platform":"Android","request":{"requests":[{"dateRanges":first,"metrics":[{"name":"activeUsers"}]},{"dateRanges":second,"metrics":[{"name":"activeUsers"}]}]}})).await.unwrap().structured.unwrap();
+    let scopes = &result["sources"][0]["scope"]["batchScopes"];
+    assert_eq!(scopes.as_array().unwrap().len(), 2);
+    assert_eq!(scopes[0]["reportIndex"], 0);
+    assert_eq!(scopes[1]["reportIndex"], 1);
+    assert_eq!(scopes[0]["dateRanges"], first);
+    assert_eq!(scopes[1]["dateRanges"], second);
+    let calls = mock.0.lock().unwrap();
+    for index in 0..2 {
+        assert_eq!(
+            scopes[index]["dimensionFilter"],
+            calls[0].1["body"]["requests"][index]["dimensionFilter"]
+        );
+    }
+}
