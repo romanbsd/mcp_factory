@@ -187,7 +187,7 @@ All four tools accept a per-call `bucket` override. After verifying a bucket wit
 This needs neither `GOOGLE_PLAY_REPORTS_BUCKET` nor a new MCP connection. The
 override uses the current authenticated principal and does not persist a new
 account mapping or change credentials. With several configured accounts, `account`
-selects one; an explicit unknown account is rejected even when a bucket is supplied.
+is required even when a bucket is supplied. An explicit unknown account is rejected.
 An override chooses the bucket, not proof that it belongs to a given developer ID.
 Raw reads still validate the report ID against the selected bucket and generation.
 

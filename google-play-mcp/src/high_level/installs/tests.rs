@@ -1491,3 +1491,48 @@ async fn bucket_override_never_forgives_an_unknown_configured_account() {
         assert_eq!(report["error"]["code"], "unknown_account", "{report}");
     }
 }
+
+#[tokio::test]
+async fn explicit_bucket_preserves_multi_account_selection_on_every_install_tool() {
+    let storage = Arc::new(play_bucket());
+    let ctx = context(
+        ReportsConfig::from_vars(Some("123,456"), None, None),
+        storage.clone(),
+    );
+    let selected = run(
+        &ctx,
+        "reports_installs_list",
+        json!({"packageName":PKG,"account":"123","bucket":"pubsite_prod_123"}),
+    )
+    .await;
+    let id = selected["reports"][0]["reportId"]
+        .as_str()
+        .expect("explicit account and bucket work");
+    let calls_before = storage.calls().len();
+    for name in [
+        ACCESS,
+        "reports_installs_list",
+        "reports_installs_query",
+        "reports_installs_get_raw",
+    ] {
+        let mut args = if name == "reports_installs_get_raw" {
+            json!({"reportId":id,"bucket":"pubsite_prod_123"})
+        } else {
+            json!({"packageName":PKG,"bucket":"pubsite_prod_123"})
+        };
+        if name == "reports_installs_query" {
+            args["startDate"] = json!("2026-10-01");
+            args["endDate"] = json!("2026-10-02");
+        }
+        let denied = run(&ctx, name, args).await;
+        assert_eq!(
+            denied["error"]["code"], "account_required",
+            "{name}: {denied}"
+        );
+    }
+    assert_eq!(
+        storage.calls().len(),
+        calls_before,
+        "ambiguous account routing must fail before storage access"
+    );
+}

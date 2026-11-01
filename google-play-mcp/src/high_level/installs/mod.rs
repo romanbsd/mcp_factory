@@ -584,7 +584,11 @@ async fn setup(
         .map_err(failure)?;
     let mut account = match ctx.reports.select(arguments["account"].as_str()) {
         Ok(account) => account.clone(),
-        Err(_) if override_bucket.is_some() && arguments.get("account").is_none() => {
+        Err(_)
+            if ctx.reports.accounts.is_empty()
+                && override_bucket.is_some()
+                && arguments.get("account").is_none() =>
+        {
             AccountConfig::default()
         }
         Err(error) => return Err(failure(error)),
@@ -626,7 +630,11 @@ async fn access_check(ctx: &InstallsContext, recorder: &Recorder, arguments: &Va
         &override_bucket,
     ) {
         (Ok(account), _) => account.clone(),
-        (Err(_), Some(_)) if arguments.get("account").is_none() => AccountConfig::default(),
+        (Err(_), Some(_))
+            if ctx.reports.accounts.is_empty() && arguments.get("account").is_none() =>
+        {
+            AccountConfig::default()
+        }
         (Err(error), Some(_)) => return failure(error),
         (Err(error), None) => return failure(error),
     };
