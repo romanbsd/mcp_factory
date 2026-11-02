@@ -393,3 +393,55 @@ fn misspelled_tool_in_profile_assignment_is_a_config_error() {
         .unwrap();
     assert_eq!(server.tool_names(), vec!["get_pet"]);
 }
+
+#[tokio::test]
+async fn mutation_redirect_is_not_followed_or_replayed() {
+    let remote = MockServer::start().await;
+    Mock::given(method("POST"))
+        .and(path("/pets"))
+        .respond_with(
+            ResponseTemplate::new(307).insert_header("Location", format!("{}/other", remote.uri())),
+        )
+        .expect(1)
+        .mount(&remote)
+        .await;
+    Mock::given(method("POST"))
+        .and(path("/other"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({"id": "unapproved"})))
+        .expect(0)
+        .mount(&remote)
+        .await;
+    let server = McpProxyServer::builder(common::proxy_config(&remote.uri()))
+        .tools(&[common::rest_create_pet_tool()])
+        .unwrap()
+        .build()
+        .unwrap();
+    assert!(server
+        .invoke_tool("create_pet", json!({"name": "approved"}))
+        .await
+        .is_err());
+    let requests = remote.received_requests().await.unwrap();
+    assert_eq!(requests.len(), 1);
+    assert_eq!(requests[0].url.path(), "/pets");
+}
+
+#[tokio::test]
+async fn mutation_failure_remains_one_attempt() {
+    let remote = MockServer::start().await;
+    Mock::given(method("POST"))
+        .and(path("/pets"))
+        .respond_with(ResponseTemplate::new(503).set_body_string("uncertain provider outcome"))
+        .expect(1)
+        .mount(&remote)
+        .await;
+    let server = McpProxyServer::builder(common::proxy_config(&remote.uri()))
+        .tools(&[common::rest_create_pet_tool()])
+        .unwrap()
+        .build()
+        .unwrap();
+    assert!(server
+        .invoke_tool("create_pet", json!({"name": "approved"}))
+        .await
+        .is_err());
+    assert_eq!(remote.received_requests().await.unwrap().len(), 1);
+}

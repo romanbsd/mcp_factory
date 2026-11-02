@@ -403,7 +403,11 @@ impl McpProxyServerBuilder {
         tool_metadata.sort_by(|a, b| a.name.cmp(&b.name));
         // One shared client so the connection pool / TLS setup is reused across
         // auth, REST, and GraphQL calls (reqwest::Client is Arc-backed).
+        // A tool call is one attempt. Redirects can change the destination or
+        // method, and implicit retries can duplicate consequential mutations.
         let http = reqwest::Client::builder()
+            .redirect(reqwest::redirect::Policy::none())
+            .retry(reqwest::retry::never())
             .timeout(self.config.timeout())
             .build()?;
         // Only launch the browser login flow on stdio (local) servers; an HTTP
