@@ -294,6 +294,12 @@ mcp-gen package \
 MCP_TRANSPORT=http MCP_FACTORY_BIND_ADDR=127.0.0.1:8080 cargo run
 ```
 
+Set `MCP_FACTORY_HTTP_STATELESS=true` (or top-level `http_stateless = true`
+in config) to disable MCP sessions. Stateful HTTP remains the default.
+Stateless clients send independent POSTs with `MCP-Protocol-Version`; session
+GET and DELETE are unavailable. Authentication still applies on every request.
+Upstream credential caches remain process-local.
+
 ## Testing
 
 ```bash
@@ -374,6 +380,7 @@ Environment variables:
 | `MCP_TRANSPORT` | `stdio`, `http`, or `both` |
 | `MCP_FACTORY_BIND_ADDR` | HTTP bind address (default `127.0.0.1:8080`) |
 | `MCP_FACTORY_HTTP_PATH` | HTTP mount path (default `/mcp`) |
+| `MCP_FACTORY_HTTP_STATELESS` | `true`/`false`: disable MCP sessions (default `false`, config: `http_stateless`) |
 | `MCP_FACTORY_TIMEOUT` | Upstream request timeout, seconds |
 | `MCP_FACTORY_MEDIA_ROOT` | Directory media-upload tools may read files from (unset disables them) |
 | `MCP_FACTORY_COMPACT_JSONAPI` | `1`/`0`: strip JSON:API `links` and link-only relationships, minify JSON responses (config: `compact_jsonapi`) |

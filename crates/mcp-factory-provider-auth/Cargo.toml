@@ -9,7 +9,7 @@ readme = "README.md"
 
 [features]
 default = []
-google = ["dep:gcp_auth", "dep:reqwest", "dep:tokio"]
+google = ["dep:gcp_auth", "dep:reqwest", "dep:tokio", "dep:ring"]
 app-store-connect = ["dep:ring", "dep:base64", "dep:reqwest", "dep:tokio"]
 
 [dependencies]
@@ -24,4 +24,5 @@ ring = { workspace = true, optional = true }
 serde_json.workspace = true
 
 [dev-dependencies]
+wiremock.workspace = true
 tempfile.workspace = true

@@ -24,9 +24,11 @@ use crate::tools::{ExecutionKind, ToolBody, ToolRegistry, ToolResult, ToolSpec};
 #[derive(Clone)]
 pub struct McpProxyServer {
     inner: Arc<McpProxyServerInner>,
+    request_auth: Option<Arc<dyn crate::auth::AuthProvider>>,
 }
 
 struct McpProxyServerInner {
+    auth: Arc<dyn crate::auth::AuthProvider>,
     config: ProxyConfig,
     tools: ToolRegistry,
     operations: OperationRegistry,
@@ -57,6 +59,42 @@ pub struct McpProxyServerBuilder {
 impl McpProxyServer {
     pub fn builder(config: ProxyConfig) -> McpProxyServerBuilder {
         McpProxyServerBuilder::new(config)
+    }
+
+    pub(crate) fn http_identity_required(&self) -> bool {
+        self.inner.auth.requires_http_identity()
+    }
+    pub(crate) async fn authenticate_http(
+        &self,
+        token: &str,
+    ) -> Result<crate::auth::HttpIdentity, ProxyError> {
+        self.inner.auth.authenticate_http(token).await
+    }
+    fn with_request_auth(&self, auth: Arc<dyn crate::auth::AuthProvider>) -> Self {
+        Self {
+            inner: self.inner.clone(),
+            request_auth: Some(auth),
+        }
+    }
+    fn check_identity(&self) -> Result<(), ProxyError> {
+        if self.http_identity_required() && self.request_auth.is_none() {
+            return Err(ProxyError::Validation(
+                "authenticated HTTP identity required".into(),
+            ));
+        }
+        Ok(())
+    }
+    fn rest(&self) -> RestProxyExecutor {
+        match &self.request_auth {
+            Some(auth) => self.inner.rest.with_auth(auth.clone()),
+            None => self.inner.rest.clone(),
+        }
+    }
+    fn graphql(&self) -> GraphQLProxyExecutor {
+        match &self.request_auth {
+            Some(auth) => self.inner.graphql.with_auth(auth.clone()),
+            None => self.inner.graphql.clone(),
+        }
     }
 
     pub fn config(&self) -> &ProxyConfig {
@@ -95,9 +133,10 @@ impl McpProxyServer {
     /// Route a validated tool call to its executor. Single source of dispatch
     /// for both `invoke_tool` and the MCP `call_tool` handler.
     async fn dispatch(&self, tool: &ToolSpec, args: Value) -> Result<ToolResult, ProxyError> {
+        self.check_identity()?;
         match &tool.execution {
-            ExecutionKind::Rest(_) => self.inner.rest.execute(tool, args).await,
-            ExecutionKind::GraphQL(_) => self.inner.graphql.execute(tool, args).await,
+            ExecutionKind::Rest(_) => self.rest().execute(tool, args).await,
+            ExecutionKind::GraphQL(_) => self.graphql().execute(tool, args).await,
         }
     }
 
@@ -125,6 +164,7 @@ impl McpProxyServer {
     }
 
     async fn dispatch_by_name(&self, name: &str, args: Value) -> Result<ToolResult, ProxyError> {
+        self.check_identity()?;
         if self.inner.tools.get(name).is_some() || self.inner.exposed_operations.contains(name) {
             let tool = self.resolve_and_validate(name, &args, |_| Ok(()))?;
             return self.dispatch(tool, args).await;
@@ -191,7 +231,8 @@ impl OperationInvoker for McpProxyServer {
             }
             Ok(())
         })?;
-        self.inner.rest.open_response(tool, &arguments).await
+        self.check_identity()?;
+        self.rest().open_response(tool, &arguments).await
     }
 }
 
@@ -431,7 +472,9 @@ impl McpProxyServerBuilder {
         let graphql =
             GraphQLProxyExecutor::new(http, self.config.base_url.clone(), Arc::clone(&auth));
         Ok(McpProxyServer {
+            request_auth: None,
             inner: Arc::new(McpProxyServerInner {
+                auth,
                 config: self.config,
                 tools: self.tools,
                 operations: self.operations,
@@ -478,14 +521,20 @@ impl ServerHandler for McpProxyServer {
     async fn call_tool(
         &self,
         request: CallToolRequestParams,
-        _context: RequestContext<RoleServer>,
+        context: RequestContext<RoleServer>,
     ) -> Result<CallToolResponse, McpError> {
         let args = request
             .arguments
             .map(Value::Object)
             .unwrap_or_else(|| Value::Object(Default::default()));
 
-        match self.dispatch_by_name(&request.name, args).await {
+        let scoped = context
+            .extensions
+            .get::<axum::http::request::Parts>()
+            .and_then(|parts| parts.extensions.get::<crate::auth::HttpIdentity>())
+            .map(|identity| self.with_request_auth(identity.auth.clone()));
+        let server = scoped.as_ref().unwrap_or(self);
+        match server.dispatch_by_name(&request.name, args).await {
             Ok(result) => Ok(result_to_call(result, &request.name).into()),
             Err(err) => Ok(CallToolResult::error(vec![ContentBlock::text(err.to_string())]).into()),
         }

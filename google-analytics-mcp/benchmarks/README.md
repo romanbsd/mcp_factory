@@ -4,7 +4,7 @@ Measured 2026-10-31 on this macOS host. Baseline is the existing uv tool
 `analytics-mcp 0.8.0`, Python 3.15.2, through `~/.local/bin/analytics-mcp`.
 Candidate is the workspace Rust release binary, version 0.1.0.
 This is a historical 19-workflow snapshot, before the platform/stream selectors
-and activation/retention workflows. The current default has 21 tools; rerun the
+and activation/retention workflows. The current default has 22 tools; rerun the
 comparison below to measure that version.
 
 Five alternating launches of each default server; medians below. Both received

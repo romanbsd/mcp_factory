@@ -48,11 +48,8 @@ impl AuthProvider for GoogleServiceAccountAuthProvider {
         &self,
         request: RequestBuilder,
     ) -> Result<RequestBuilder, ProxyError> {
-        let scopes = self.scopes.iter().map(String::as_str).collect::<Vec<_>>();
-        let token = self.provider.token(&scopes).await.map_err(|error| {
-            ProxyError::Other(format!("failed to obtain Google access token: {error}"))
-        })?;
-        Ok(request.bearer_auth(token.as_str()))
+        crate::google_token::apply_request_auth(self.provider.as_ref(), &self.scopes, None, request)
+            .await
     }
 
     fn api_key_query(&self) -> Option<(String, String)> {

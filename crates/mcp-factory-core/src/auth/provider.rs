@@ -9,12 +9,32 @@ use crate::error::ProxyError;
 
 #[async_trait]
 pub trait AuthProvider: Send + Sync {
+    /// Opt in to authenticated HTTP with caller-owned upstream credentials.
+    fn requires_http_identity(&self) -> bool {
+        false
+    }
+
+    /// Validate an MCP credential, never an upstream token. The principal must
+    /// be stable, bounded by the configured user set, and unique per identity.
+    async fn authenticate_http(&self, _bearer: &str) -> Result<HttpIdentity, ProxyError> {
+        Err(ProxyError::Validation(
+            "HTTP authentication is unavailable".into(),
+        ))
+    }
+
     async fn apply_request_auth(
         &self,
         request: RequestBuilder,
     ) -> Result<RequestBuilder, ProxyError>;
 
     fn api_key_query(&self) -> Option<(String, String)>;
+}
+
+/// Immutable credentials for exactly one authenticated HTTP request.
+#[derive(Clone)]
+pub struct HttpIdentity {
+    pub principal: String,
+    pub auth: Arc<dyn AuthProvider>,
 }
 
 pub struct StaticAuthProvider {

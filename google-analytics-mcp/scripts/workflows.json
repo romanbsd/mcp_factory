@@ -19,5 +19,6 @@
   "analytics_access_audit",
   "analytics_change_history",
   "analytics_activation",
-  "analytics_retention"
+  "analytics_retention",
+  "analytics_annotations"
 ]

@@ -147,6 +147,9 @@ pub struct ProxyConfig {
     pub bind_addr: String,
     #[serde(default = "default_http_path")]
     pub http_path: String,
+    /// Disable MCP sessions; every HTTP request is independently authenticated.
+    #[serde(default)]
+    pub http_stateless: bool,
     #[serde(default)]
     pub server_name: String,
     #[serde(default = "default_server_version")]
@@ -191,6 +194,7 @@ impl Default for ProxyConfig {
             transport: TransportMode::Stdio,
             bind_addr: default_bind_addr(),
             http_path: default_http_path(),
+            http_stateless: false,
             server_name: String::new(),
             server_version: default_server_version(),
             media_root: None,
@@ -228,6 +232,17 @@ impl ProxyConfig {
         }
         if let Ok(path) = env::var("MCP_FACTORY_HTTP_PATH") {
             self.http_path = path;
+        }
+        if let Ok(value) = env::var("MCP_FACTORY_HTTP_STATELESS") {
+            self.http_stateless = match value.trim().to_ascii_lowercase().as_str() {
+                "1" | "true" | "yes" => true,
+                "0" | "false" | "no" | "" => false,
+                _ => {
+                    return Err(ProxyError::Config(
+                        "invalid MCP_FACTORY_HTTP_STATELESS boolean".into(),
+                    ))
+                }
+            };
         }
         if let Ok(timeout) = env::var("MCP_FACTORY_TIMEOUT") {
             self.timeout_secs = timeout.parse().map_err(|_| {
@@ -343,6 +358,27 @@ where
 mod tests {
     use super::*;
 
+    #[test]
+    fn stateless_config_is_opt_in_and_env_is_validated() {
+        assert!(!ProxyConfig::default().http_stateless);
+        let config: ProxyConfig =
+            toml::from_str("base_url = 'https://example.com'\nhttp_stateless = true").unwrap();
+        assert!(config.http_stateless);
+        temp_env::with_var("MCP_FACTORY_HTTP_STATELESS", Some("TRUE"), || {
+            assert!(
+                ProxyConfig::default()
+                    .apply_env_overrides()
+                    .unwrap()
+                    .http_stateless
+            );
+        });
+        temp_env::with_var("MCP_FACTORY_HTTP_STATELESS", Some("false"), || {
+            assert!(!config.clone().apply_env_overrides().unwrap().http_stateless);
+        });
+        temp_env::with_var("MCP_FACTORY_HTTP_STATELESS", Some("maybe"), || {
+            assert!(ProxyConfig::default().apply_env_overrides().is_err());
+        });
+    }
     #[test]
     fn explicit_none_opts_out_of_environment_auth() {
         temp_env::with_var("MCP_FACTORY_BEARER_TOKEN", Some("ambient"), || {

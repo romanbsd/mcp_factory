@@ -1,17 +1,38 @@
+use crate::google_adc_file::{self, ResolvedAdc};
+use crate::google_token::{self, validate_quota_project};
 use async_trait::async_trait;
+#[cfg(test)]
 use gcp_auth::TokenProvider;
 use mcp_factory_core::auth::AuthProvider;
 use mcp_factory_core::ProxyError;
 use reqwest::RequestBuilder;
+#[cfg(test)]
 use std::sync::Arc;
 
 /// Lazily discover ADC, preserving stdio startup and tools/list without credentials.
 pub struct GoogleAdcAuthProvider {
-    provider: tokio::sync::OnceCell<Result<Arc<dyn TokenProvider>, String>>,
+    provider: tokio::sync::OnceCell<Result<ResolvedAdc, String>>,
     quota_project: Option<String>,
     scopes: Vec<String>,
 }
 impl GoogleAdcAuthProvider {
+    pub(crate) fn from_selected_file(
+        path: &std::path::Path,
+        scopes: &[String],
+        quota_project: Option<String>,
+    ) -> Result<Self, ProxyError> {
+        let provider = Self::with_quota_project(scopes, quota_project)?;
+        let resolved = google_adc_file::from_file(path).map_err(|_| {
+            ProxyError::Config(
+                "invalid per-user Google ADC credentials; no fallback is allowed".into(),
+            )
+        })?;
+        if let Some(project) = &resolved.quota_project {
+            validate_quota_project(project)?;
+        }
+        let _ = provider.provider.set(Ok(resolved));
+        Ok(provider)
+    }
     pub fn new(scopes: &[String]) -> Result<Self, ProxyError> {
         Self::with_quota_project(scopes, None)
     }
@@ -20,13 +41,7 @@ impl GoogleAdcAuthProvider {
         quota_project: Option<String>,
     ) -> Result<Self, ProxyError> {
         if let Some(value) = &quota_project {
-            if value.trim().is_empty() || value.trim() != value {
-                return Err(ProxyError::Config(
-                    "quota_project must be non-blank without surrounding whitespace".into(),
-                ));
-            }
-            reqwest::header::HeaderValue::from_str(value)
-                .map_err(|_| ProxyError::Config("invalid quota_project header value".into()))?;
+            validate_quota_project(value)?;
         }
 
         crate::validate_google_scopes(scopes)?;
@@ -45,7 +60,7 @@ impl AuthProvider for GoogleAdcAuthProvider {
     ) -> Result<RequestBuilder, ProxyError> {
         let provider = self
             .provider
-            .get_or_init(|| async { gcp_auth::provider().await.map_err(|e| e.to_string()) })
+            .get_or_init(google_adc_file::discover)
             .await
             .as_ref()
             .map_err(|e| {
@@ -53,17 +68,15 @@ impl AuthProvider for GoogleAdcAuthProvider {
                     "Google ADC discovery failed: {e}; fix credentials and restart the server"
                 ))
             })?;
-        let scopes = self.scopes.iter().map(String::as_str).collect::<Vec<_>>();
-        let token = provider
-            .token(&scopes)
-            .await
-            .map_err(|e| ProxyError::Other(format!("Google ADC token failed: {e}")))?;
-        let request = request.bearer_auth(token.as_str());
-        Ok(if let Some(project) = &self.quota_project {
-            request.header("x-goog-user-project", project)
-        } else {
-            request
-        })
+        google_token::apply_request_auth(
+            provider.provider.as_ref(),
+            &self.scopes,
+            self.quota_project
+                .as_deref()
+                .or(provider.quota_project.as_deref()),
+            request,
+        )
+        .await
     }
     fn api_key_query(&self) -> Option<(String, String)> {
         None
@@ -73,7 +86,7 @@ impl AuthProvider for GoogleAdcAuthProvider {
 #[cfg(test)]
 mod adc_tests {
     use super::*;
-    struct FixedToken;
+    pub(super) struct FixedToken;
     #[async_trait]
     impl TokenProvider for FixedToken {
         async fn token(&self, _: &[&str]) -> Result<Arc<gcp_auth::Token>, gcp_auth::Error> {
@@ -95,7 +108,13 @@ mod adc_tests {
             Some("billing-project".into()),
         )
         .unwrap();
-        assert!(provider.provider.set(Ok(Arc::new(FixedToken))).is_ok());
+        assert!(provider
+            .provider
+            .set(Ok(ResolvedAdc {
+                provider: Arc::new(FixedToken),
+                quota_project: None
+            }))
+            .is_ok());
         let request = provider
             .apply_request_auth(reqwest::Client::new().get("https://example.com"))
             .await
@@ -118,7 +137,13 @@ mod adc_tests {
     #[tokio::test]
     async fn adc_without_quota_project_does_not_attach_project_header() {
         let provider = GoogleAdcAuthProvider::new(&["read".into()]).unwrap();
-        assert!(provider.provider.set(Ok(Arc::new(FixedToken))).is_ok());
+        assert!(provider
+            .provider
+            .set(Ok(ResolvedAdc {
+                provider: Arc::new(FixedToken),
+                quota_project: None
+            }))
+            .is_ok());
         let request = provider
             .apply_request_auth(reqwest::Client::new().get("https://example.com"))
             .await
@@ -135,5 +160,56 @@ mod adc_tests {
         ])
         .unwrap();
         assert!(provider.provider.get().is_none());
+    }
+}
+
+#[cfg(test)]
+mod quota_inheritance_tests {
+    use super::*;
+    #[tokio::test]
+    async fn selected_adc_quota_is_inherited_and_configuration_wins() {
+        for (explicit, inherited, expected) in [
+            (None, Some("from-adc"), Some("from-adc")),
+            (Some("override"), Some("from-adc"), Some("override")),
+            (None, None, None),
+        ] {
+            let auth = GoogleAdcAuthProvider::with_quota_project(
+                &["read".into()],
+                explicit.map(str::to_string),
+            )
+            .unwrap();
+            assert!(auth
+                .provider
+                .set(Ok(ResolvedAdc {
+                    provider: Arc::new(super::adc_tests::FixedToken),
+                    quota_project: inherited.map(str::to_string)
+                }))
+                .is_ok());
+            let request = auth
+                .apply_request_auth(reqwest::Client::new().get("https://example.com"))
+                .await
+                .unwrap()
+                .build()
+                .unwrap();
+            assert_eq!(
+                request
+                    .headers()
+                    .get("x-goog-user-project")
+                    .map(|v| v.to_str().unwrap()),
+                expected
+            );
+        }
+        let auth = GoogleAdcAuthProvider::new(&["read".into()]).unwrap();
+        assert!(auth
+            .provider
+            .set(Ok(ResolvedAdc {
+                provider: Arc::new(super::adc_tests::FixedToken),
+                quota_project: Some("invalid\nheader".into())
+            }))
+            .is_ok());
+        assert!(auth
+            .apply_request_auth(reqwest::Client::new().get("https://example.com"))
+            .await
+            .is_err());
     }
 }

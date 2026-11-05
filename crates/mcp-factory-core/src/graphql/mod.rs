@@ -13,6 +13,7 @@ pub struct GraphQLOperation {
     pub variable_bindings: Vec<String>,
 }
 
+#[derive(Clone)]
 pub struct GraphQLProxyExecutor {
     client: reqwest::Client,
     base_url: String,
@@ -21,6 +22,12 @@ pub struct GraphQLProxyExecutor {
 }
 
 impl GraphQLProxyExecutor {
+    pub(crate) fn with_auth(&self, auth: Arc<dyn AuthProvider>) -> Self {
+        let mut executor = self.clone();
+        executor.auth = auth;
+        executor
+    }
+
     pub fn new(client: reqwest::Client, base_url: String, auth: Arc<dyn AuthProvider>) -> Self {
         Self {
             client,

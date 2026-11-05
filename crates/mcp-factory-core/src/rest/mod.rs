@@ -64,6 +64,7 @@ pub struct MediaUploadOperation {
     pub max_size: Option<u64>,
 }
 
+#[derive(Clone)]
 pub struct RestProxyExecutor {
     client: reqwest::Client,
     base_url: String,
@@ -73,6 +74,12 @@ pub struct RestProxyExecutor {
 }
 
 impl RestProxyExecutor {
+    pub(crate) fn with_auth(&self, auth: Arc<dyn AuthProvider>) -> Self {
+        let mut executor = self.clone();
+        executor.auth = auth;
+        executor
+    }
+
     pub fn new(
         client: reqwest::Client,
         base_url: String,

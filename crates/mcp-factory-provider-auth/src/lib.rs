@@ -4,7 +4,13 @@ mod app_store_connect;
 #[cfg(feature = "google")]
 mod google_adc;
 #[cfg(feature = "google")]
+mod google_adc_file;
+#[cfg(feature = "google")]
+mod google_http_users;
+#[cfg(feature = "google")]
 mod google_service_account;
+#[cfg(feature = "google")]
+mod google_token;
 #[cfg(feature = "app-store-connect")]
 pub use app_store_connect::AppStoreConnectAuthProvider;
 #[cfg(feature = "google")]
@@ -24,6 +30,13 @@ struct AdcOptions {
     #[serde(default)]
     scopes: Vec<String>,
     quota_project: Option<String>,
+}
+#[cfg(feature = "google")]
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct HttpUsersOptions {
+    scopes: Vec<String>,
+    users_file: std::path::PathBuf,
 }
 #[cfg(feature = "google")]
 #[derive(Deserialize)]
@@ -57,6 +70,18 @@ pub fn from_config(config: &ProxyConfig) -> Result<Option<Arc<dyn AuthProvider>>
     };
     let _ = settings;
     match provider.as_str() {
+        #[cfg(feature = "google")]
+        "google_http_users" => {
+            let opt: HttpUsersOptions = options(settings)?;
+            if config.transport != mcp_factory_core::TransportMode::Http {
+                return Err(ProxyError::Config(
+                    "google_http_users requires transport=http".into(),
+                ));
+            }
+            Ok(Some(Arc::new(
+                google_http_users::GoogleHttpUsers::from_file(&opt.users_file, &opt.scopes)?,
+            )))
+        }
         #[cfg(feature = "google")]
         "google_adc" => {
             let opt: AdcOptions = options(settings)?;

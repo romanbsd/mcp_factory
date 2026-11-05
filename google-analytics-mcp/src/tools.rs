@@ -8581,6 +8581,7 @@ pub fn build_tool_profiles() -> Vec<(&'static str, &'static [&'static str])> {
         ("analytics_access_audit", &["workflow"]),
         ("analytics_acquisition", &["workflow"]),
         ("analytics_activation", &["workflow"]),
+        ("analytics_annotations", &["workflow"]),
         ("analytics_batch", &["workflow"]),
         ("analytics_change_history", &["workflow"]),
         ("analytics_compare", &["workflow"]),

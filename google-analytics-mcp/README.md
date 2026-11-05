@@ -1,6 +1,6 @@
 # Google Analytics MCP
 
-Rust MCP server with 21 default workflows and 248 generated Data/Admin API operations.
+Rust MCP server with 22 default workflows and 248 generated Data/Admin API operations.
 The pinned Discovery revisions are Admin **20261027** and Data **20261028**, for both
 v1beta and v1alpha. Alpha methods retain Google's preview limitations.
 
@@ -29,6 +29,7 @@ variable to the key path. Never commit credentials.
 |---|---|
 | `discover_properties` | Account/property summaries, with pageToken |
 | `property_configuration` | Property, streams, key events, retention, Ads/Firebase/BigQuery links |
+| `annotations` | One bounded page of release/campaign notes, optionally filtered by date overlap |
 | `metadata` | Search standard and custom metrics/dimensions; at most 50 matches per kind |
 | `validate_report` | Core metric/dimension compatibility |
 | `run_report` | Full Core REST report request |
@@ -138,7 +139,7 @@ unclassified: HTTP status alone cannot distinguish these causes.
 
 Set `MCP_FACTORY_PROFILES` to a comma-separated combination of:
 
-- `workflow` (default): 21 public workflows, generated dependencies kept internal.
+- `workflow` (default): 22 public workflows, generated dependencies kept internal.
 - `analyticsdata_read` / `analyticsadmin_read`: generated read operations.
 - `analyticsdata_write` / `analyticsadmin_write`: generated operations that create
   or change resources, including audience exports/report tasks and alpha chat.
@@ -168,7 +169,11 @@ credentials and property access; local tests use deterministic evidence.
 
 ADC user credentials may need an explicit quota project. Set
 `[auth.options] quota_project = "your-project-id"` to attach
-`x-goog-user-project`. Failed ADC discovery is cached until restart; fix the
+`x-goog-user-project`; otherwise the selected ADC file's `quota_project_id` is used.
+Both service-account and authorized-user files can be selected through
+`GOOGLE_APPLICATION_CREDENTIALS`. `CLOUDSDK_CONFIG` selects the gcloud ADC directory.
+Unsupported impersonated/federated files and invalid selected files fail clearly,
+without falling back to another identity. Failed ADC discovery is cached until restart; fix the
 credentials and restart after a discovery failure. Core/Realtime reports and
 access audits enforce the configured row limit and return explicit pagination
 state; funnel and pivot requests use their own API-specific limits.
@@ -176,3 +181,74 @@ state; funnel and pivot requests use their own API-specific limits.
 To authorize raw Admin edits, configure `analytics.edit` in the provider's scopes
 and grant the corresponding Analytics role. Merely selecting a write profile
 never upgrades OAuth permissions. The shipped config stays read-only.
+
+`analytics_annotations` accepts `propertyId`, optional paired ISO `startDate` /
+`endDate`, optional Google annotation `filter`, `limit` (1–200, default 50) and
+`pageToken`. The API's `is_annotation_in_range` helper handles overlapping
+single-date and date-range annotations. A supplied filter is ANDed with the date
+window. An omitted date window lists one page across all dates. Follow
+`nextPageToken` using the same property, dates, filter and limit. This workflow is
+read-only; annotation creation remains an explicit raw write operation.
+
+### Provisioned per-user HTTP access
+
+For a hosted server with several known users, give each caller a separate MCP
+bearer credential and map it to that caller's Google ADC file. This is an
+explicit alternative to single-identity `google_adc`; it never falls back to
+host ADC and requires `transport = "http"` (not `both` or stdio).
+
+```toml
+transport = "http"
+[auth]
+type = "external"
+provider = "google_http_users"
+[auth.options]
+scopes = ["https://www.googleapis.com/auth/analytics.readonly"]
+users_file = "/absolute/private/analytics-users.json"
+```
+
+The owner-only JSON file (`chmod 600`) contains 1–100 entries:
+
+```json
+[
+  {
+    "principal": "alice",
+    "bearer_token": "REPLACE_WITH_A_RANDOM_MCP_TOKEN_AT_LEAST_32_CHARS",
+    "credentials_file": "/absolute/private/alice-adc.json",
+    "quota_project": "alice-quota-project"
+  }
+]
+```
+
+Generate a separate random token for each user (for example `openssl rand -hex 32`).
+Keep both files outside the repository; protect each ADC file as a secret.
+`quota_project` is optional and otherwise inherits that ADC file's quota project.
+The selected files support the same `authorized_user` / `service_account` types
+as ADC mode, but are resolved explicitly at startup; an invalid entry refuses
+startup. Restart after adding, removing, or rotating credentials. Client requests
+must carry `Authorization: Bearer <MCP token>` on **every** HTTP request. Use TLS
+at your reverse proxy for remote access.
+
+Each principal has its own session store. Request credentials flow through raw
+operations, presets, and streaming calls; a session ID from another user is
+rejected. The MCP credential is never forwarded to Google, and Google access or
+refresh tokens are never accepted as MCP credentials. This provisioned mode
+has no automatic OAuth discovery, browser enrollment, or refresh of MCP bearer
+tokens; it is not a full MCP OAuth authorization-server implementation.
+
+### Stateless HTTP
+
+Set top-level `http_stateless = true` in the server config, or
+`MCP_FACTORY_HTTP_STATELESS=true`, to disable MCP session creation. The default
+is `false`, retaining stateful sessions for existing clients. This transport
+option is provider agnostic and works with either single-identity or provisioned
+per-user authentication. It has no effect on stdio.
+
+In stateless mode each POST is independent, no `Mcp-Session-Id` is issued, and
+session GET/SSE subscription and DELETE endpoints are unavailable. Clients send
+their negotiated `MCP-Protocol-Version` on requests. Authentication is still
+required on every request when using `google_http_users`; the flag never grants
+access or changes credential selection. MCP session state is removed, while
+upstream credential caches and provisioned user configuration remain local to
+the process. For multiple replicas, configure the same users on each replica;
+this option does not provide shared OAuth enrollment or credential storage.

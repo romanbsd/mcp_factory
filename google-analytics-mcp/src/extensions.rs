@@ -1,3 +1,5 @@
+#[path = "annotations.rs"]
+mod annotations;
 #[path = "diagnostics.rs"]
 mod diagnostics;
 #[path = "lifecycle.rs"]
@@ -25,6 +27,7 @@ pub fn build_custom_tools() -> Vec<CustomToolSpec> {
     let definitions = [
         ("analytics_discover_properties", "List accessible accounts and properties, one bounded page at a time."),
         ("analytics_property_configuration", "Read property identity, streams, key events, retention and linked products. Each source has its own status."),
+        ("analytics_annotations", "Read one bounded page of release/campaign annotations. Optional date window uses Google's overlap filter; nextPageToken continues with unchanged filters."),
         ("analytics_metadata", "Search standard and custom report dimensions and metrics. Returns at most 50 matches per kind."),
         ("analytics_validate_report", "Check Core report dimension and metric compatibility before querying."),
         ("analytics_run_report", "Run a Core report with the complete Google REST request body, including cohorts and comparisons."),
@@ -77,6 +80,7 @@ pub fn build_custom_tools() -> Vec<CustomToolSpec> {
         }
         if name == "analytics_activation" { schema["required"].as_array_mut().unwrap().push(json!("steps")); }
         if name == "analytics_retention" { schema["required"].as_array_mut().unwrap().push(json!("cohortDate")); }
+        if name == "analytics_annotations" { schema = annotations::schema(); }
         CustomToolSpec { name:name.into(), description:description.into(), input_schema:schema,
             hints:ToolHints {read_only:Some(true), destructive:Some(false), idempotent:Some(true), open_world:Some(true), ..Default::default()},
             handler:Arc::new(Handler(name)) }
@@ -241,6 +245,9 @@ impl CustomToolHandler for Handler {
         let data = "analyticsdata_v1beta_properties_";
         let mut sources = Vec::new();
         match self.0 {
+            "analytics_annotations" => {
+                sources.push(annotations::read(invoker, &args, &property).await?)
+            }
             "analytics_discover_properties" => {
                 let mut params = json!({"pageSize":limit.min(200)});
                 if let Some(token) = args.get("pageToken") {
@@ -702,7 +709,7 @@ mod tests {
     #[test]
     fn workflow_schemas_are_small_and_valid() {
         let tools = build_custom_tools();
-        assert_eq!(tools.len(), 21);
+        assert_eq!(tools.len(), 22);
         for tool in &tools {
             jsonschema::validator_for(&tool.input_schema).unwrap();
         }
@@ -744,7 +751,7 @@ mod contracts {
             raw.tool_names().len(),
             full
         );
-        assert_eq!(workflow.tool_names().len(), 21);
+        assert_eq!(workflow.tool_names().len(), 22);
         assert_eq!(raw.tool_names().len(), 248);
         assert!(compact < 25_000);
         assert!(compact * 4 < full);
