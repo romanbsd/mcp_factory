@@ -174,55 +174,38 @@ impl AuthProvider for GoogleAdcAuthProvider {
             ));
         }
 
-        // First-time discovery or not yet time to retry - check if already initialized
-        if let Some(result) = self.provider.get() {
-            // Already initialized (either success or cached error)
-            let provider = result.as_ref().map_err(|e| {
+        // First-time discovery - get_or_init ensures only one caller runs discovery
+        let provider = self
+            .provider
+            .get_or_init(|| async {
+                let result = google_adc_file::discover().await;
+
+                // Record failure state synchronously if discovery failed
+                if result.is_err() {
+                    let mut retry_state = self.retry_state.lock().await;
+                    retry_state.last_failure = Some(std::time::Instant::now());
+                    retry_state.consecutive_failures = 1;
+                }
+
+                result
+            })
+            .await
+            .as_ref()
+            .map_err(|e| {
                 ProxyError::Config(format!(
                     "Google ADC discovery failed: {e}; will retry after 5 seconds"
                 ))
             })?;
-            return google_token::apply_request_auth(
-                provider.provider.as_ref(),
-                &self.scopes,
-                self.quota_project
-                    .as_deref()
-                    .or(provider.quota_project.as_deref()),
-                request,
-            )
-            .await;
-        }
 
-        // First-time discovery
-        let result = google_adc_file::discover().await;
-
-        match result {
-            Ok(provider) => {
-                // Success on first try
-                let _ = self.provider.set(Ok(provider.clone()));
-                google_token::apply_request_auth(
-                    provider.provider.as_ref(),
-                    &self.scopes,
-                    self.quota_project
-                        .as_deref()
-                        .or(provider.quota_project.as_deref()),
-                    request,
-                )
-                .await
-            }
-            Err(e) => {
-                // Initial failure - record it and cache the error
-                let _ = self.provider.set(Err(e.clone()));
-                let mut retry_state = self.retry_state.lock().await;
-                retry_state.last_failure = Some(std::time::Instant::now());
-                retry_state.consecutive_failures = 1;
-                drop(retry_state);
-
-                Err(ProxyError::Config(format!(
-                    "Google ADC discovery failed: {e}; will retry after 5 seconds"
-                )))
-            }
-        }
+        google_token::apply_request_auth(
+            provider.provider.as_ref(),
+            &self.scopes,
+            self.quota_project
+                .as_deref()
+                .or(provider.quota_project.as_deref()),
+            request,
+        )
+        .await
     }
     fn api_key_query(&self) -> Option<(String, String)> {
         None
