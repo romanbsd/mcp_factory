@@ -21,6 +21,7 @@ pub struct GoogleAdcAuthProvider {
 struct RetryState {
     last_failure: Option<std::time::Instant>,
     consecutive_failures: u32,
+    retrying: bool,
 }
 impl GoogleAdcAuthProvider {
     pub(crate) fn from_selected_file(
@@ -80,21 +81,29 @@ impl AuthProvider for GoogleAdcAuthProvider {
         }
 
         // Check if we should retry discovery after a previous failure
-        let (should_retry, _retry_delay_secs) = {
-            let retry_state = self.retry_state.lock().await;
+        let (should_retry, retry_in_progress) = {
+            let mut retry_state = self.retry_state.lock().await;
             if let Some(failure_time) = retry_state.last_failure {
                 // Exponential backoff: 5s * 2^failures, capped at 60s
                 let delay_secs = (5u64 << retry_state.consecutive_failures.min(4)).min(60);
                 let retry_after = std::time::Duration::from_secs(delay_secs);
                 let elapsed = failure_time.elapsed();
-                (elapsed >= retry_after, delay_secs)
+                let can_retry = elapsed >= retry_after && !retry_state.retrying;
+
+                if can_retry {
+                    // Mark that we're retrying to prevent concurrent attempts
+                    retry_state.retrying = true;
+                    (true, false)
+                } else {
+                    (false, retry_state.retrying)
+                }
             } else {
-                (false, 5)
+                (false, false)
             }
         };
 
         if should_retry {
-            // Retry discovery
+            // Retry discovery (only one caller at a time will reach here)
             let result = google_adc_file::discover().await;
             match &result {
                 Ok(provider) => {
@@ -102,11 +111,12 @@ impl AuthProvider for GoogleAdcAuthProvider {
                     let mut retry_state = self.retry_state.lock().await;
                     retry_state.last_failure = None;
                     retry_state.consecutive_failures = 0;
+                    retry_state.retrying = false;
                     drop(retry_state);
-                    
+
                     // Try to store in the OnceCell (may fail if another task beat us to it)
                     let _ = self.provider.set(Ok(provider.clone()));
-                    
+
                     return google_token::apply_request_auth(
                         provider.provider.as_ref(),
                         &self.scopes,
@@ -121,7 +131,9 @@ impl AuthProvider for GoogleAdcAuthProvider {
                     // Failed again, update retry state
                     let mut retry_state = self.retry_state.lock().await;
                     retry_state.last_failure = Some(std::time::Instant::now());
-                    retry_state.consecutive_failures = retry_state.consecutive_failures.saturating_add(1);
+                    retry_state.consecutive_failures =
+                        retry_state.consecutive_failures.saturating_add(1);
+                    retry_state.retrying = false;
                     let next_delay = (5u64 << retry_state.consecutive_failures.min(4)).min(60);
                     return Err(ProxyError::Config(format!(
                         "Google ADC discovery failed: {e}; will retry after {}s",
@@ -129,6 +141,13 @@ impl AuthProvider for GoogleAdcAuthProvider {
                     )));
                 }
             }
+        }
+
+        // If another request is currently retrying, return the cached error
+        if retry_in_progress {
+            return Err(ProxyError::Config(
+                "Google ADC discovery failed; retry in progress by another request".into(),
+            ));
         }
 
         // First-time discovery or not yet time to retry
@@ -298,51 +317,56 @@ mod quota_inheritance_tests {
 #[cfg(test)]
 mod retry_tests {
     use super::*;
-    
+
     #[tokio::test]
     async fn retry_state_allows_recovery() {
         let auth = GoogleAdcAuthProvider::new(&["read".into()]).unwrap();
-        
+
         // Simulate initial failure
         assert!(auth.provider.set(Err("initial failure".into())).is_ok());
         {
             let mut retry_state = auth.retry_state.lock().await;
-            retry_state.last_failure = Some(std::time::Instant::now() - std::time::Duration::from_secs(10));
+            retry_state.last_failure =
+                Some(std::time::Instant::now() - std::time::Duration::from_secs(10));
             retry_state.consecutive_failures = 1;
         }
-        
+
         // Verify retry state was set
         let retry_state = auth.retry_state.lock().await;
         assert_eq!(retry_state.consecutive_failures, 1);
         assert!(retry_state.last_failure.is_some());
     }
-    
+
     #[tokio::test]
     async fn exponential_backoff_calculation() {
         let auth = GoogleAdcAuthProvider::new(&["read".into()]).unwrap();
-        
+
         // Test backoff calculation
         let test_cases = vec![
-            (0, 5),   // 5 * 2^0 = 5
-            (1, 10),  // 5 * 2^1 = 10
-            (2, 20),  // 5 * 2^2 = 20
-            (3, 40),  // 5 * 2^3 = 40
-            (4, 60),  // 5 * 2^4 = 80, capped at 60
-            (5, 60),  // 5 * 2^5 = 160, capped at 60
+            (0, 5),  // 5 * 2^0 = 5
+            (1, 10), // 5 * 2^1 = 10
+            (2, 20), // 5 * 2^2 = 20
+            (3, 40), // 5 * 2^3 = 40
+            (4, 60), // 5 * 2^4 = 80, capped at 60
+            (5, 60), // 5 * 2^5 = 160, capped at 60
         ];
-        
+
         for (failures, expected_delay) in test_cases {
             let calculated = (5u64 << failures.min(4)).min(60);
-            assert_eq!(calculated, expected_delay, "Backoff for {} failures should be {}s", failures, expected_delay);
+            assert_eq!(
+                calculated, expected_delay,
+                "Backoff for {} failures should be {}s",
+                failures, expected_delay
+            );
         }
     }
-    
+
     #[test]
     fn retry_state_tracks_consecutive_failures() {
         let mut state = RetryState::default();
         assert_eq!(state.consecutive_failures, 0);
         assert!(state.last_failure.is_none());
-        
+
         state.last_failure = Some(std::time::Instant::now());
         state.consecutive_failures = 1;
         assert_eq!(state.consecutive_failures, 1);

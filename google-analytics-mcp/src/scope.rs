@@ -56,14 +56,14 @@ pub fn apply(body: &mut Value, args: &Value) -> Result<(), ProxyError> {
                     )));
                 }
             }
-            
+
             // All valid, build filters
             let hostname_filters: Vec<Value> = exclude_hostnames
                 .iter()
                 .filter_map(|v| v.as_str())
                 .map(|hostname| exact("hostName", hostname))
                 .collect();
-            
+
             filters.push(json!({
                 "notExpression": {
                     "orGroup": {
@@ -88,7 +88,8 @@ fn exact(field: &str, value: &str) -> Value {
 pub fn label(tool: &str, args: &Value) -> Value {
     let reporting = supported(tool) || tool == "analytics_realtime";
     let scoped = args.get("platform").is_some() || args.get("streamId").is_some();
-    let excluded_hostnames = args.get("excludeHostnames")
+    let excluded_hostnames = args
+        .get("excludeHostnames")
         .and_then(Value::as_array)
         .filter(|v| !v.is_empty());
     let filtered = args["request"].get("dimensionFilter").is_some()
