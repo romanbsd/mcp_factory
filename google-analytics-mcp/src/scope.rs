@@ -57,11 +57,22 @@ pub fn apply(body: &mut Value, args: &Value) -> Result<(), ProxyError> {
                 }
             }
 
-            // All valid, build filters
+            // All valid, build filters (case-insensitive hostname matching)
             let hostname_filters: Vec<Value> = exclude_hostnames
                 .iter()
                 .filter_map(|v| v.as_str())
-                .map(|hostname| exact("hostName", hostname))
+                .map(|hostname| {
+                    json!({
+                        "filter": {
+                            "fieldName": "hostName",
+                            "stringFilter": {
+                                "matchType": "EXACT",
+                                "value": hostname,
+                                "caseSensitive": false
+                            }
+                        }
+                    })
+                })
                 .collect();
 
             filters.push(json!({

@@ -84,8 +84,10 @@ impl AuthProvider for GoogleAdcAuthProvider {
         let (should_retry, retry_in_progress) = {
             let mut retry_state = self.retry_state.lock().await;
             if let Some(failure_time) = retry_state.last_failure {
-                // Exponential backoff: 5s * 2^failures, capped at 60s
-                let delay_secs = (5u64 << retry_state.consecutive_failures.min(4)).min(60);
+                // Exponential backoff: 5s, 10s, 20s, 40s, 60s (capped)
+                // Use consecutive_failures - 1 so first retry is at 5s
+                let delay_secs =
+                    (5u64 << retry_state.consecutive_failures.saturating_sub(1).min(4)).min(60);
                 let retry_after = std::time::Duration::from_secs(delay_secs);
                 let elapsed = failure_time.elapsed();
                 let can_retry = elapsed >= retry_after && !retry_state.retrying;
@@ -103,20 +105,38 @@ impl AuthProvider for GoogleAdcAuthProvider {
         };
 
         if should_retry {
-            // Retry discovery (only one caller at a time will reach here)
-            let result = google_adc_file::discover().await;
-            match &result {
-                Ok(provider) => {
-                    // Success! Store it and reset failure count
-                    let mut retry_state = self.retry_state.lock().await;
-                    retry_state.last_failure = None;
-                    retry_state.consecutive_failures = 0;
-                    retry_state.retrying = false;
-                    drop(retry_state);
+            // Spawn discovery in a detached task so cancellation of this request doesn't leave retrying=true
+            let provider_cell = self.provider.clone();
+            let retry_state_arc = self.retry_state.clone();
+            let discovery_handle = tokio::spawn(async move {
+                let result = google_adc_file::discover().await;
+                let mut retry_state = retry_state_arc.lock().await;
 
-                    // Try to store in the OnceCell (may fail if another task beat us to it)
-                    let _ = self.provider.set(Ok(provider.clone()));
+                match &result {
+                    Ok(provider) => {
+                        // Success! Reset failure state
+                        retry_state.last_failure = None;
+                        retry_state.consecutive_failures = 0;
+                        retry_state.retrying = false;
 
+                        // Try to store in the OnceCell (may fail if another task beat us to it)
+                        let _ = provider_cell.set(Ok(provider.clone()));
+                        Ok(provider.clone())
+                    }
+                    Err(e) => {
+                        // Failed again, update retry state
+                        retry_state.last_failure = Some(std::time::Instant::now());
+                        retry_state.consecutive_failures =
+                            retry_state.consecutive_failures.saturating_add(1);
+                        retry_state.retrying = false;
+                        Err(e.clone())
+                    }
+                }
+            });
+
+            // Await the discovery result
+            match discovery_handle.await {
+                Ok(Ok(provider)) => {
                     return google_token::apply_request_auth(
                         provider.provider.as_ref(),
                         &self.scopes,
@@ -127,18 +147,22 @@ impl AuthProvider for GoogleAdcAuthProvider {
                     )
                     .await;
                 }
-                Err(e) => {
-                    // Failed again, update retry state
-                    let mut retry_state = self.retry_state.lock().await;
-                    retry_state.last_failure = Some(std::time::Instant::now());
-                    retry_state.consecutive_failures =
-                        retry_state.consecutive_failures.saturating_add(1);
-                    retry_state.retrying = false;
-                    let next_delay = (5u64 << retry_state.consecutive_failures.min(4)).min(60);
+                Ok(Err(e)) => {
+                    let retry_state = self.retry_state.lock().await;
+                    let next_delay =
+                        (5u64 << retry_state.consecutive_failures.saturating_sub(1).min(4)).min(60);
                     return Err(ProxyError::Config(format!(
                         "Google ADC discovery failed: {e}; will retry after {}s",
                         next_delay
                     )));
+                }
+                Err(_) => {
+                    // Task panicked; clear retry flag and treat as error
+                    let mut retry_state = self.retry_state.lock().await;
+                    retry_state.retrying = false;
+                    return Err(ProxyError::Config(
+                        "Google ADC discovery task failed".into(),
+                    ));
                 }
             }
         }
@@ -150,33 +174,55 @@ impl AuthProvider for GoogleAdcAuthProvider {
             ));
         }
 
-        // First-time discovery or not yet time to retry
-        let provider = self
-            .provider
-            .get_or_init(google_adc_file::discover)
-            .await
-            .as_ref()
-            .map_err(|e| {
-                // Record the initial failure
-                let retry_state = self.retry_state.clone();
-                std::mem::drop(tokio::spawn(async move {
-                    let mut state = retry_state.lock().await;
-                    state.last_failure = Some(std::time::Instant::now());
-                    state.consecutive_failures = 1;
-                }));
+        // First-time discovery or not yet time to retry - check if already initialized
+        if let Some(result) = self.provider.get() {
+            // Already initialized (either success or cached error)
+            let provider = result.as_ref().map_err(|e| {
                 ProxyError::Config(format!(
                     "Google ADC discovery failed: {e}; will retry after 5 seconds"
                 ))
             })?;
-        google_token::apply_request_auth(
-            provider.provider.as_ref(),
-            &self.scopes,
-            self.quota_project
-                .as_deref()
-                .or(provider.quota_project.as_deref()),
-            request,
-        )
-        .await
+            return google_token::apply_request_auth(
+                provider.provider.as_ref(),
+                &self.scopes,
+                self.quota_project
+                    .as_deref()
+                    .or(provider.quota_project.as_deref()),
+                request,
+            )
+            .await;
+        }
+
+        // First-time discovery
+        let result = google_adc_file::discover().await;
+
+        match result {
+            Ok(provider) => {
+                // Success on first try
+                let _ = self.provider.set(Ok(provider.clone()));
+                google_token::apply_request_auth(
+                    provider.provider.as_ref(),
+                    &self.scopes,
+                    self.quota_project
+                        .as_deref()
+                        .or(provider.quota_project.as_deref()),
+                    request,
+                )
+                .await
+            }
+            Err(e) => {
+                // Initial failure - record it and cache the error
+                let _ = self.provider.set(Err(e.clone()));
+                let mut retry_state = self.retry_state.lock().await;
+                retry_state.last_failure = Some(std::time::Instant::now());
+                retry_state.consecutive_failures = 1;
+                drop(retry_state);
+
+                Err(ProxyError::Config(format!(
+                    "Google ADC discovery failed: {e}; will retry after 5 seconds"
+                )))
+            }
+        }
     }
     fn api_key_query(&self) -> Option<(String, String)> {
         None

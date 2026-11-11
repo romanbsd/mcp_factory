@@ -33,7 +33,7 @@ variable to the key path. Never commit credentials.
 | `metadata` | Search standard and custom metrics/dimensions; at most 50 matches per kind |
 | `validate_report` | Core metric/dimension compatibility |
 | `run_report` | Full Core REST report request |
-| `overview`, `acquisition`, `content`, `events`, `ecommerce` | Deterministic report presets; optional daily grouping. Overview includes 10 metrics: engagement rate, duration, page views, new/returning users, bounce rate, and revenue |
+| `overview`, `acquisition`, `content`, `events`, `ecommerce` | Deterministic report presets; optional daily grouping. Overview includes 10 metrics: active users, new users, sessions, engaged sessions, engagement rate, session duration, page views, page views per session, bounce rate, and revenue |
 | `compare` | Two explicit date ranges in one report |
 | `realtime`, `funnel`, `conversions`, `pivot` | Specialized REST reporting |
 | `batch` | Up to five Core requests for one property |

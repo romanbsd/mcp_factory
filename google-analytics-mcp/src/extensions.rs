@@ -19,6 +19,8 @@ fn extract_hostname(input: &str) -> Option<String> {
             .next()?
             .split('?')
             .next()?
+            .split('#')
+            .next()?
             .split(':')
             .next()?;
         return Some(hostname.to_lowercase());
@@ -31,6 +33,8 @@ fn extract_hostname(input: &str) -> Option<String> {
             .next()?
             .split('?')
             .next()?
+            .split('#')
+            .next()?
             .split(':')
             .next()?;
         return Some(hostname.to_lowercase());
@@ -42,6 +46,8 @@ fn extract_hostname(input: &str) -> Option<String> {
             .split('/')
             .next()?
             .split('?')
+            .next()?
+            .split('#')
             .next()?
             .split(':')
             .next()?;
@@ -1385,6 +1391,19 @@ mod new_features_tests {
         assert_eq!(
             extract_hostname("www.example.com?foo=bar"),
             Some("www.example.com".into())
+        );
+        // URLs with fragments
+        assert_eq!(
+            extract_hostname("https://example.com#section"),
+            Some("example.com".into())
+        );
+        assert_eq!(
+            extract_hostname("example.com#section"),
+            Some("example.com".into())
+        );
+        assert_eq!(
+            extract_hostname("https://example.com/path?query=1#fragment"),
+            Some("example.com".into())
         );
         assert_eq!(extract_hostname("not a url"), None);
     }

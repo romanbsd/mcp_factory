@@ -77,10 +77,10 @@ At the cost of:
 - Fails safely: users know when resolution is unavailable
 
 **Cons:**
-- **Usability regression:** Hostname resolution works for 90% of accounts but fails categorically for the remaining 10%, even when the target property is in the first 200
+- **Usability regression:** Hostname resolution works for accounts with few properties but fails categorically for accounts with many properties, even when the target property is in the first page
 - **Error messages:** "Your account is too large for hostname resolution" is a poor UX when the property might be scanned successfully
 
-**Rejected because:** Partial coverage is better than categorical failure. The workaround (use numeric ID) is the same either way, but partial coverage succeeds for most users.
+**Rejected because:** Partial coverage is better than categorical failure. The workaround (use numeric ID) is the same either way, but partial coverage succeeds for accounts within the scanned range.
 
 ### Alternative 3: Cache Account Summaries Across Requests
 
@@ -139,7 +139,7 @@ At the cost of:
 
 Revisit this design if:
 
-1. **User reports indicate frequent failures:** If >10% of real-world hostname resolutions fail due to incomplete coverage, full pagination may be justified
+1. **User reports indicate frequent failures:** If real-world hostname resolutions frequently fail due to incomplete coverage, full pagination may be justified
 2. **Google adds a search API:** If the Admin API gains a `properties.search` endpoint that accepts hostname queries, we can delegate to that instead
 3. **Rate limits are relaxed:** If per-user QPS limits increase significantly, parallel stream lookups become safer
 4. **Caching is standardized:** If the MCP server gains a standard per-session cache mechanism, cached summaries become viable
