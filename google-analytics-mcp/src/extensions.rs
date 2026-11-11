@@ -51,8 +51,97 @@ fn extract_hostname(input: &str) -> Option<String> {
     None
 }
 
-/// Resolve property identifier to numeric ID. Accepts numeric IDs (pass-through),
-/// display names, or web domains/URLs. Follows pagination to ensure complete search.
+/// Resolve property identifier to numeric ID.
+///
+/// # Supported Input Formats
+///
+/// 1. **Numeric ID** (e.g., `"123456"`) — returned as-is without any API calls
+/// 2. **Full resource name** (e.g., `"properties/123456"`) — treated as numeric ID
+/// 3. **Display name** (e.g., `"My Website"`) — resolved via account summaries
+/// 4. **Bare domain** (e.g., `"example.com"`) — resolved via web stream lookup
+/// 5. **Full URL** (e.g., `"https://example.com/path"`) — hostname extracted, then resolved
+///
+/// # Resolution Algorithm
+///
+/// ## Phase 1: Display Name Search (paginated)
+///
+/// - Fetches account summaries with `pageSize=200` (up to **10 pages = 2000 properties max**)
+/// - For each page, compares the normalized (lowercase) identifier against each property's `displayName`
+/// - If exactly one match is found across all pages, returns that property ID
+/// - If multiple matches are found, returns an ambiguity error listing all matches
+/// - If no matches are found, proceeds to Phase 2
+///
+/// **Coverage**: Up to 2000 properties total. If your account has more than 2000 properties
+/// and the target is not in the first 2000, resolution will fail with "Property search
+/// incomplete after 10 pages".
+///
+/// ## Phase 2: Hostname/URL Fallback (partial scan, **known limitation**)
+///
+/// If the identifier contains a dot and no display-name match was found, attempts hostname matching:
+///
+/// 1. Extracts the hostname from the identifier (stripping scheme, port, path, query)
+/// 2. **Re-fetches only the first page** of account summaries (`pageSize=200`, no pagination)
+/// 3. For each property in that first page (up to 200):
+///    - Lists its data streams with `pageSize=50` (**no pagination**)
+///    - Compares the hostname from each stream's `defaultUri` against the target hostname
+///    - If an exact hostname match is found, records that property
+/// 4. If exactly one property matched, returns its ID
+/// 5. If multiple properties matched, returns an ambiguity error
+/// 6. If no properties matched, returns "not found"
+///
+/// ### Known Limitations of Hostname Fallback
+///
+/// - **Only scans the first 200 properties** (first page of account summaries)
+///   - Properties beyond the first 200 are never examined, even if display-name search
+///     already paginated through them
+/// - **Only scans the first 50 data streams per property** (no stream pagination)
+///   - If a property has more than 50 streams and the matching stream is not in the first 50,
+///     it will not be found
+/// - **No ambiguity detection across all properties**
+///   - If two properties (one in the first 200, one after) both have matching hostnames,
+///     only the first-page property is returned, without detecting the ambiguity
+///
+/// These limitations mean hostname/URL resolution can:
+/// - Silently miss a property that exists but is outside the scanned pages
+/// - Silently return a non-unique match when multiple properties share the hostname
+/// - Return "not found" even when a matching property exists beyond the scanned range
+///
+/// # Failure Modes
+///
+/// - **"Property search incomplete after 10 pages"**: Account has >2000 properties and
+///   display-name search didn't find a match in the first 2000
+/// - **"Property identifier 'X' is ambiguous"**: Multiple properties matched (either by
+///   display name across all pages, or by hostname in the scanned subset)
+/// - **"Failed to resolve property identifier"**: No properties matched, or upstream API error
+///
+/// # Design Rationale
+///
+/// Full pagination of all properties and all data streams would be correct but expensive:
+/// - **API call count**: For an account with 1000 properties, full stream pagination could
+///   require 1000+ `dataStreams.list` calls (one per property)
+/// - **Latency**: Serial stream lookups would add seconds of delay to every tool call
+/// - **Quota**: Google Analytics Admin API has rate limits; aggressive pagination could
+///   quickly exhaust daily quotas
+///
+/// The current partial scan covers the common case (small-to-medium accounts, properties
+/// in the first 200, streams in the first 50) while keeping latency and quota consumption
+/// reasonable for typical interactive use.
+///
+/// # Workaround
+///
+/// **Always use the numeric property ID when available.** Numeric IDs bypass all resolution
+/// logic and API calls. To find your property ID:
+/// 1. Visit Google Analytics Admin → Property Settings
+/// 2. Copy the numeric Property ID (e.g., `123456789`)
+/// 3. Use that directly in all tool calls: `{"propertyId": "123456789"}`
+///
+/// This guarantees correct resolution regardless of account size, naming ambiguity, or
+/// stream pagination.
+///
+/// # See Also
+///
+/// - Design rationale and alternatives: `docs/property-resolution.md`
+/// - User-facing documentation: `README.md` "Property Resolution" section
 async fn resolve_property_id(
     invoker: &dyn OperationInvoker,
     identifier: &str,
@@ -274,7 +363,7 @@ pub fn build_custom_tools() -> Vec<CustomToolSpec> {
 
         // Add base properties based on tool type
         if name != "analytics_change_history" {
-            schema["properties"]["propertyId"] = json!({"type":"string","description":"Numeric property ID, property display name, or web stream URL/domain (e.g. '561397529', 'AnimalMeaning', or 'animalmeaning.com')"});
+            schema["properties"]["propertyId"] = json!({"type":"string","description":"Numeric ID, display name, or URL/domain. Examples: '561397529', 'AnimalMeaning', 'animalmeaning.com'. Large accounts: use numeric ID."});
         }
         if name == "analytics_change_history" {
             schema["properties"]["accountId"] = json!({"type":"string","pattern":"^[0-9]+$"});
@@ -343,7 +432,7 @@ pub fn build_custom_tools() -> Vec<CustomToolSpec> {
         if name == "analytics_annotations" {
             schema = annotations::schema();
             // Override propertyId to accept flexible identifiers
-            schema["properties"]["propertyId"] = json!({"type":"string","description":"Numeric property ID, property display name, or web stream URL/domain (e.g. '561397529', 'AnimalMeaning', or 'animalmeaning.com')"});
+            schema["properties"]["propertyId"] = json!({"type":"string","description":"Numeric ID, display name, or URL/domain. Examples: '561397529', 'AnimalMeaning', 'animalmeaning.com'. Large accounts: use numeric ID."});
         }
         CustomToolSpec { name:name.into(), description:description.into(), input_schema:schema,
             hints:ToolHints {read_only:Some(true), destructive:Some(false), idempotent:Some(true), open_world:Some(true), ..Default::default()},

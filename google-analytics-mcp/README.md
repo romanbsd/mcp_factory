@@ -42,11 +42,40 @@ variable to the key path. Never commit credentials.
 | `quota` | Alpha quota snapshot |
 | `access_audit`, `change_history` | Data access and configuration change evidence |
 
-Pass `propertyId` as a **numeric string** (e.g. `"561397529"`), property **display name**
-(e.g. `"AnimalMeaning"`), or **web stream domain/URL** (e.g. `"animalmeaning.com"` or
-`"https://animalmeaning.com"`). The server resolves non-numeric identifiers via the
-Admin API account summaries; ambiguous names fail with a clear error. Numeric IDs
-pass through unchanged. Use `accountId` for change history.
+### Property resolution
+
+`propertyId` accepts three input formats:
+
+1. **Numeric ID** (e.g. `"561397529"`) — always works, no API calls, recommended for all use cases
+2. **Display name** (e.g. `"AnimalMeaning"`) — resolved via Admin API, supports up to 2000 properties
+3. **Web stream URL/domain** (e.g. `"animalmeaning.com"` or `"https://animalmeaning.com"`) — resolved via web stream lookup, **limited to first 200 properties**
+
+#### How resolution works
+
+**Numeric IDs** pass through immediately without any lookups.
+
+**Display names** are resolved by paginating through account summaries (up to 10 pages × 200 properties = 2000 max). If exactly one property matches, that ID is used. If multiple properties have the same display name, resolution fails with an ambiguity error listing all matches.
+
+**Hostnames/URLs** first check for display-name matches. If none are found, the hostname is extracted and compared against web stream `defaultUri` values. **This hostname fallback only scans the first 200 properties and the first 50 data streams per property** to keep API call count and latency reasonable.
+
+#### Known limitations
+
+The hostname/URL fallback has incomplete coverage:
+- Properties beyond the first 200 are never examined
+- Data streams beyond the first 50 per property are not checked
+- Ambiguity across the full account is not detected (only within the scanned subset)
+
+This means hostname resolution can silently miss a property that exists outside the scanned range, or return a match when multiple undetected properties share the hostname. For accounts with many properties or properties with many streams, **use the numeric property ID**.
+
+#### Finding your numeric property ID
+
+1. Visit Google Analytics Admin → Property Settings
+2. Copy the numeric Property ID shown at the top (e.g. `123456789`)
+3. Use that in all tool calls: `{"propertyId": "123456789"}`
+
+Numeric IDs guarantee correct resolution regardless of account size, naming collisions, or stream configuration.
+
+Use `accountId` (always numeric) for `analytics_change_history`.
 
 `request` uses Google's REST **camelCase** fields. Presets choose dimensions and
 metrics; request filters and ordering remain available. Default dates are
