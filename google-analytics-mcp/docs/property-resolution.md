@@ -32,11 +32,11 @@ If no display-name match is found and the identifier looks like a hostname/URL:
 5. Return the first unique match, or fail on ambiguity within the scanned subset
 
 **Parameters:**
-- Account summary pagination: **none** (first page only, 200 properties)
+- Account summary pagination: **none** (first page only, 200 accounts — each may contain multiple properties)
 - Data streams per property: **none** (first page only, 50 streams)
-- Ambiguity detection: only within the scanned 200 properties
+- Ambiguity detection: only within the scanned accounts/properties
 
-**API calls:** 1 `accountSummaries.list` + up to 200 `properties.dataStreams.list` calls
+**API calls:** 1 `accountSummaries.list` + one `properties.dataStreams.list` per property in the returned accounts (potentially more than 200 total calls if accounts have many properties)
 
 ### Tradeoffs
 

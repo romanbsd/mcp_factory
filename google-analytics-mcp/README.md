@@ -113,10 +113,10 @@ manual `dimensionFilter` construction on every report.
 
 ### Verbose mode
 
-By default, responses omit verbose quota blocks and metadata to reduce noise. Set
-`"verbose":true` to include full `propertyQuota`, `kind`, and other diagnostic details.
-Sampling warnings, thresholding notices, and pagination state remain visible regardless
-of verbosity.
+By default, responses omit verbose quota blocks to reduce noise. Set
+`"verbose":true` to include full `propertyQuota` and `kind` fields.
+Metadata, sampling warnings, thresholding notices, and pagination state remain visible
+regardless of verbosity.
 
 ```json
 {"propertyId":"123456","verbose":true}

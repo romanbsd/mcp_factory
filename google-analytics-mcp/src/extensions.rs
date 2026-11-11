@@ -62,9 +62,10 @@ fn extract_hostname(input: &str) -> Option<String> {
 /// # Supported Input Formats
 ///
 /// 1. **Numeric ID** (e.g., `"123456"`) — returned as-is without any API calls
-/// 2. **Full resource name** (e.g., `"properties/123456"`) — treated as numeric ID
-/// 3. **Display name** (e.g., `"My Website"`) — resolved via account summaries
-/// 4. **Bare domain** (e.g., `"example.com"`) — resolved via web stream lookup
+/// 2. **Display name** (e.g., `"My Website"`) — resolved via account summaries
+/// 3. **Bare domain/URL** (e.g., `"example.com"`, `"https://example.com"`) — resolved via web stream lookup
+///
+/// Note: Full resource names (e.g., `"properties/123456"`) are NOT supported — extract the numeric ID instead.
 /// 5. **Full URL** (e.g., `"https://example.com/path"`) — hostname extracted, then resolved
 ///
 /// # Resolution Algorithm
@@ -119,6 +120,14 @@ fn extract_hostname(input: &str) -> Option<String> {
 /// - **"Property identifier 'X' is ambiguous"**: Multiple properties matched (either by
 ///   display name across all pages, or by hostname in the scanned subset)
 /// - **"Failed to resolve property identifier"**: No properties matched, or upstream API error
+///
+/// # Known Limitations
+///
+/// - **Display name vs hostname priority**: If an identifier matches both a property's display
+///   name AND another property's web stream hostname (e.g., one property is named "example.com"
+///   and another has a stream at example.com), the display-name match is returned without
+///   checking for the hostname collision. This could return the wrong property for URL lookups.
+///   Workaround: Use numeric property IDs when ambiguity is possible.
 ///
 /// # Design Rationale
 ///
