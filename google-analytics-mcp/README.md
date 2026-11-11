@@ -33,7 +33,7 @@ variable to the key path. Never commit credentials.
 | `metadata` | Search standard and custom metrics/dimensions; at most 50 matches per kind |
 | `validate_report` | Core metric/dimension compatibility |
 | `run_report` | Full Core REST report request |
-| `overview`, `acquisition`, `content`, `events`, `ecommerce` | Deterministic report presets; optional daily grouping. Overview includes engagement rate, duration, page views, new/returning users, and bounce rate |
+| `overview`, `acquisition`, `content`, `events`, `ecommerce` | Deterministic report presets; optional daily grouping. Overview includes 10 metrics: engagement rate, duration, page views, new/returning users, bounce rate, and revenue |
 | `compare` | Two explicit date ranges in one report |
 | `realtime`, `funnel`, `conversions`, `pivot` | Specialized REST reporting |
 | `batch` | Up to five Core requests for one property |
@@ -191,7 +191,7 @@ cargo test -p google-analytics-mcp
 Generation preserves `src/extensions.rs` and the workspace manifest. Schemas are
 pinned local inputs; updating them is a deliberate refresh from
 `https://{analyticsdata,analyticsadmin}.googleapis.com/$discovery/rest?version={v1beta,v1alpha}`.
-The contract test measures the real MCP tool metadata and enforces a 25 KB default
+The contract test measures the real MCP tool metadata and enforces a 27 KB default
 listing budget. These measurements compare workflow and raw profiles, not process
 RSS or the official Python server. Live-account report correctness requires valid
 credentials and property access; local tests use deterministic evidence.

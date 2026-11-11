@@ -38,21 +38,39 @@ pub fn apply(body: &mut Value, args: &Value) -> Result<(), ProxyError> {
     }
     if let Some(exclude_hostnames) = args.get("excludeHostnames").and_then(Value::as_array) {
         if !exclude_hostnames.is_empty() {
+            // Validate all hostnames before applying any filters
+            for (i, hostname) in exclude_hostnames.iter().enumerate() {
+                let hostname_str = hostname.as_str().ok_or_else(|| {
+                    ProxyError::Validation(format!("excludeHostnames[{}] must be a string", i))
+                })?;
+                if hostname_str.is_empty() {
+                    return Err(ProxyError::Validation(format!(
+                        "excludeHostnames[{}] cannot be empty",
+                        i
+                    )));
+                }
+                if hostname_str.len() > 255 {
+                    return Err(ProxyError::Validation(format!(
+                        "excludeHostnames[{}] exceeds 255 characters",
+                        i
+                    )));
+                }
+            }
+            
+            // All valid, build filters
             let hostname_filters: Vec<Value> = exclude_hostnames
                 .iter()
                 .filter_map(|v| v.as_str())
-                .filter(|s| !s.is_empty() && s.len() <= 255)
                 .map(|hostname| exact("hostName", hostname))
                 .collect();
-            if !hostname_filters.is_empty() {
-                filters.push(json!({
-                    "notExpression": {
-                        "orGroup": {
-                            "expressions": hostname_filters
-                        }
+            
+            filters.push(json!({
+                "notExpression": {
+                    "orGroup": {
+                        "expressions": hostname_filters
                     }
-                }));
-            }
+                }
+            }));
         }
     }
     if filters.is_empty() {
