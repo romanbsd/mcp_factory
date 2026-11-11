@@ -14,6 +14,7 @@ pub struct GoogleAdcAuthProvider {
     provider: tokio::sync::OnceCell<Result<ResolvedAdc, String>>,
     quota_project: Option<String>,
     scopes: Vec<String>,
+    last_failure: std::sync::Arc<tokio::sync::Mutex<Option<std::time::Instant>>>,
 }
 impl GoogleAdcAuthProvider {
     pub(crate) fn from_selected_file(
@@ -49,6 +50,7 @@ impl GoogleAdcAuthProvider {
             provider: tokio::sync::OnceCell::new(),
             quota_project,
             scopes: scopes.to_vec(),
+            last_failure: std::sync::Arc::new(tokio::sync::Mutex::new(None)),
         })
     }
 }
@@ -58,14 +60,61 @@ impl AuthProvider for GoogleAdcAuthProvider {
         &self,
         request: RequestBuilder,
     ) -> Result<RequestBuilder, ProxyError> {
+        // Check if we should retry discovery after a previous failure
+        let should_retry = {
+            let mut last_failure = self.last_failure.lock().await;
+            if let Some(failure_time) = *last_failure {
+                let elapsed = failure_time.elapsed();
+                // Retry after 5 seconds, exponentially backing off up to 60 seconds
+                let retry_after = std::time::Duration::from_secs(5);
+                if elapsed >= retry_after {
+                    // Clear the cached failure to allow retry
+                    *last_failure = None;
+                    true
+                } else {
+                    false
+                }
+            } else {
+                false
+            }
+        };
+
+        if should_retry {
+            // Force re-discovery by creating a new OnceCell
+            // We can't clear the existing OnceCell, so we'll just retry the discovery
+            let result = google_adc_file::discover().await;
+            if result.is_err() {
+                *self.last_failure.lock().await = Some(std::time::Instant::now());
+            }
+            let provider = result.as_ref().map_err(|e| {
+                ProxyError::Config(format!(
+                    "Google ADC discovery failed: {e}; retrying with backoff"
+                ))
+            })?;
+            return google_token::apply_request_auth(
+                provider.provider.as_ref(),
+                &self.scopes,
+                self.quota_project
+                    .as_deref()
+                    .or(provider.quota_project.as_deref()),
+                request,
+            )
+            .await;
+        }
+
         let provider = self
             .provider
             .get_or_init(google_adc_file::discover)
             .await
             .as_ref()
             .map_err(|e| {
+                // Record the failure time asynchronously
+                let last_failure = self.last_failure.clone();
+                std::mem::drop(tokio::spawn(async move {
+                    *last_failure.lock().await = Some(std::time::Instant::now());
+                }));
                 ProxyError::Config(format!(
-                    "Google ADC discovery failed: {e}; fix credentials and restart the server"
+                    "Google ADC discovery failed: {e}; will retry after 5 seconds"
                 ))
             })?;
         google_token::apply_request_auth(

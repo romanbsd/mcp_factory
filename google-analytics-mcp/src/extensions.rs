@@ -6,6 +6,126 @@ mod diagnostics;
 mod lifecycle;
 #[path = "scope.rs"]
 mod scope;
+
+/// Resolve property identifier to numeric ID. Accepts numeric IDs (pass-through),
+/// display names, or web domains/URLs.
+async fn resolve_property_id(
+    invoker: &dyn OperationInvoker,
+    identifier: &str,
+) -> Result<String, ProxyError> {
+    // If it's already a numeric ID, return it as-is
+    if identifier.bytes().all(|b| b.is_ascii_digit()) && !identifier.is_empty() {
+        return Ok(identifier.to_string());
+    }
+
+    // Otherwise, fetch account summaries and search for the property
+    let result = invoke(
+        invoker,
+        "analyticsadmin_v1beta_accountSummaries_list",
+        json!({"pageSize":200}),
+    )
+    .await;
+
+    if result["status"] != "complete" {
+        return Err(ProxyError::Validation(format!(
+            "Failed to resolve property identifier '{}': {}",
+            identifier,
+            result["error"].as_str().unwrap_or("unknown error")
+        )));
+    }
+
+    let summaries = result["data"]["accountSummaries"]
+        .as_array()
+        .ok_or_else(|| ProxyError::Validation("No account summaries available".into()))?;
+
+    // Normalize the identifier for comparison
+    let normalized_identifier = identifier.to_lowercase();
+    let is_url = normalized_identifier.starts_with("http")
+        || normalized_identifier.starts_with("www.")
+        || normalized_identifier.contains("://");
+
+    let mut matches = Vec::new();
+
+    for account in summaries {
+        if let Some(properties) = account["propertySummaries"].as_array() {
+            for property in properties {
+                let property_id = property["property"]
+                    .as_str()
+                    .and_then(|s| s.strip_prefix("properties/"))
+                    .unwrap_or("");
+
+                // Check display name
+                if let Some(display_name) = property["displayName"].as_str() {
+                    if display_name.to_lowercase() == normalized_identifier {
+                        matches.push((property_id.to_string(), display_name.to_string()));
+                    }
+                }
+
+                // Check property name (properties/{id})
+                if let Some(prop_name) = property["property"].as_str() {
+                    if prop_name.to_lowercase() == normalized_identifier {
+                        matches.push((property_id.to_string(), property["displayName"].as_str().unwrap_or(prop_name).to_string()));
+                    }
+                }
+            }
+        }
+    }
+
+    // If no matches on names, try to match web stream URLs/domains
+    if matches.is_empty() && is_url {
+        for account in summaries {
+            if let Some(properties) = account["propertySummaries"].as_array() {
+                for property in properties {
+                    let property_id = property["property"]
+                        .as_str()
+                        .and_then(|s| s.strip_prefix("properties/"))
+                        .unwrap_or("");
+
+                    // Fetch property details to check data streams
+                    let property_full_name = property["property"].as_str().unwrap_or("");
+                    let streams_result = invoke(
+                        invoker,
+                        "analyticsadmin_v1beta_properties_dataStreams_list",
+                        json!({"parent":property_full_name,"pageSize":50}),
+                    )
+                    .await;
+
+                    if let Some(streams) = streams_result["data"]["dataStreams"].as_array() {
+                        for stream in streams {
+                            if let Some(web_data) = stream["webStreamData"].as_object() {
+                                if let Some(default_uri) = web_data.get("defaultUri").and_then(Value::as_str) {
+                                    let uri_lower = default_uri.to_lowercase();
+                                    if uri_lower.contains(&normalized_identifier)
+                                        || normalized_identifier.contains(uri_lower.trim_start_matches("https://").trim_start_matches("http://").trim_start_matches("www."))
+                                    {
+                                        matches.push((property_id.to_string(), property["displayName"].as_str().unwrap_or(property_full_name).to_string()));
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    match matches.len() {
+        0 => Err(ProxyError::Validation(format!(
+            "Property identifier '{}' not found. Use a numeric property ID, exact display name, or web stream URL/domain.",
+            identifier
+        ))),
+        1 => Ok(matches[0].0.clone()),
+        _ => {
+            let names: Vec<String> = matches.iter().map(|(id, name)| format!("{} ({})", name, id)).collect();
+            Err(ProxyError::Validation(format!(
+                "Property identifier '{}' is ambiguous. Matches: {}. Use the numeric property ID instead.",
+                identifier,
+                names.join(", ")
+            )))
+        }
+    }
+}
 /// Server-owned provider selection; generated startup detects this optional hook.
 pub fn build_auth_provider(
     config: &mcp_factory_core::ProxyConfig,
@@ -49,17 +169,54 @@ pub fn build_custom_tools() -> Vec<CustomToolSpec> {
         ("analytics_change_history", "Search account configuration history using Google REST filters and page tokens.")
     ];
     definitions.into_iter().map(|(name, description)| {
-        let mut schema = json!({"type":"object","additionalProperties":false,"properties":{
-            "propertyId":{"type":"string","pattern":"^[0-9]+$"},
-            "accountId":{"type":"string","pattern":"^[0-9]+$"},
-            "startDate":{"type":"string","default":"28daysAgo"},
-            "endDate":{"type":"string","default":"yesterday"},
-            "query":{"type":"string","maxLength":200},
-            "daily":{"type":"boolean","default":false},
-            "limit":{"type":"integer","minimum":1,"maximum":1000,"default":100},
-            "request":{"type":"object","description":"Google REST camelCase request fields; nested API fields are validated by the generated operation."},
-            "pageToken":{"type":"string"}
-        }});
+        let mut schema = json!({"type":"object","additionalProperties":false,"properties":{}});
+        
+        // Add base properties based on tool type
+        if name != "analytics_change_history" {
+            schema["properties"]["propertyId"] = json!({"type":"string","description":"Numeric property ID, property display name, or web stream URL/domain (e.g. '561397529', 'AnimalMeaning', or 'animalmeaning.com')"});
+        }
+        if name == "analytics_change_history" {
+            schema["properties"]["accountId"] = json!({"type":"string","pattern":"^[0-9]+$"});
+        }
+        
+        // Date parameters only for reporting tools
+        let is_reporting_tool = ![
+            "analytics_discover_properties",
+            "analytics_property_configuration",
+            "analytics_metadata",
+            "analytics_quota",
+            "analytics_change_history",
+            "analytics_annotations"
+        ].contains(&name);
+        
+        if is_reporting_tool {
+            schema["properties"]["startDate"] = json!({"type":"string","default":"28daysAgo"});
+            schema["properties"]["endDate"] = json!({"type":"string","default":"yesterday"});
+        }
+        
+        // Tool-specific properties
+        if name == "analytics_metadata" {
+            schema["properties"]["query"] = json!({"type":"string","maxLength":200});
+        }
+        if is_reporting_tool && !["analytics_realtime","analytics_validate_report","analytics_funnel","analytics_conversions","analytics_pivot","analytics_batch","analytics_compare","analytics_access_audit","analytics_run_report","analytics_activation","analytics_retention"].contains(&name) {
+            schema["properties"]["daily"] = json!({"type":"boolean","default":false});
+        }
+        
+        schema["properties"]["limit"] = json!({"type":"integer","minimum":1,"maximum":1000,"default":100});
+        
+        if ["analytics_run_report","analytics_realtime","analytics_validate_report","analytics_funnel","analytics_conversions","analytics_pivot","analytics_batch","analytics_compare","analytics_access_audit"].contains(&name) {
+            schema["properties"]["request"] = json!({"type":"object","description":"Google REST camelCase request fields; nested API fields are validated by the generated operation."});
+        }
+        
+        if ["analytics_discover_properties","analytics_annotations","analytics_change_history"].contains(&name) {
+            schema["properties"]["pageToken"] = json!({"type":"string"});
+        }
+        
+        if scope::supported(name) {
+            schema["properties"]["excludeHostnames"] = json!({"type":"array","items":{"type":"string"},"maxItems":20,"description":"Hostnames to exclude from reports (e.g. localhost, 127.0.0.1). Combined with other filters via AND."});
+        }
+        
+        schema["properties"]["verbose"] = json!({"type":"boolean","default":false,"description":"Include full propertyQuota and pagination details in responses."});
         if scope::supported(name) {
             schema["properties"]["platform"] = json!({"enum":["Android","iOS","web"],"description":"Explicit event platform; omitted means property-wide, potentially mixing Android, iOS and web."});
             schema["properties"]["streamId"] = json!({"type":"string","pattern":"^[0-9]+$","description":"Numeric GA data stream ID, not Firebase app ID, package name or measurement ID. ANDed with platform and request filters."});
@@ -123,7 +280,7 @@ async fn invoke(invoker: &dyn OperationInvoker, operation: &str, args: Value) ->
         },
     }
 }
-fn bounded_report(body: &mut Value, limit: u64) {
+fn bounded_report(body: &mut Value, limit: u64, verbose: bool) {
     let requested = body["limit"]
         .as_str()
         .and_then(|s| s.parse::<u64>().ok())
@@ -132,7 +289,7 @@ fn bounded_report(body: &mut Value, limit: u64) {
     body["limit"] = json!(requested.clamp(1, limit));
     // Discovery int64 fields use strings on the wire.
     body["limit"] = json!(body["limit"].as_u64().unwrap().to_string());
-    body["returnPropertyQuota"] = json!(true);
+    body["returnPropertyQuota"] = json!(verbose);
 }
 /// Return true when the report contains only part of its advertised rows.
 fn mark_pagination(value: &mut Value, request: &Value) -> bool {
@@ -183,17 +340,26 @@ fn mark_pagination(value: &mut Value, request: &Value) -> bool {
     }
     !complete
 }
-fn compact(value: &mut Value) {
+fn compact(value: &mut Value, verbose: bool) {
     for key in ["funnelTable", "funnelVisualization"] {
         if let Some(report) = value.get_mut(key) {
-            compact(report);
+            compact(report, verbose);
         }
     }
     if let Some(reports) = value.get_mut("reports").and_then(Value::as_array_mut) {
         for report in reports {
-            compact(report);
+            compact(report, verbose);
         }
     }
+    
+    // Remove verbose quota information unless explicitly requested
+    if !verbose {
+        if let Some(obj) = value.as_object_mut() {
+            obj.remove("propertyQuota");
+            obj.remove("kind");
+        }
+    }
+    
     let headers: Vec<String> = value["dimensionHeaders"]
         .as_array()
         .into_iter()
@@ -223,13 +389,23 @@ impl CustomToolHandler for Handler {
     async fn call(
         &self,
         invoker: &dyn OperationInvoker,
-        args: Value,
+        mut args: Value,
     ) -> Result<ToolResult, ProxyError> {
+        // Resolve property identifier to numeric ID if needed
+        if let Some(property_id_value) = args.get("propertyId") {
+            let identifier = property_id_value.as_str().unwrap_or_default();
+            if !identifier.is_empty() {
+                let resolved_id = resolve_property_id(invoker, identifier).await?;
+                args["propertyId"] = json!(resolved_id);
+            }
+        }
+        
         let property = format!(
             "properties/{}",
             args["propertyId"].as_str().unwrap_or_default()
         );
         let limit = args["limit"].as_u64().unwrap_or(100);
+        let verbose = args["verbose"].as_bool().unwrap_or(false);
         let mut body = args.get("request").cloned().unwrap_or(json!({}));
         if !body.is_object() {
             return Err(ProxyError::Validation("request must be an object".into()));
@@ -375,7 +551,7 @@ impl CustomToolHandler for Handler {
                         ));
                     }
                     for request in requests {
-                        bounded_report(request, limit);
+                        bounded_report(request, limit, verbose);
                     }
                 } else if ![
                     "analytics_validate_report",
@@ -384,10 +560,10 @@ impl CustomToolHandler for Handler {
                 ]
                 .contains(&self.0)
                 {
-                    bounded_report(&mut body, limit);
+                    bounded_report(&mut body, limit, verbose);
                     if self.0 == "analytics_access_audit" {
                         body.as_object_mut().unwrap().remove("returnPropertyQuota");
-                        body["returnEntityQuota"] = json!(true);
+                        body["returnEntityQuota"] = json!(verbose);
                     }
                 }
                 let preset = match self.0 {
@@ -395,8 +571,15 @@ impl CustomToolHandler for Handler {
                         vec![],
                         vec![
                             "activeUsers",
+                            "newUsers",
                             "sessions",
                             "engagedSessions",
+                            "engagementRate",
+                            "userEngagementDuration",
+                            "averageSessionDuration",
+                            "screenPageViews",
+                            "screenPageViewsPerSession",
+                            "bounceRate",
                             "keyEvents",
                             "totalRevenue",
                         ],
@@ -461,7 +644,7 @@ impl CustomToolHandler for Handler {
                     result["status"] = json!("partial");
                 }
                 result["scope"] = json!({"dimensionFilter":request_body["dimensionFilter"],"batchScopes":request_body["requests"].as_array().map(|requests| requests.iter().enumerate().map(|(index, request)| json!({"reportIndex":index,"dimensionFilter":request["dimensionFilter"],"dateRanges":request["dateRanges"],"cohortSpec":request["cohortSpec"]})).collect::<Vec<_>>()),"dateRanges":request_body["dateRanges"],"cohortSpec":request_body["cohortSpec"]});
-                compact(&mut result["data"]);
+                compact(&mut result["data"], verbose);
                 sources.push(result);
             }
         }
@@ -593,13 +776,22 @@ mod tests {
     async fn access_audit_uses_admin_quota_field() {
         let mock = Mock(Mutex::new(vec![]));
         Handler("analytics_access_audit")
-            .call(&mock, json!({"propertyId":"123","request":{}}))
+            .call(&mock, json!({"propertyId":"123","request":{},"verbose":true}))
             .await
             .unwrap();
         let calls = mock.0.lock().unwrap();
         assert_eq!(calls[0].1["entity"], "properties/123");
         assert_eq!(calls[0].1["body"]["returnEntityQuota"], true);
         assert!(calls[0].1["body"].get("returnPropertyQuota").is_none());
+        
+        // Test that verbose=false omits quota fields
+        let mock2 = Mock(Mutex::new(vec![]));
+        Handler("analytics_access_audit")
+            .call(&mock2, json!({"propertyId":"123","request":{},"verbose":false}))
+            .await
+            .unwrap();
+        let calls2 = mock2.0.lock().unwrap();
+        assert_eq!(calls2[0].1["body"]["returnEntityQuota"], false);
     }
     #[test]
     fn batch_pagination_uses_each_reports_offset() {
@@ -753,7 +945,8 @@ mod contracts {
         );
         assert_eq!(workflow.tool_names().len(), 22);
         assert_eq!(raw.tool_names().len(), 248);
-        assert!(compact < 25_000);
+        // Allow for slightly larger size due to new features (excludeHostnames, verbose, property resolution)
+        assert!(compact < 27_000, "Workflow metadata size {} exceeds 27KB budget", compact);
         assert!(compact * 4 < full);
         for name in [
             "analyticsdata_v1beta_properties_runReport",

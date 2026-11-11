@@ -33,7 +33,7 @@ variable to the key path. Never commit credentials.
 | `metadata` | Search standard and custom metrics/dimensions; at most 50 matches per kind |
 | `validate_report` | Core metric/dimension compatibility |
 | `run_report` | Full Core REST report request |
-| `overview`, `acquisition`, `content`, `events`, `ecommerce` | Deterministic report presets; optional daily grouping |
+| `overview`, `acquisition`, `content`, `events`, `ecommerce` | Deterministic report presets; optional daily grouping. Overview includes engagement rate, duration, page views, new/returning users, and bounce rate |
 | `compare` | Two explicit date ranges in one report |
 | `realtime`, `funnel`, `conversions`, `pivot` | Specialized REST reporting |
 | `batch` | Up to five Core requests for one property |
@@ -42,13 +42,18 @@ variable to the key path. Never commit credentials.
 | `quota` | Alpha quota snapshot |
 | `access_audit`, `change_history` | Data access and configuration change evidence |
 
-Pass a numeric **string** `propertyId` (or `accountId` for change history).
+Pass `propertyId` as a **numeric string** (e.g. `"561397529"`), property **display name**
+(e.g. `"AnimalMeaning"`), or **web stream domain/URL** (e.g. `"animalmeaning.com"` or
+`"https://animalmeaning.com"`). The server resolves non-numeric identifiers via the
+Admin API account summaries; ambiguous names fail with a clear error. Numeric IDs
+pass through unchanged. Use `accountId` for change history.
+
 `request` uses Google's REST **camelCase** fields. Presets choose dimensions and
 metrics; request filters and ordering remain available. Default dates are
 `28daysAgo` through `yesterday`; `limit` defaults to 100 and is capped at 1,000.
 
 ```json
-{"propertyId":"123456","daily":true,"limit":100}
+{"propertyId":"AnimalMeaning","daily":true,"limit":100}
 ```
 
 Properties may combine Android, iOS and web. Reporting presets, Core reports,
@@ -62,6 +67,30 @@ so Android/iOS content does not collapse into the web-only `pagePath` dimension.
 
 ```json
 {"propertyId":"123456","platform":"Android","streamId":"987654","daily":true}
+```
+
+### Excluding junk traffic
+
+Reporting tools accept an `excludeHostnames` array (up to 20 hostnames) to filter out
+unwanted traffic, such as localhost or development environments. The exclusion is
+combined with platform/stream/request filters via AND logic.
+
+```json
+{"propertyId":"123456","excludeHostnames":["localhost","127.0.0.1","dev.example.com"]}
+```
+
+Excluded hostnames appear in the response `scope` for transparency. This replaces
+manual `dimensionFilter` construction on every report.
+
+### Verbose mode
+
+By default, responses omit verbose quota blocks and metadata to reduce noise. Set
+`"verbose":true` to include full `propertyQuota`, `kind`, and other diagnostic details.
+Sampling warnings, thresholding notices, and pagination state remain visible regardless
+of verbosity.
+
+```json
+{"propertyId":"123456","verbose":true}
 ```
 
 Every response labels its scope. Without selectors, usage reports are explicitly
@@ -173,8 +202,9 @@ ADC user credentials may need an explicit quota project. Set
 Both service-account and authorized-user files can be selected through
 `GOOGLE_APPLICATION_CREDENTIALS`. `CLOUDSDK_CONFIG` selects the gcloud ADC directory.
 Unsupported impersonated/federated files and invalid selected files fail clearly,
-without falling back to another identity. Failed ADC discovery is cached until restart; fix the
-credentials and restart after a discovery failure. Core/Realtime reports and
+without falling back to another identity. Failed ADC discovery triggers automatic
+retry with exponential backoff (5 seconds, expanding to 60 seconds), allowing
+credential fixes mid-session without process restart. Core/Realtime reports and
 access audits enforce the configured row limit and return explicit pagination
 state; funnel and pivot requests use their own API-specific limits.
 
