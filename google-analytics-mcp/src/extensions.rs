@@ -57,6 +57,13 @@ fn extract_hostname(input: &str) -> Option<String> {
     None
 }
 
+/// A property matched during resolution, together with the form that matched it.
+struct PropertyMatch {
+    id: String,
+    label: String,
+    source: &'static str,
+}
+
 /// Resolve property identifier to numeric ID.
 ///
 /// # Supported Input Formats
@@ -74,9 +81,9 @@ fn extract_hostname(input: &str) -> Option<String> {
 ///
 /// - Fetches account summaries with `pageSize=200` (up to **10 pages = 2000 properties max**)
 /// - For each page, compares the normalized (lowercase) identifier against each property's `displayName`
-/// - If exactly one match is found across all pages, returns that property ID
 /// - If multiple matches are found, returns an ambiguity error listing all matches
-/// - If no matches are found, proceeds to Phase 2
+/// - If the identifier is hostname-shaped (URL or bare domain), Phase 2 also runs, so a
+///   display-name match cannot silently win over a cross-property hostname match
 ///
 /// **Coverage**: Up to 2000 properties total. If your account has more than 2000 properties
 /// and the target is not in the first 2000, resolution will fail with "Property search
@@ -84,17 +91,24 @@ fn extract_hostname(input: &str) -> Option<String> {
 ///
 /// ## Phase 2: Hostname/URL Fallback (partial scan, **known limitation**)
 ///
-/// If the identifier contains a dot and no display-name match was found, attempts hostname matching:
+/// If the identifier is hostname-shaped (a scheme, a `www.` prefix, or a dot without spaces),
+/// attempts hostname matching — independently of whether Phase 1 found a display-name match, so
+/// the two forms can be cross-checked:
 ///
 /// 1. Extracts the hostname from the identifier (stripping scheme, port, path, query)
-/// 2. **Re-fetches only the first page** of account summaries (`pageSize=200`, no pagination)
+/// 2. **Re-uses the first page** of account summaries already fetched by Phase 1
+///    (`pageSize=200`, no additional request)
 /// 3. For each property in that first page (up to 200):
 ///    - Lists its data streams with `pageSize=50` (**no pagination**)
 ///    - Compares the hostname from each stream's `defaultUri` against the target hostname
 ///    - If an exact hostname match is found, records that property
-/// 4. If exactly one property matched, returns its ID
-/// 5. If multiple properties matched, returns an ambiguity error
-/// 6. If no properties matched, returns "not found"
+/// 4. Merges display-name and hostname matches by property ID; a property matched by both
+///    forms counts once
+/// 5. If exactly one property remains, returns its ID
+/// 6. If multiple distinct properties remain — including a cross-form collision where one
+///    property is named after the host and another has a stream at it — returns an ambiguity
+///    error listing every match and the form that matched it
+/// 7. If nothing matched, returns "not found"
 ///
 /// ### Known Limitations of Hostname Fallback
 ///
@@ -117,17 +131,20 @@ fn extract_hostname(input: &str) -> Option<String> {
 ///
 /// - **"Property search incomplete after 10 pages"**: Account has >2000 properties and
 ///   display-name search didn't find a match in the first 2000
-/// - **"Property identifier 'X' is ambiguous"**: Multiple properties matched (either by
-///   display name across all pages, or by hostname in the scanned subset)
+/// - **"Property identifier 'X' is ambiguous"**: Multiple distinct properties matched — by
+///   display name across all pages, by hostname in the scanned subset, or one of each
 /// - **"Failed to resolve property identifier"**: No properties matched, or upstream API error
 ///
 /// # Known Limitations
 ///
-/// - **Display name vs hostname priority**: If an identifier matches both a property's display
-///   name AND another property's web stream hostname (e.g., one property is named "example.com"
-///   and another has a stream at example.com), the display-name match is returned without
-///   checking for the hostname collision. This could return the wrong property for URL lookups.
-///   Workaround: Use numeric property IDs when ambiguity is possible.
+/// - **Cross-form collisions are rejected, not ranked**: If an identifier matches one property's
+///   display name and a different property's web stream hostname (e.g., one property is named
+///   "example.com" and another has a stream at example.com), resolution fails with an ambiguity
+///   error instead of guessing which form the caller meant. Use the numeric property ID to
+///   disambiguate.
+/// - **Hostname scan is still partial**: the collision check compares against the same bounded
+///   stream scan described above, so a conflicting property beyond the first 200 properties or
+///   the first 50 streams of a property remains invisible.
 ///
 /// # Design Rationale
 ///
@@ -170,7 +187,10 @@ async fn resolve_property_id(
     let normalized_identifier = identifier.to_lowercase();
     let target_hostname = extract_hostname(identifier);
 
-    let mut matches = Vec::new();
+    let mut display_name_matches: Vec<PropertyMatch> = Vec::new();
+    let mut hostname_matches: Vec<PropertyMatch> = Vec::new();
+    // First page of account summaries, reused by the hostname scan so it costs no extra request.
+    let mut first_page_properties: Vec<Value> = Vec::new();
     let mut next_token: Option<String> = None;
     let mut pages_fetched = 0;
     const MAX_PAGES: usize = 10; // Safety limit
@@ -211,6 +231,10 @@ async fn resolve_property_id(
         // Search this page for matches by display name
         for account in summaries {
             if let Some(properties) = account["propertySummaries"].as_array() {
+                // Only the first page is scanned for hostnames (bounded coverage).
+                if pages_fetched == 0 {
+                    first_page_properties.extend(properties.iter().cloned());
+                }
                 for property in properties {
                     let property_id = property["property"]
                         .as_str()
@@ -220,7 +244,11 @@ async fn resolve_property_id(
                     // Check display name
                     if let Some(display_name) = property["displayName"].as_str() {
                         if display_name.to_lowercase() == normalized_identifier {
-                            matches.push((property_id.to_string(), display_name.to_string()));
+                            display_name_matches.push(PropertyMatch {
+                                id: property_id.to_string(),
+                                label: display_name.to_string(),
+                                source: "display name",
+                            });
                         }
                     }
                 }
@@ -240,78 +268,62 @@ async fn resolve_property_id(
         }
     }
 
-    // If we found matches by name, return early
-    if !matches.is_empty() {
-        return match matches.len() {
-            1 => Ok(matches[0].0.clone()),
-            _ => {
-                let names: Vec<String> = matches
-                    .iter()
-                    .map(|(id, name)| format!("{} ({})", name, id))
-                    .collect();
-                Err(ProxyError::Validation(format!(
-                    "Property identifier '{}' is ambiguous. Matches: {}. Use the numeric property ID instead.",
-                    identifier,
-                    names.join(", ")
-                )))
-            }
-        };
-    }
-
-    // If we have a hostname to match, search web streams
+    // If the identifier is hostname-shaped, search web streams as well — even when a
+    // display-name match was found — so the two forms can be cross-checked.
     if let Some(target_host) = target_hostname {
-        // Re-fetch account summaries to search streams (we need property full names)
-        let result = invoke(
-            invoker,
-            "analyticsadmin_v1beta_accountSummaries_list",
-            json!({"pageSize":200}),
-        )
-        .await;
+        for property in &first_page_properties {
+            let property_id = property["property"]
+                .as_str()
+                .and_then(|s| s.strip_prefix("properties/"))
+                .unwrap_or("");
+            let property_full_name = property["property"].as_str().unwrap_or("");
 
-        if let Some(summaries) = result["data"]["accountSummaries"].as_array() {
-            for account in summaries {
-                if let Some(properties) = account["propertySummaries"].as_array() {
-                    for property in properties {
-                        let property_id = property["property"]
-                            .as_str()
-                            .and_then(|s| s.strip_prefix("properties/"))
-                            .unwrap_or("");
-                        let property_full_name = property["property"].as_str().unwrap_or("");
+            // Fetch data streams for this property
+            let streams_result = invoke(
+                invoker,
+                "analyticsadmin_v1beta_properties_dataStreams_list",
+                json!({"parent":property_full_name,"pageSize":50}),
+            )
+            .await;
 
-                        // Fetch data streams for this property
-                        let streams_result = invoke(
-                            invoker,
-                            "analyticsadmin_v1beta_properties_dataStreams_list",
-                            json!({"parent":property_full_name,"pageSize":50}),
-                        )
-                        .await;
-
-                        if let Some(streams) = streams_result["data"]["dataStreams"].as_array() {
-                            for stream in streams {
-                                if let Some(web_data) = stream["webStreamData"].as_object() {
-                                    if let Some(default_uri) =
-                                        web_data.get("defaultUri").and_then(Value::as_str)
-                                    {
-                                        if let Some(stream_host) = extract_hostname(default_uri) {
-                                            // Exact hostname match
-                                            if stream_host == target_host {
-                                                matches.push((
-                                                    property_id.to_string(),
-                                                    property["displayName"]
-                                                        .as_str()
-                                                        .unwrap_or(property_full_name)
-                                                        .to_string(),
-                                                ));
-                                                break;
-                                            }
-                                        }
-                                    }
+            let mut host_matched = false;
+            if let Some(streams) = streams_result["data"]["dataStreams"].as_array() {
+                for stream in streams {
+                    if let Some(web_data) = stream["webStreamData"].as_object() {
+                        if let Some(default_uri) =
+                            web_data.get("defaultUri").and_then(Value::as_str)
+                        {
+                            if let Some(stream_host) = extract_hostname(default_uri) {
+                                // Exact hostname match
+                                if stream_host == target_host {
+                                    host_matched = true;
+                                    break;
                                 }
                             }
                         }
                     }
                 }
             }
+
+            if host_matched {
+                hostname_matches.push(PropertyMatch {
+                    id: property_id.to_string(),
+                    label: property["displayName"]
+                        .as_str()
+                        .unwrap_or(property_full_name)
+                        .to_string(),
+                    source: "web stream hostname",
+                });
+            }
+        }
+    }
+
+    // Merge both forms, deduplicating by property ID so a property that matches by display
+    // name *and* hostname counts once. Distinct properties from either form are a collision.
+    let mut matches: Vec<PropertyMatch> = Vec::new();
+    for candidate in display_name_matches.into_iter().chain(hostname_matches) {
+        if !matches.iter().any(|existing| existing.id == candidate.id) {
+            matches.push(candidate);
         }
     }
 
@@ -320,9 +332,12 @@ async fn resolve_property_id(
             "Property identifier '{}' not found. Use a numeric property ID, exact display name, or web stream URL/domain.",
             identifier
         ))),
-        1 => Ok(matches[0].0.clone()),
+        1 => Ok(matches[0].id.clone()),
         _ => {
-            let names: Vec<String> = matches.iter().map(|(id, name)| format!("{} ({})", name, id)).collect();
+            let names: Vec<String> = matches
+                .iter()
+                .map(|m| format!("{} ({}, matched by {})", m.label, m.id, m.source))
+                .collect();
             Err(ProxyError::Validation(format!(
                 "Property identifier '{}' is ambiguous. Matches: {}. Use the numeric property ID instead.",
                 identifier,
@@ -1363,6 +1378,153 @@ mod new_features_tests {
         let calls = mock.0.lock().unwrap();
         // Should resolve TestProperty to 123456
         assert_eq!(calls[1].1["property"], "properties/123456");
+        // A dotless display name is not hostname-shaped, so no stream scan may run.
+        assert!(
+            calls
+                .iter()
+                .all(|(name, _)| name != "analyticsadmin_v1beta_properties_dataStreams_list"),
+            "display-name-only resolution must not scan data streams"
+        );
+    }
+
+    /// Mock with caller-supplied account summaries and per-property web streams.
+    struct ResolutionMock {
+        summaries: Value,
+        streams: Vec<(String, Value)>,
+        calls: Mutex<Vec<(String, Value)>>,
+    }
+
+    impl ResolutionMock {
+        fn new(summaries: Value, streams: Vec<(&str, &str)>) -> Self {
+            Self {
+                summaries,
+                streams: streams
+                    .into_iter()
+                    .map(|(parent, uri)| {
+                        (
+                            parent.to_string(),
+                            json!({"dataStreams":[{"webStreamData":{"defaultUri":uri}}]}),
+                        )
+                    })
+                    .collect(),
+                calls: Mutex::new(vec![]),
+            }
+        }
+    }
+
+    #[async_trait]
+    impl OperationInvoker for ResolutionMock {
+        async fn invoke_read_only(
+            &self,
+            name: &str,
+            args: Value,
+        ) -> Result<ToolResult, ProxyError> {
+            self.calls.lock().unwrap().push((name.into(), args.clone()));
+            let response = match name {
+                "analyticsadmin_v1beta_accountSummaries_list" => self.summaries.clone(),
+                "analyticsadmin_v1beta_properties_dataStreams_list" => {
+                    let parent = args["parent"].as_str().unwrap_or_default();
+                    self.streams
+                        .iter()
+                        .find(|(p, _)| p == parent)
+                        .map(|(_, v)| v.clone())
+                        .unwrap_or_else(|| json!({"dataStreams":[]}))
+                }
+                _ => json!({"dimensionHeaders": [], "metricHeaders": [], "rows": []}),
+            };
+            Ok(ToolResult::text("{}").with_structured(Some(response)))
+        }
+    }
+
+    fn summaries_with(entries: &[(&str, &str)]) -> Value {
+        json!({
+            "accountSummaries": [{
+                "propertySummaries": entries
+                    .iter()
+                    .map(|(id, name)| json!({"property": format!("properties/{}", id), "displayName": name}))
+                    .collect::<Vec<_>>()
+            }],
+            "nextPageToken": ""
+        })
+    }
+
+    #[tokio::test]
+    async fn property_resolution_rejects_cross_form_collision() {
+        // One property is *named* example.com; a different property has a stream at example.com.
+        let mock = ResolutionMock::new(
+            summaries_with(&[("111111", "example.com"), ("222222", "Other Property")]),
+            vec![("properties/222222", "https://example.com")],
+        );
+
+        let err = resolve_property_id(&mock, "example.com").await.unwrap_err();
+        let message = err.to_string();
+        assert!(
+            message.contains("ambiguous"),
+            "collision should be reported as ambiguous: {message}"
+        );
+        assert!(
+            message.contains("111111"),
+            "error must list the name match: {message}"
+        );
+        assert!(
+            message.contains("222222"),
+            "error must list the hostname match: {message}"
+        );
+        assert!(
+            message.contains("display name") && message.contains("web stream hostname"),
+            "error must name both matching forms: {message}"
+        );
+
+        // The hostname scan reuses Phase 1's first page instead of re-fetching summaries.
+        let calls = mock.calls.lock().unwrap();
+        let summary_calls = calls
+            .iter()
+            .filter(|(name, _)| name == "analyticsadmin_v1beta_accountSummaries_list")
+            .count();
+        assert_eq!(summary_calls, 1, "account summaries should be fetched once");
+    }
+
+    #[tokio::test]
+    async fn property_resolution_accepts_agreeing_name_and_hostname() {
+        let mock = ResolutionMock::new(
+            summaries_with(&[("111111", "example.com")]),
+            vec![("properties/111111", "https://example.com")],
+        );
+
+        let resolved = resolve_property_id(&mock, "https://example.com")
+            .await
+            .unwrap();
+        assert_eq!(resolved, "111111");
+    }
+
+    #[tokio::test]
+    async fn property_resolution_falls_back_to_hostname_only() {
+        let mock = ResolutionMock::new(
+            summaries_with(&[("111111", "My Website")]),
+            vec![("properties/111111", "https://example.com")],
+        );
+
+        let resolved = resolve_property_id(&mock, "example.com").await.unwrap();
+        assert_eq!(resolved, "111111");
+    }
+
+    #[tokio::test]
+    async fn property_resolution_reports_hostname_ambiguity() {
+        let mock = ResolutionMock::new(
+            summaries_with(&[("111111", "One"), ("222222", "Two")]),
+            vec![
+                ("properties/111111", "https://example.com"),
+                ("properties/222222", "https://example.com"),
+            ],
+        );
+
+        let err = resolve_property_id(&mock, "example.com").await.unwrap_err();
+        let message = err.to_string();
+        assert!(message.contains("ambiguous"), "message: {message}");
+        assert!(
+            message.contains("111111") && message.contains("222222"),
+            "message: {message}"
+        );
     }
 
     #[test]

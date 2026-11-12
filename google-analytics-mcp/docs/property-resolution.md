@@ -22,21 +22,24 @@ Search account summaries for exact display-name matches, paginating up to 10 pag
 
 **API calls:** 1–10 `accountSummaries.list` calls
 
-### Phase 2: Hostname Fallback (Partial, Non-Paginated)
+### Phase 2: Hostname Search (Partial, Non-Paginated)
 
-If no display-name match is found and the identifier looks like a hostname/URL:
+If the identifier looks like a hostname/URL, this phase runs even when Phase 1 found a display-name match, so the two forms can be cross-checked:
 1. Extract the hostname (strip scheme, port, path, query)
-2. Re-fetch the **first page only** of account summaries (200 properties)
+2. Reuse the **first page already fetched by Phase 1** (no extra `accountSummaries.list` call)
 3. For each property, list its data streams with `pageSize=50` (**no pagination**)
 4. Compare each stream's `defaultUri` hostname against the target
-5. Return the first unique match, or fail on ambiguity within the scanned subset
+5. Merge display-name and hostname matches by property ID — a property matched by both forms counts once
+6. Return the single distinct property, or fail on ambiguity (including a cross-form collision where one property is named after the host and another has a stream at it)
+
+Cross-checking both forms prevents a data-integrity bug: previously a property *named* `example.com` would win over a different property with a *stream* at `example.com`, returning analytics for the wrong property. When the two forms disagree, resolution now refuses to guess and reports both candidates.
 
 **Parameters:**
 - Account summary pagination: **none** (first page only, 200 accounts — each may contain multiple properties)
 - Data streams per property: **none** (first page only, 50 streams)
 - Ambiguity detection: only within the scanned accounts/properties
 
-**API calls:** 1 `accountSummaries.list` + one `properties.dataStreams.list` per property in the returned accounts (potentially more than 200 total calls if accounts have many properties)
+**API calls:** one `properties.dataStreams.list` per property in the first summaries page (potentially more than 200 total calls if accounts have many properties); no additional `accountSummaries.list` call
 
 ### Tradeoffs
 
@@ -117,8 +120,9 @@ At the cost of:
 ### Positive
 
 - **Works for most users:** Accounts with <200 properties and <50 streams/property resolve correctly
-- **Fast:** Display-name search completes in <1 second; hostname fallback in 1–5 seconds
-- **Quota-efficient:** Bounded API calls per resolution (max 210 calls for hostname fallback)
+- **Fast:** Display-name search completes in <1 second; hostname search in 1–5 seconds
+- **Quota-efficient:** Bounded API calls per resolution (at most 200 stream calls, reusing Phase 1's first summaries page)
+- **Correct across forms:** A display-name match no longer silently shadows a different property's hostname match; cross-form collisions are rejected
 - **Simple implementation:** No caching, no parallel coordination, no state management
 
 ### Negative

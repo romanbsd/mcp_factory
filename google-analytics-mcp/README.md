@@ -56,11 +56,11 @@ variable to the key path. Never commit credentials.
 
 **Display names** are resolved by paginating through account summaries (up to 10 pages × 200 properties = 2000 max). If exactly one property matches, that ID is used. If multiple properties have the same display name, resolution fails with an ambiguity error listing all matches.
 
-**Hostnames/URLs** first check for display-name matches. If none are found, the hostname is extracted and compared against web stream `defaultUri` values. **This hostname fallback only scans the first 200 properties and the first 50 data streams per property** to keep API call count and latency reasonable.
+**Hostnames/URLs** extract the hostname and compare it against web stream `defaultUri` values. The hostname scan runs *in addition to* the display-name search, so when an identifier matches one property's display name and a different property's web stream hostname, resolution fails with an ambiguity error instead of silently picking the display-name match. A property that matches by both forms counts once, so agreeing matches resolve normally. **This hostname scan only covers the first 200 properties and the first 50 data streams per property** to keep API call count and latency reasonable.
 
 #### Known limitations
 
-The hostname/URL fallback has incomplete coverage:
+The hostname/URL scan has incomplete coverage:
 - Properties beyond the first 200 are never examined
 - Data streams beyond the first 50 per property are not checked
 - Ambiguity across the full account is not detected (only within the scanned subset)
