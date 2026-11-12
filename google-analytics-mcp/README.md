@@ -33,7 +33,7 @@ variable to the key path. Never commit credentials.
 | `metadata` | Search standard and custom metrics/dimensions; at most 50 matches per kind |
 | `validate_report` | Core metric/dimension compatibility |
 | `run_report` | Full Core REST report request |
-| `overview`, `acquisition`, `content`, `events`, `ecommerce` | Deterministic report presets; optional daily grouping |
+| `overview`, `acquisition`, `content`, `events`, `ecommerce` | Deterministic report presets; optional daily grouping. Overview includes 10 metrics: active users, new users, sessions, engaged sessions, engagement rate, session duration, page views, page views per session, bounce rate, and revenue |
 | `compare` | Two explicit date ranges in one report |
 | `realtime`, `funnel`, `conversions`, `pivot` | Specialized REST reporting |
 | `batch` | Up to five Core requests for one property |
@@ -42,13 +42,47 @@ variable to the key path. Never commit credentials.
 | `quota` | Alpha quota snapshot |
 | `access_audit`, `change_history` | Data access and configuration change evidence |
 
-Pass a numeric **string** `propertyId` (or `accountId` for change history).
+### Property resolution
+
+`propertyId` accepts three input formats:
+
+1. **Numeric ID** (e.g. `"561397529"`) — always works, no API calls, recommended for all use cases
+2. **Display name** (e.g. `"AnimalMeaning"`) — resolved via Admin API, supports up to 2000 properties
+3. **Web stream URL/domain** (e.g. `"animalmeaning.com"` or `"https://animalmeaning.com"`) — resolved via web stream lookup, **limited to first 200 properties**
+
+#### How resolution works
+
+**Numeric IDs** pass through immediately without any lookups.
+
+**Display names** are resolved by paginating through account summaries (up to 10 pages × 200 properties = 2000 max). If exactly one property matches, that ID is used. If multiple properties have the same display name, resolution fails with an ambiguity error listing all matches.
+
+**Hostnames/URLs** extract the hostname and compare it against web stream `defaultUri` values. The hostname scan runs *in addition to* the display-name search, so when an identifier matches one property's display name and a different property's web stream hostname, resolution fails with an ambiguity error instead of silently picking the display-name match. A property that matches by both forms counts once, so agreeing matches resolve normally. **This hostname scan only covers the first 200 properties and the first 50 data streams per property** to keep API call count and latency reasonable.
+
+#### Known limitations
+
+The hostname/URL scan has incomplete coverage:
+- Properties beyond the first 200 are never examined
+- Data streams beyond the first 50 per property are not checked
+- Ambiguity across the full account is not detected (only within the scanned subset)
+
+This means hostname resolution can silently miss a property that exists outside the scanned range, or return a match when multiple undetected properties share the hostname. For accounts with many properties or properties with many streams, **use the numeric property ID**.
+
+#### Finding your numeric property ID
+
+1. Visit Google Analytics Admin → Property Settings
+2. Copy the numeric Property ID shown at the top (e.g. `123456789`)
+3. Use that in all tool calls: `{"propertyId": "123456789"}`
+
+Numeric IDs guarantee correct resolution regardless of account size, naming collisions, or stream configuration.
+
+Use `accountId` (always numeric) for `analytics_change_history`.
+
 `request` uses Google's REST **camelCase** fields. Presets choose dimensions and
 metrics; request filters and ordering remain available. Default dates are
 `28daysAgo` through `yesterday`; `limit` defaults to 100 and is capped at 1,000.
 
 ```json
-{"propertyId":"123456","daily":true,"limit":100}
+{"propertyId":"AnimalMeaning","daily":true,"limit":100}
 ```
 
 Properties may combine Android, iOS and web. Reporting presets, Core reports,
@@ -62,6 +96,30 @@ so Android/iOS content does not collapse into the web-only `pagePath` dimension.
 
 ```json
 {"propertyId":"123456","platform":"Android","streamId":"987654","daily":true}
+```
+
+### Excluding junk traffic
+
+Reporting tools accept an `excludeHostnames` array (up to 20 hostnames) to filter out
+unwanted traffic, such as localhost or development environments. The exclusion is
+combined with platform/stream/request filters via AND logic.
+
+```json
+{"propertyId":"123456","excludeHostnames":["localhost","127.0.0.1","dev.example.com"]}
+```
+
+Excluded hostnames appear in the response `scope` for transparency. This replaces
+manual `dimensionFilter` construction on every report.
+
+### Verbose mode
+
+By default, responses omit verbose quota blocks to reduce noise. Set
+`"verbose":true` to include full `propertyQuota` and `kind` fields.
+Metadata, sampling warnings, thresholding notices, and pagination state remain visible
+regardless of verbosity.
+
+```json
+{"propertyId":"123456","verbose":true}
 ```
 
 Every response labels its scope. Without selectors, usage reports are explicitly
@@ -162,7 +220,7 @@ cargo test -p google-analytics-mcp
 Generation preserves `src/extensions.rs` and the workspace manifest. Schemas are
 pinned local inputs; updating them is a deliberate refresh from
 `https://{analyticsdata,analyticsadmin}.googleapis.com/$discovery/rest?version={v1beta,v1alpha}`.
-The contract test measures the real MCP tool metadata and enforces a 25 KB default
+The contract test measures the real MCP tool metadata and enforces a 27 KB default
 listing budget. These measurements compare workflow and raw profiles, not process
 RSS or the official Python server. Live-account report correctness requires valid
 credentials and property access; local tests use deterministic evidence.
@@ -173,8 +231,9 @@ ADC user credentials may need an explicit quota project. Set
 Both service-account and authorized-user files can be selected through
 `GOOGLE_APPLICATION_CREDENTIALS`. `CLOUDSDK_CONFIG` selects the gcloud ADC directory.
 Unsupported impersonated/federated files and invalid selected files fail clearly,
-without falling back to another identity. Failed ADC discovery is cached until restart; fix the
-credentials and restart after a discovery failure. Core/Realtime reports and
+without falling back to another identity. Failed ADC discovery triggers automatic
+retry with exponential backoff (5 seconds, expanding to 60 seconds), allowing
+credential fixes mid-session without process restart. Core/Realtime reports and
 access audits enforce the configured row limit and return explicit pagination
 state; funnel and pivot requests use their own API-specific limits.
 

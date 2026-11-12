@@ -43,7 +43,7 @@ pub fn prepare(tool: &str, args: &Value, body: &mut Value) -> Result<(), ProxyEr
             .unwrap_or(100)
             .clamp(1, 1000)
             .to_string());
-        body["returnPropertyQuota"] = json!(true);
+        body["returnPropertyQuota"] = json!(args["verbose"].as_bool().unwrap_or(false));
     } else if tool == "analytics_retention" {
         let day = args["cohortDate"].as_str().and_then(|s| NaiveDate::parse_from_str(s,"%Y-%m-%d").ok())
             .ok_or_else(|| invalid("retention requires cohortDate (YYYY-MM-DD), the first-session acquisition date"))?;

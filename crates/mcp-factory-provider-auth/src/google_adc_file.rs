@@ -7,6 +7,7 @@ use std::{
     sync::Arc,
 };
 
+#[derive(Clone)]
 pub(super) struct ResolvedAdc {
     pub provider: Arc<dyn TokenProvider>,
     pub quota_project: Option<String>,

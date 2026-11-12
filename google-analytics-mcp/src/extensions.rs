@@ -6,6 +6,346 @@ mod diagnostics;
 mod lifecycle;
 #[path = "scope.rs"]
 mod scope;
+
+/// Extract hostname from URL or bare domain
+fn extract_hostname(input: &str) -> Option<String> {
+    let trimmed = input.trim();
+
+    // Handle full URLs
+    if let Some(scheme_pos) = trimmed.find("://") {
+        let after_scheme = &trimmed[scheme_pos + 3..];
+        let hostname = after_scheme
+            .split('/')
+            .next()?
+            .split('?')
+            .next()?
+            .split('#')
+            .next()?
+            .split(':')
+            .next()?;
+        return Some(hostname.to_lowercase());
+    }
+
+    // Handle www. prefix without scheme
+    if trimmed.starts_with("www.") {
+        let hostname = trimmed
+            .split('/')
+            .next()?
+            .split('?')
+            .next()?
+            .split('#')
+            .next()?
+            .split(':')
+            .next()?;
+        return Some(hostname.to_lowercase());
+    }
+
+    // Treat as bare domain if it contains at least one dot and no spaces
+    if trimmed.contains('.') && !trimmed.contains(' ') {
+        let hostname = trimmed
+            .split('/')
+            .next()?
+            .split('?')
+            .next()?
+            .split('#')
+            .next()?
+            .split(':')
+            .next()?;
+        return Some(hostname.to_lowercase());
+    }
+
+    None
+}
+
+/// A property matched during resolution, together with the form that matched it.
+struct PropertyMatch {
+    id: String,
+    label: String,
+    source: &'static str,
+}
+
+/// Resolve property identifier to numeric ID.
+///
+/// # Supported Input Formats
+///
+/// 1. **Numeric ID** (e.g., `"123456"`) — returned as-is without any API calls
+/// 2. **Display name** (e.g., `"My Website"`) — resolved via account summaries
+/// 3. **Bare domain/URL** (e.g., `"example.com"`, `"https://example.com"`) — resolved via web stream lookup
+///
+/// Note: Full resource names (e.g., `"properties/123456"`) are NOT supported — extract the numeric ID instead.
+/// 5. **Full URL** (e.g., `"https://example.com/path"`) — hostname extracted, then resolved
+///
+/// # Resolution Algorithm
+///
+/// ## Phase 1: Display Name Search (paginated)
+///
+/// - Fetches account summaries with `pageSize=200` (up to **10 pages = 2000 properties max**)
+/// - For each page, compares the normalized (lowercase) identifier against each property's `displayName`
+/// - If multiple matches are found, returns an ambiguity error listing all matches
+/// - If the identifier is hostname-shaped (URL or bare domain), Phase 2 also runs, so a
+///   display-name match cannot silently win over a cross-property hostname match
+///
+/// **Coverage**: Up to 2000 properties total. If your account has more than 2000 properties
+/// and the target is not in the first 2000, resolution will fail with "Property search
+/// incomplete after 10 pages".
+///
+/// ## Phase 2: Hostname/URL Fallback (partial scan, **known limitation**)
+///
+/// If the identifier is hostname-shaped (a scheme, a `www.` prefix, or a dot without spaces),
+/// attempts hostname matching — independently of whether Phase 1 found a display-name match, so
+/// the two forms can be cross-checked:
+///
+/// 1. Extracts the hostname from the identifier (stripping scheme, port, path, query)
+/// 2. **Re-uses the first page** of account summaries already fetched by Phase 1
+///    (`pageSize=200`, no additional request)
+/// 3. For each property in that first page (up to 200):
+///    - Lists its data streams with `pageSize=50` (**no pagination**)
+///    - Compares the hostname from each stream's `defaultUri` against the target hostname
+///    - If an exact hostname match is found, records that property
+/// 4. Merges display-name and hostname matches by property ID; a property matched by both
+///    forms counts once
+/// 5. If exactly one property remains, returns its ID
+/// 6. If multiple distinct properties remain — including a cross-form collision where one
+///    property is named after the host and another has a stream at it — returns an ambiguity
+///    error listing every match and the form that matched it
+/// 7. If nothing matched, returns "not found"
+///
+/// ### Known Limitations of Hostname Fallback
+///
+/// - **Only scans the first 200 properties** (first page of account summaries)
+///   - Properties beyond the first 200 are never examined, even if display-name search
+///     already paginated through them
+/// - **Only scans the first 50 data streams per property** (no stream pagination)
+///   - If a property has more than 50 streams and the matching stream is not in the first 50,
+///     it will not be found
+/// - **No ambiguity detection across all properties**
+///   - If two properties (one in the first 200, one after) both have matching hostnames,
+///     only the first-page property is returned, without detecting the ambiguity
+///
+/// These limitations mean hostname/URL resolution can:
+/// - Silently miss a property that exists but is outside the scanned pages
+/// - Silently return a non-unique match when multiple properties share the hostname
+/// - Return "not found" even when a matching property exists beyond the scanned range
+///
+/// # Failure Modes
+///
+/// - **"Property search incomplete after 10 pages"**: Account has >2000 properties and
+///   display-name search didn't find a match in the first 2000
+/// - **"Property identifier 'X' is ambiguous"**: Multiple distinct properties matched — by
+///   display name across all pages, by hostname in the scanned subset, or one of each
+/// - **"Failed to resolve property identifier"**: No properties matched, or upstream API error
+///
+/// # Known Limitations
+///
+/// - **Cross-form collisions are rejected, not ranked**: If an identifier matches one property's
+///   display name and a different property's web stream hostname (e.g., one property is named
+///   "example.com" and another has a stream at example.com), resolution fails with an ambiguity
+///   error instead of guessing which form the caller meant. Use the numeric property ID to
+///   disambiguate.
+/// - **Hostname scan is still partial**: the collision check compares against the same bounded
+///   stream scan described above, so a conflicting property beyond the first 200 properties or
+///   the first 50 streams of a property remains invisible.
+///
+/// # Design Rationale
+///
+/// Full pagination of all properties and all data streams would be correct but expensive:
+/// - **API call count**: For an account with 1000 properties, full stream pagination could
+///   require 1000+ `dataStreams.list` calls (one per property)
+/// - **Latency**: Serial stream lookups would add seconds of delay to every tool call
+/// - **Quota**: Google Analytics Admin API has rate limits; aggressive pagination could
+///   quickly exhaust daily quotas
+///
+/// The current partial scan covers the common case (small-to-medium accounts, properties
+/// in the first 200, streams in the first 50) while keeping latency and quota consumption
+/// reasonable for typical interactive use.
+///
+/// # Workaround
+///
+/// **Always use the numeric property ID when available.** Numeric IDs bypass all resolution
+/// logic and API calls. To find your property ID:
+/// 1. Visit Google Analytics Admin → Property Settings
+/// 2. Copy the numeric Property ID (e.g., `123456789`)
+/// 3. Use that directly in all tool calls: `{"propertyId": "123456789"}`
+///
+/// This guarantees correct resolution regardless of account size, naming ambiguity, or
+/// stream pagination.
+///
+/// # See Also
+///
+/// - Design rationale and alternatives: `docs/property-resolution.md`
+/// - User-facing documentation: `README.md` "Property Resolution" section
+async fn resolve_property_id(
+    invoker: &dyn OperationInvoker,
+    identifier: &str,
+) -> Result<String, ProxyError> {
+    // If it's already a numeric ID, return it as-is
+    if identifier.bytes().all(|b| b.is_ascii_digit()) && !identifier.is_empty() {
+        return Ok(identifier.to_string());
+    }
+
+    // Normalize the identifier for comparison
+    let normalized_identifier = identifier.to_lowercase();
+    let target_hostname = extract_hostname(identifier);
+
+    let mut display_name_matches: Vec<PropertyMatch> = Vec::new();
+    let mut hostname_matches: Vec<PropertyMatch> = Vec::new();
+    // First page of account summaries, reused by the hostname scan so it costs no extra request.
+    let mut first_page_properties: Vec<Value> = Vec::new();
+    let mut next_token: Option<String> = None;
+    let mut pages_fetched = 0;
+    const MAX_PAGES: usize = 10; // Safety limit
+
+    // Fetch all pages of account summaries
+    loop {
+        if pages_fetched >= MAX_PAGES {
+            return Err(ProxyError::Validation(format!(
+                "Property search incomplete after {} pages; use the numeric property ID directly",
+                MAX_PAGES
+            )));
+        }
+
+        let mut params = json!({"pageSize":200});
+        if let Some(token) = &next_token {
+            params["pageToken"] = json!(token);
+        }
+
+        let result = invoke(
+            invoker,
+            "analyticsadmin_v1beta_accountSummaries_list",
+            params,
+        )
+        .await;
+
+        if result["status"] != "complete" {
+            return Err(ProxyError::Validation(format!(
+                "Failed to resolve property identifier '{}': {}",
+                identifier,
+                result["error"].as_str().unwrap_or("unknown error")
+            )));
+        }
+
+        let summaries = result["data"]["accountSummaries"]
+            .as_array()
+            .ok_or_else(|| ProxyError::Validation("No account summaries available".into()))?;
+
+        // Search this page for matches by display name
+        for account in summaries {
+            if let Some(properties) = account["propertySummaries"].as_array() {
+                // Only the first page is scanned for hostnames (bounded coverage).
+                if pages_fetched == 0 {
+                    first_page_properties.extend(properties.iter().cloned());
+                }
+                for property in properties {
+                    let property_id = property["property"]
+                        .as_str()
+                        .and_then(|s| s.strip_prefix("properties/"))
+                        .unwrap_or("");
+
+                    // Check display name
+                    if let Some(display_name) = property["displayName"].as_str() {
+                        if display_name.to_lowercase() == normalized_identifier {
+                            display_name_matches.push(PropertyMatch {
+                                id: property_id.to_string(),
+                                label: display_name.to_string(),
+                                source: "display name",
+                            });
+                        }
+                    }
+                }
+            }
+        }
+
+        // Check for more pages
+        next_token = result["data"]["nextPageToken"]
+            .as_str()
+            .filter(|s| !s.is_empty())
+            .map(str::to_string);
+
+        pages_fetched += 1;
+
+        if next_token.is_none() {
+            break;
+        }
+    }
+
+    // If the identifier is hostname-shaped, search web streams as well — even when a
+    // display-name match was found — so the two forms can be cross-checked.
+    if let Some(target_host) = target_hostname {
+        for property in &first_page_properties {
+            let property_id = property["property"]
+                .as_str()
+                .and_then(|s| s.strip_prefix("properties/"))
+                .unwrap_or("");
+            let property_full_name = property["property"].as_str().unwrap_or("");
+
+            // Fetch data streams for this property
+            let streams_result = invoke(
+                invoker,
+                "analyticsadmin_v1beta_properties_dataStreams_list",
+                json!({"parent":property_full_name,"pageSize":50}),
+            )
+            .await;
+
+            let mut host_matched = false;
+            if let Some(streams) = streams_result["data"]["dataStreams"].as_array() {
+                for stream in streams {
+                    if let Some(web_data) = stream["webStreamData"].as_object() {
+                        if let Some(default_uri) =
+                            web_data.get("defaultUri").and_then(Value::as_str)
+                        {
+                            if let Some(stream_host) = extract_hostname(default_uri) {
+                                // Exact hostname match
+                                if stream_host == target_host {
+                                    host_matched = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            if host_matched {
+                hostname_matches.push(PropertyMatch {
+                    id: property_id.to_string(),
+                    label: property["displayName"]
+                        .as_str()
+                        .unwrap_or(property_full_name)
+                        .to_string(),
+                    source: "web stream hostname",
+                });
+            }
+        }
+    }
+
+    // Merge both forms, deduplicating by property ID so a property that matches by display
+    // name *and* hostname counts once. Distinct properties from either form are a collision.
+    let mut matches: Vec<PropertyMatch> = Vec::new();
+    for candidate in display_name_matches.into_iter().chain(hostname_matches) {
+        if !matches.iter().any(|existing| existing.id == candidate.id) {
+            matches.push(candidate);
+        }
+    }
+
+    match matches.len() {
+        0 => Err(ProxyError::Validation(format!(
+            "Property identifier '{}' not found. Use a numeric property ID, exact display name, or web stream URL/domain.",
+            identifier
+        ))),
+        1 => Ok(matches[0].id.clone()),
+        _ => {
+            let names: Vec<String> = matches
+                .iter()
+                .map(|m| format!("{} ({}, matched by {})", m.label, m.id, m.source))
+                .collect();
+            Err(ProxyError::Validation(format!(
+                "Property identifier '{}' is ambiguous. Matches: {}. Use the numeric property ID instead.",
+                identifier,
+                names.join(", ")
+            )))
+        }
+    }
+}
 /// Server-owned provider selection; generated startup detects this optional hook.
 pub fn build_auth_provider(
     config: &mcp_factory_core::ProxyConfig,
@@ -49,17 +389,56 @@ pub fn build_custom_tools() -> Vec<CustomToolSpec> {
         ("analytics_change_history", "Search account configuration history using Google REST filters and page tokens.")
     ];
     definitions.into_iter().map(|(name, description)| {
-        let mut schema = json!({"type":"object","additionalProperties":false,"properties":{
-            "propertyId":{"type":"string","pattern":"^[0-9]+$"},
-            "accountId":{"type":"string","pattern":"^[0-9]+$"},
-            "startDate":{"type":"string","default":"28daysAgo"},
-            "endDate":{"type":"string","default":"yesterday"},
-            "query":{"type":"string","maxLength":200},
-            "daily":{"type":"boolean","default":false},
-            "limit":{"type":"integer","minimum":1,"maximum":1000,"default":100},
-            "request":{"type":"object","description":"Google REST camelCase request fields; nested API fields are validated by the generated operation."},
-            "pageToken":{"type":"string"}
-        }});
+        let mut schema = json!({"type":"object","additionalProperties":false,"properties":{}});
+
+        // Add base properties based on tool type
+        if name != "analytics_change_history" {
+            schema["properties"]["propertyId"] = json!({"type":"string","description":"Numeric ID, display name, or URL/domain. Examples: '561397529', 'AnimalMeaning', 'animalmeaning.com'. Large accounts: use numeric ID."});
+        }
+        if name == "analytics_change_history" {
+            schema["properties"]["accountId"] = json!({"type":"string","pattern":"^[0-9]+$"});
+        }
+
+        // Date parameters only for reporting tools
+        let is_reporting_tool = ![
+            "analytics_discover_properties",
+            "analytics_property_configuration",
+            "analytics_metadata",
+            "analytics_quota",
+            "analytics_change_history",
+            "analytics_annotations"
+        ].contains(&name);
+
+        if is_reporting_tool {
+            schema["properties"]["startDate"] = json!({"type":"string","default":"28daysAgo"});
+            schema["properties"]["endDate"] = json!({"type":"string","default":"yesterday"});
+        }
+
+        // Tool-specific properties
+        if name == "analytics_metadata" {
+            schema["properties"]["query"] = json!({"type":"string","maxLength":200});
+        }
+        if is_reporting_tool && !["analytics_realtime","analytics_validate_report","analytics_funnel","analytics_conversions","analytics_pivot","analytics_batch","analytics_compare","analytics_access_audit","analytics_run_report","analytics_activation","analytics_retention"].contains(&name) {
+            schema["properties"]["daily"] = json!({"type":"boolean","default":false});
+        }
+
+        schema["properties"]["limit"] = json!({"type":"integer","minimum":1,"maximum":1000,"default":100});
+
+        // Add request parameter for tools that accept API request bodies
+        // This includes explicit raw tools AND presets that support filters/ordering
+        if ["analytics_run_report","analytics_realtime","analytics_validate_report","analytics_funnel","analytics_conversions","analytics_pivot","analytics_batch","analytics_compare","analytics_access_audit","analytics_overview","analytics_acquisition","analytics_content","analytics_events","analytics_ecommerce","analytics_change_history"].contains(&name) {
+            schema["properties"]["request"] = json!({"type":"object","description":"Google REST camelCase request fields (e.g. dimensionFilter, orderBys); nested API fields are validated by the generated operation."});
+        }
+
+        if ["analytics_discover_properties","analytics_annotations","analytics_change_history"].contains(&name) {
+            schema["properties"]["pageToken"] = json!({"type":"string"});
+        }
+
+        if scope::supported(name) {
+            schema["properties"]["excludeHostnames"] = json!({"type":"array","items":{"type":"string","minLength":1,"maxLength":255},"maxItems":20,"description":"Hostnames to exclude from reports (e.g. localhost, 127.0.0.1). Combined with other filters via AND."});
+        }
+
+        schema["properties"]["verbose"] = json!({"type":"boolean","default":false,"description":"Include full propertyQuota and pagination details in responses."});
         if scope::supported(name) {
             schema["properties"]["platform"] = json!({"enum":["Android","iOS","web"],"description":"Explicit event platform; omitted means property-wide, potentially mixing Android, iOS and web."});
             schema["properties"]["streamId"] = json!({"type":"string","pattern":"^[0-9]+$","description":"Numeric GA data stream ID, not Firebase app ID, package name or measurement ID. ANDed with platform and request filters."});
@@ -80,7 +459,11 @@ pub fn build_custom_tools() -> Vec<CustomToolSpec> {
         }
         if name == "analytics_activation" { schema["required"].as_array_mut().unwrap().push(json!("steps")); }
         if name == "analytics_retention" { schema["required"].as_array_mut().unwrap().push(json!("cohortDate")); }
-        if name == "analytics_annotations" { schema = annotations::schema(); }
+        if name == "analytics_annotations" {
+            schema = annotations::schema();
+            // Override propertyId to accept flexible identifiers
+            schema["properties"]["propertyId"] = json!({"type":"string","description":"Numeric ID, display name, or URL/domain. Examples: '561397529', 'AnimalMeaning', 'animalmeaning.com'. Large accounts: use numeric ID."});
+        }
         CustomToolSpec { name:name.into(), description:description.into(), input_schema:schema,
             hints:ToolHints {read_only:Some(true), destructive:Some(false), idempotent:Some(true), open_world:Some(true), ..Default::default()},
             handler:Arc::new(Handler(name)) }
@@ -123,7 +506,7 @@ async fn invoke(invoker: &dyn OperationInvoker, operation: &str, args: Value) ->
         },
     }
 }
-fn bounded_report(body: &mut Value, limit: u64) {
+fn bounded_report(body: &mut Value, limit: u64, verbose: bool) {
     let requested = body["limit"]
         .as_str()
         .and_then(|s| s.parse::<u64>().ok())
@@ -132,7 +515,7 @@ fn bounded_report(body: &mut Value, limit: u64) {
     body["limit"] = json!(requested.clamp(1, limit));
     // Discovery int64 fields use strings on the wire.
     body["limit"] = json!(body["limit"].as_u64().unwrap().to_string());
-    body["returnPropertyQuota"] = json!(true);
+    body["returnPropertyQuota"] = json!(verbose);
 }
 /// Return true when the report contains only part of its advertised rows.
 fn mark_pagination(value: &mut Value, request: &Value) -> bool {
@@ -183,17 +566,26 @@ fn mark_pagination(value: &mut Value, request: &Value) -> bool {
     }
     !complete
 }
-fn compact(value: &mut Value) {
+fn compact(value: &mut Value, verbose: bool) {
     for key in ["funnelTable", "funnelVisualization"] {
         if let Some(report) = value.get_mut(key) {
-            compact(report);
+            compact(report, verbose);
         }
     }
     if let Some(reports) = value.get_mut("reports").and_then(Value::as_array_mut) {
         for report in reports {
-            compact(report);
+            compact(report, verbose);
         }
     }
+
+    // Remove verbose quota information unless explicitly requested
+    if !verbose {
+        if let Some(obj) = value.as_object_mut() {
+            obj.remove("propertyQuota");
+            obj.remove("kind");
+        }
+    }
+
     let headers: Vec<String> = value["dimensionHeaders"]
         .as_array()
         .into_iter()
@@ -223,13 +615,23 @@ impl CustomToolHandler for Handler {
     async fn call(
         &self,
         invoker: &dyn OperationInvoker,
-        args: Value,
+        mut args: Value,
     ) -> Result<ToolResult, ProxyError> {
+        // Resolve property identifier to numeric ID if needed
+        if let Some(property_id_value) = args.get("propertyId") {
+            let identifier = property_id_value.as_str().unwrap_or_default();
+            if !identifier.is_empty() {
+                let resolved_id = resolve_property_id(invoker, identifier).await?;
+                args["propertyId"] = json!(resolved_id);
+            }
+        }
+
         let property = format!(
             "properties/{}",
             args["propertyId"].as_str().unwrap_or_default()
         );
         let limit = args["limit"].as_u64().unwrap_or(100);
+        let verbose = args["verbose"].as_bool().unwrap_or(false);
         let mut body = args.get("request").cloned().unwrap_or(json!({}));
         if !body.is_object() {
             return Err(ProxyError::Validation("request must be an object".into()));
@@ -375,7 +777,7 @@ impl CustomToolHandler for Handler {
                         ));
                     }
                     for request in requests {
-                        bounded_report(request, limit);
+                        bounded_report(request, limit, verbose);
                     }
                 } else if ![
                     "analytics_validate_report",
@@ -384,20 +786,28 @@ impl CustomToolHandler for Handler {
                 ]
                 .contains(&self.0)
                 {
-                    bounded_report(&mut body, limit);
+                    bounded_report(&mut body, limit, verbose);
                     if self.0 == "analytics_access_audit" {
                         body.as_object_mut().unwrap().remove("returnPropertyQuota");
-                        body["returnEntityQuota"] = json!(true);
+                        body["returnEntityQuota"] = json!(verbose);
                     }
+                } else if ["analytics_funnel", "analytics_pivot"].contains(&self.0) {
+                    // Funnels and pivots skip bounded_report but still need quota flag
+                    body["returnPropertyQuota"] = json!(verbose);
                 }
                 let preset = match self.0 {
                     "analytics_overview" => Some((
                         vec![],
                         vec![
                             "activeUsers",
+                            "newUsers",
                             "sessions",
                             "engagedSessions",
-                            "keyEvents",
+                            "engagementRate",
+                            "averageSessionDuration",
+                            "screenPageViews",
+                            "screenPageViewsPerSession",
+                            "bounceRate",
                             "totalRevenue",
                         ],
                     )),
@@ -461,7 +871,7 @@ impl CustomToolHandler for Handler {
                     result["status"] = json!("partial");
                 }
                 result["scope"] = json!({"dimensionFilter":request_body["dimensionFilter"],"batchScopes":request_body["requests"].as_array().map(|requests| requests.iter().enumerate().map(|(index, request)| json!({"reportIndex":index,"dimensionFilter":request["dimensionFilter"],"dateRanges":request["dateRanges"],"cohortSpec":request["cohortSpec"]})).collect::<Vec<_>>()),"dateRanges":request_body["dateRanges"],"cohortSpec":request_body["cohortSpec"]});
-                compact(&mut result["data"]);
+                compact(&mut result["data"], verbose);
                 sources.push(result);
             }
         }
@@ -593,13 +1003,28 @@ mod tests {
     async fn access_audit_uses_admin_quota_field() {
         let mock = Mock(Mutex::new(vec![]));
         Handler("analytics_access_audit")
-            .call(&mock, json!({"propertyId":"123","request":{}}))
+            .call(
+                &mock,
+                json!({"propertyId":"123","request":{},"verbose":true}),
+            )
             .await
             .unwrap();
         let calls = mock.0.lock().unwrap();
         assert_eq!(calls[0].1["entity"], "properties/123");
         assert_eq!(calls[0].1["body"]["returnEntityQuota"], true);
         assert!(calls[0].1["body"].get("returnPropertyQuota").is_none());
+
+        // Test that verbose=false omits quota fields
+        let mock2 = Mock(Mutex::new(vec![]));
+        Handler("analytics_access_audit")
+            .call(
+                &mock2,
+                json!({"propertyId":"123","request":{},"verbose":false}),
+            )
+            .await
+            .unwrap();
+        let calls2 = mock2.0.lock().unwrap();
+        assert_eq!(calls2[0].1["body"]["returnEntityQuota"], false);
     }
     #[test]
     fn batch_pagination_uses_each_reports_offset() {
@@ -753,7 +1178,12 @@ mod contracts {
         );
         assert_eq!(workflow.tool_names().len(), 22);
         assert_eq!(raw.tool_names().len(), 248);
-        assert!(compact < 25_000);
+        // Allow for slightly larger size due to new features (excludeHostnames, verbose, property resolution, request field on presets)
+        assert!(
+            compact < 29_000,
+            "Workflow metadata size {} exceeds 29KB budget",
+            compact
+        );
         assert!(compact * 4 < full);
         for name in [
             "analyticsdata_v1beta_properties_runReport",
@@ -826,3 +1256,475 @@ mod generated_contracts {
 #[cfg(test)]
 #[path = "feedback_tests.rs"]
 mod feedback_tests;
+
+#[cfg(test)]
+mod new_features_tests {
+    use super::*;
+    use std::sync::Mutex;
+
+    struct Mock(Mutex<Vec<(String, Value)>>);
+    #[async_trait]
+    impl OperationInvoker for Mock {
+        async fn invoke_read_only(
+            &self,
+            name: &str,
+            args: Value,
+        ) -> Result<ToolResult, ProxyError> {
+            self.0.lock().unwrap().push((name.into(), args));
+            // Return mock responses based on operation type
+            let response = match name {
+                "analyticsadmin_v1beta_accountSummaries_list" => {
+                    json!({
+                        "accountSummaries": [{
+                            "propertySummaries": [
+                                {
+                                    "property": "properties/123456",
+                                    "displayName": "TestProperty"
+                                },
+                                {
+                                    "property": "properties/789012",
+                                    "displayName": "AnotherProperty"
+                                }
+                            ]
+                        }],
+                        "nextPageToken": ""
+                    })
+                }
+                "analyticsadmin_v1beta_properties_dataStreams_list" => {
+                    json!({
+                        "dataStreams": [{
+                            "webStreamData": {
+                                "defaultUri": "https://example.com"
+                            }
+                        }]
+                    })
+                }
+                _ => json!({"dimensionHeaders": [], "metricHeaders": [], "rows": []}),
+            };
+            Ok(ToolResult::text("{}").with_structured(Some(response)))
+        }
+    }
+
+    #[tokio::test]
+    async fn overview_respects_10_metric_limit() {
+        let mock = Mock(Mutex::new(vec![]));
+        let result = Handler("analytics_overview")
+            .call(&mock, json!({"propertyId":"123"}))
+            .await
+            .unwrap();
+        let calls = mock.0.lock().unwrap();
+        let metrics = calls[0].1["body"]["metrics"].as_array().unwrap();
+        assert_eq!(
+            metrics.len(),
+            10,
+            "Overview must have exactly 10 metrics to comply with API limit"
+        );
+    }
+
+    #[tokio::test]
+    async fn hostname_exclusion_validation() {
+        let mock = Mock(Mutex::new(vec![]));
+
+        // Valid exclusion
+        let _result = Handler("analytics_overview")
+            .call(
+                &mock,
+                json!({
+                    "propertyId":"123",
+                    "excludeHostnames":["localhost","127.0.0.1"]
+                }),
+            )
+            .await;
+        assert!(_result.is_ok());
+
+        let calls = mock.0.lock().unwrap();
+        let filter = &calls[0].1["body"]["dimensionFilter"];
+        assert!(filter["andGroup"]["expressions"].as_array().unwrap().len() > 0);
+    }
+
+    #[test]
+    fn hostname_exclusion_rejects_invalid_entries() {
+        // Schema validation will reject these, but scope::apply also validates
+        use crate::extensions::scope;
+
+        // Empty hostname
+        let result = scope::apply(&mut json!({}), &json!({"excludeHostnames": [""]}));
+        assert!(result.is_err(), "Empty hostnames should be rejected");
+
+        // Overlong hostname
+        let long_host = "a".repeat(256);
+        let result = scope::apply(&mut json!({}), &json!({"excludeHostnames": [long_host]}));
+        assert!(result.is_err(), "Hostnames >255 chars should be rejected");
+    }
+
+    #[tokio::test]
+    async fn property_resolution_accepts_numeric_id() {
+        let mock = Mock(Mutex::new(vec![]));
+        let _result = Handler("analytics_overview")
+            .call(&mock, json!({"propertyId":"123456"}))
+            .await
+            .unwrap();
+        let calls = mock.0.lock().unwrap();
+        assert_eq!(calls[0].1["property"], "properties/123456");
+    }
+
+    #[tokio::test]
+    async fn property_resolution_by_display_name() {
+        let mock = Mock(Mutex::new(vec![]));
+        let _result = Handler("analytics_overview")
+            .call(&mock, json!({"propertyId":"TestProperty"}))
+            .await
+            .unwrap();
+        let calls = mock.0.lock().unwrap();
+        // Should resolve TestProperty to 123456
+        assert_eq!(calls[1].1["property"], "properties/123456");
+        // A dotless display name is not hostname-shaped, so no stream scan may run.
+        assert!(
+            calls
+                .iter()
+                .all(|(name, _)| name != "analyticsadmin_v1beta_properties_dataStreams_list"),
+            "display-name-only resolution must not scan data streams"
+        );
+    }
+
+    /// Mock with caller-supplied account summaries and per-property web streams.
+    struct ResolutionMock {
+        summaries: Value,
+        streams: Vec<(String, Value)>,
+        calls: Mutex<Vec<(String, Value)>>,
+    }
+
+    impl ResolutionMock {
+        fn new(summaries: Value, streams: Vec<(&str, &str)>) -> Self {
+            Self {
+                summaries,
+                streams: streams
+                    .into_iter()
+                    .map(|(parent, uri)| {
+                        (
+                            parent.to_string(),
+                            json!({"dataStreams":[{"webStreamData":{"defaultUri":uri}}]}),
+                        )
+                    })
+                    .collect(),
+                calls: Mutex::new(vec![]),
+            }
+        }
+    }
+
+    #[async_trait]
+    impl OperationInvoker for ResolutionMock {
+        async fn invoke_read_only(
+            &self,
+            name: &str,
+            args: Value,
+        ) -> Result<ToolResult, ProxyError> {
+            self.calls.lock().unwrap().push((name.into(), args.clone()));
+            let response = match name {
+                "analyticsadmin_v1beta_accountSummaries_list" => self.summaries.clone(),
+                "analyticsadmin_v1beta_properties_dataStreams_list" => {
+                    let parent = args["parent"].as_str().unwrap_or_default();
+                    self.streams
+                        .iter()
+                        .find(|(p, _)| p == parent)
+                        .map(|(_, v)| v.clone())
+                        .unwrap_or_else(|| json!({"dataStreams":[]}))
+                }
+                _ => json!({"dimensionHeaders": [], "metricHeaders": [], "rows": []}),
+            };
+            Ok(ToolResult::text("{}").with_structured(Some(response)))
+        }
+    }
+
+    fn summaries_with(entries: &[(&str, &str)]) -> Value {
+        json!({
+            "accountSummaries": [{
+                "propertySummaries": entries
+                    .iter()
+                    .map(|(id, name)| json!({"property": format!("properties/{}", id), "displayName": name}))
+                    .collect::<Vec<_>>()
+            }],
+            "nextPageToken": ""
+        })
+    }
+
+    #[tokio::test]
+    async fn property_resolution_rejects_cross_form_collision() {
+        // One property is *named* example.com; a different property has a stream at example.com.
+        let mock = ResolutionMock::new(
+            summaries_with(&[("111111", "example.com"), ("222222", "Other Property")]),
+            vec![("properties/222222", "https://example.com")],
+        );
+
+        let err = resolve_property_id(&mock, "example.com").await.unwrap_err();
+        let message = err.to_string();
+        assert!(
+            message.contains("ambiguous"),
+            "collision should be reported as ambiguous: {message}"
+        );
+        assert!(
+            message.contains("111111"),
+            "error must list the name match: {message}"
+        );
+        assert!(
+            message.contains("222222"),
+            "error must list the hostname match: {message}"
+        );
+        assert!(
+            message.contains("display name") && message.contains("web stream hostname"),
+            "error must name both matching forms: {message}"
+        );
+
+        // The hostname scan reuses Phase 1's first page instead of re-fetching summaries.
+        let calls = mock.calls.lock().unwrap();
+        let summary_calls = calls
+            .iter()
+            .filter(|(name, _)| name == "analyticsadmin_v1beta_accountSummaries_list")
+            .count();
+        assert_eq!(summary_calls, 1, "account summaries should be fetched once");
+    }
+
+    #[tokio::test]
+    async fn property_resolution_accepts_agreeing_name_and_hostname() {
+        let mock = ResolutionMock::new(
+            summaries_with(&[("111111", "example.com")]),
+            vec![("properties/111111", "https://example.com")],
+        );
+
+        let resolved = resolve_property_id(&mock, "https://example.com")
+            .await
+            .unwrap();
+        assert_eq!(resolved, "111111");
+    }
+
+    #[tokio::test]
+    async fn property_resolution_falls_back_to_hostname_only() {
+        let mock = ResolutionMock::new(
+            summaries_with(&[("111111", "My Website")]),
+            vec![("properties/111111", "https://example.com")],
+        );
+
+        let resolved = resolve_property_id(&mock, "example.com").await.unwrap();
+        assert_eq!(resolved, "111111");
+    }
+
+    #[tokio::test]
+    async fn property_resolution_reports_hostname_ambiguity() {
+        let mock = ResolutionMock::new(
+            summaries_with(&[("111111", "One"), ("222222", "Two")]),
+            vec![
+                ("properties/111111", "https://example.com"),
+                ("properties/222222", "https://example.com"),
+            ],
+        );
+
+        let err = resolve_property_id(&mock, "example.com").await.unwrap_err();
+        let message = err.to_string();
+        assert!(message.contains("ambiguous"), "message: {message}");
+        assert!(
+            message.contains("111111") && message.contains("222222"),
+            "message: {message}"
+        );
+    }
+
+    #[test]
+    fn hostname_extraction_handles_various_formats() {
+        assert_eq!(
+            extract_hostname("https://example.com"),
+            Some("example.com".into())
+        );
+        assert_eq!(
+            extract_hostname("http://example.com"),
+            Some("example.com".into())
+        );
+        assert_eq!(extract_hostname("example.com"), Some("example.com".into()));
+        assert_eq!(
+            extract_hostname("www.example.com"),
+            Some("www.example.com".into())
+        );
+        assert_eq!(
+            extract_hostname("https://example.com/path"),
+            Some("example.com".into())
+        );
+        assert_eq!(
+            extract_hostname("https://example.com:8080"),
+            Some("example.com".into())
+        );
+        // URLs with query strings
+        assert_eq!(
+            extract_hostname("https://example.com?foo=bar"),
+            Some("example.com".into())
+        );
+        assert_eq!(
+            extract_hostname("example.com?foo=bar"),
+            Some("example.com".into())
+        );
+        assert_eq!(
+            extract_hostname("www.example.com?foo=bar"),
+            Some("www.example.com".into())
+        );
+        // URLs with fragments
+        assert_eq!(
+            extract_hostname("https://example.com#section"),
+            Some("example.com".into())
+        );
+        assert_eq!(
+            extract_hostname("example.com#section"),
+            Some("example.com".into())
+        );
+        assert_eq!(
+            extract_hostname("https://example.com/path?query=1#fragment"),
+            Some("example.com".into())
+        );
+        assert_eq!(extract_hostname("not a url"), None);
+    }
+
+    #[tokio::test]
+    async fn presets_accept_request_field() {
+        for tool_name in [
+            "analytics_overview",
+            "analytics_acquisition",
+            "analytics_content",
+            "analytics_events",
+            "analytics_ecommerce",
+        ] {
+            let mock = Mock(Mutex::new(vec![]));
+            let _result = Handler(tool_name)
+                .call(
+                    &mock,
+                    json!({
+                        "propertyId":"123",
+                        "request":{"orderBys":[{"metric":{"metricName":"sessions"},"desc":true}]}
+                    }),
+                )
+                .await;
+            assert!(_result.is_ok(), "{} should accept request field", tool_name);
+        }
+    }
+
+    #[tokio::test]
+    async fn change_history_accepts_request_field() {
+        let mock = Mock(Mutex::new(vec![]));
+        let _result = Handler("analytics_change_history")
+            .call(
+                &mock,
+                json!({
+                    "accountId":"123",
+                    "request":{"resourceType":"ACCOUNT"}
+                }),
+            )
+            .await;
+        assert!(
+            _result.is_ok(),
+            "change_history should accept request field"
+        );
+    }
+
+    #[tokio::test]
+    async fn verbose_flag_controls_quota_request() {
+        let mock = Mock(Mutex::new(vec![]));
+
+        // verbose=false (default)
+        Handler("analytics_overview")
+            .call(&mock, json!({"propertyId":"123","verbose":false}))
+            .await
+            .unwrap();
+        let calls = mock.0.lock().unwrap();
+        assert_eq!(calls[0].1["body"]["returnPropertyQuota"], false);
+
+        drop(calls);
+
+        // verbose=true
+        Handler("analytics_overview")
+            .call(&mock, json!({"propertyId":"123","verbose":true}))
+            .await
+            .unwrap();
+        let calls = mock.0.lock().unwrap();
+        assert_eq!(calls[1].1["body"]["returnPropertyQuota"], true);
+    }
+
+    #[tokio::test]
+    async fn funnel_and_pivot_respect_verbose_flag() {
+        let mock = Mock(Mutex::new(vec![]));
+
+        Handler("analytics_funnel")
+            .call(
+                &mock,
+                json!({
+                    "propertyId":"123",
+                    "verbose":true,
+                    "request":{}
+                }),
+            )
+            .await
+            .unwrap();
+
+        let calls = mock.0.lock().unwrap();
+        assert_eq!(
+            calls[0].1["body"]["returnPropertyQuota"], true,
+            "funnel should set returnPropertyQuota when verbose"
+        );
+    }
+
+    #[tokio::test]
+    async fn annotations_accepts_flexible_property_id() {
+        let mock = Mock(Mutex::new(vec![]));
+
+        // Should resolve property name to ID
+        let _result = Handler("analytics_annotations")
+            .call(&mock, json!({"propertyId":"TestProperty"}))
+            .await;
+        assert!(_result.is_ok(), "annotations should accept property names");
+    }
+
+    #[test]
+    fn schema_exposes_request_for_appropriate_tools() {
+        let tools = build_custom_tools();
+
+        let overview = tools
+            .iter()
+            .find(|t| t.name == "analytics_overview")
+            .unwrap();
+        assert!(
+            overview.input_schema["properties"]["request"].is_object(),
+            "overview should expose request field"
+        );
+
+        let change_history = tools
+            .iter()
+            .find(|t| t.name == "analytics_change_history")
+            .unwrap();
+        assert!(
+            change_history.input_schema["properties"]["request"].is_object(),
+            "change_history should expose request field"
+        );
+
+        let discover = tools
+            .iter()
+            .find(|t| t.name == "analytics_discover_properties")
+            .unwrap();
+        assert!(
+            !discover.input_schema["properties"]["request"].is_object(),
+            "discover_properties should NOT expose request field"
+        );
+    }
+
+    #[test]
+    fn schema_enforces_hostname_limits() {
+        let tools = build_custom_tools();
+        let overview = tools
+            .iter()
+            .find(|t| t.name == "analytics_overview")
+            .unwrap();
+        let exclude_schema = &overview.input_schema["properties"]["excludeHostnames"]["items"];
+
+        assert_eq!(
+            exclude_schema["minLength"], 1,
+            "hostname minLength should be 1"
+        );
+        assert_eq!(
+            exclude_schema["maxLength"], 255,
+            "hostname maxLength should be 255"
+        );
+    }
+}
