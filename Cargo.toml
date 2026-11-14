@@ -11,7 +11,7 @@ authors = ["MCP Factory Contributors"]
 [workspace.dependencies]
 mcp-factory-core = { path = "crates/mcp-factory-core" }
 mcp-factory-provider-auth = { path = "crates/mcp-factory-provider-auth", default-features = false }
-rmcp = { version = "3.8", features = [
+rmcp = { version = "3.10", features = [
     "server",
     "schemars",
     "transport-io",
@@ -39,10 +39,10 @@ thiserror = "2"
 anyhow = "1"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
-jsonschema = "0.60.2"
+jsonschema = "0.61.2"
 percent-encoding = "2"
 base64 = "0.23"
-toml = "1.1"
+toml = "1.2"
 chrono = { version = "0.4", features = ["serde"] }
 # oauth2 5.0 still depends on reqwest 0.12; `default-features = false` keeps
 # that second copy out of the graph — we supply the HTTP client ourselves

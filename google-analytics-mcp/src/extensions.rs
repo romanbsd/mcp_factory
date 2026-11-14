@@ -1308,7 +1308,7 @@ mod new_features_tests {
     #[tokio::test]
     async fn overview_respects_10_metric_limit() {
         let mock = Mock(Mutex::new(vec![]));
-        let result = Handler("analytics_overview")
+        let _result = Handler("analytics_overview")
             .call(&mock, json!({"propertyId":"123"}))
             .await
             .unwrap();
